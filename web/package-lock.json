@@ -1,0 +1,48 @@
+{
+  "name": "padel-app",
+  "version": "1.0.0",
+  "description": "Padel application with Firebase backend",
+  "scripts": {
+    "dev": "./scripts/dev.sh",
+    "import:storage": "./scripts/import-storage.sh",
+    "import:storage:js": "node scripts/import-storage.js",
+    "import:storage:all": "./scripts/import-storage.sh --all",
+    "import:storage:specific": "./scripts/import-storage.sh --specific",
+    "import:storage:sample": "./scripts/import-storage.sh --sample",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:all": "./scripts/deploy.sh --all",
+    "deploy:functions": "./scripts/deploy.sh --functions",
+    "deploy:firestore": "./scripts/deploy.sh --firestore",
+    "deploy:storage": "./scripts/deploy.sh --storage",
+    "deploy:hosting": "./scripts/deploy.sh --hosting",
+    "deploy:dev": "./scripts/deploy.sh --dev",
+    "deploy:prod": "./scripts/deploy.sh --prod",
+    "build": "./scripts/deploy.sh --web-app",
+    "install:all": "npm install && cd web-app && npm install && cd ../firebase-functions && npm install",
+    "clean": "rm -rf web-app/dist firebase-functions/lib firebase-functions/node_modules web-app/node_modules",
+    "setup": "./scripts/setup.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/padel.git"
+  },
+  "keywords": [
+    "padel",
+    "firebase",
+    "angular",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^12.0.0",
+    "firebase-admin": "^13.4.0"
+  }
+}

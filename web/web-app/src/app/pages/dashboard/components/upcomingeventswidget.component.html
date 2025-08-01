@@ -1,0 +1,48 @@
+<div class="card w-full">
+    <div class="flex justify-between items-center mb-6">
+        <div class="font-semibold text-xl">Upcoming Events</div>
+        <div>
+            <button pButton type="button" icon="pi pi-ellipsis-v" class="p-button-rounded p-button-text p-button-plain" (click)="menu.toggle($event)">
+                </button>
+            <p-menu #menu [popup]="true" [model]="items">
+                </p-menu>
+            </div>
+        </div>
+    <p-carousel class="upcoming-events-carousel w-full" [value]="events" [numVisible]="numVisible" [numScroll]="numScroll" [circular]="true" [autoplayInterval]="0" [showNavigators]="false" [showIndicators]="true" (onPage)="onCarouselPage($event)" [page]="currentPage" indicatorsContentClass="custom-indicators-content" indicatorStyleClass="custom-indicator" >
+        <ng-template let-event let-i="index" pTemplate="item">
+            <div class="h-full w-full">
+                <div class="border-2 border-gray-400 dark:border-gray-600 rounded-lg hover:shadow-md transition-shadow p-4 sm:p-6 w-full bg-gray-200 md:bg-transparent">
+                    <img *ngIf="event.image" [src]="event.image" alt="Event image" class="w-full h-32 sm:h-40 object-cover rounded-t-md mb-4" />
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 flex items-center justify-center bg-primary-100 dark:bg-primary-400/10 rounded-full shrink-0">
+                            <i class="pi pi-calendar !text-lg text-white">
+                                </i>
+                            </div>
+                        <div class="flex-1">
+                            <div class="text-md font-medium text-surface-700 dark:text-surface-300">{{ event.date }}</div>
+                            <div class="text-md font-medium text-surface-700 dark:text-surface-300">{{ event.time }}</div>
+                            </div>
+                        <div class="ml-auto text-md font-semibold px-2 py-1 rounded bg-green-400 text-gray-900 uppercase"> {{ event.gender }} </div>
+                        </div>
+                    <div class="mb-3">
+                        <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-1">{{ event.name }}</h3>
+                        <div class="flex text-lg items-center text-muted-color">
+                            <i class="pi pi-map-marker mr-2">
+                                </i>
+                            <span>{{ event.venue }}</span>
+                            </div>
+                        </div>
+                    <div class="flex justify-between items-center">
+                        <button pButton type="button" label="View Details" class="p-button-md p-button-outlined">
+                            </button>
+                        <div class="text-md text-muted-color">
+                            <i class="pi pi-users mr-1">
+                                </i>
+                            <span>24/24</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </p-carousel>
+    </div>

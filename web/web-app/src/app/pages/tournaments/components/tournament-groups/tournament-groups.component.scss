@@ -1,0 +1,55 @@
+// Accordion styles for mobile view
+.groups-accordion {
+    .p-accordion-tab {
+        margin-bottom: 0.5rem;
+        border: 1px solid var(--surface-border);
+        border-radius: 8px;
+        overflow: hidden;
+
+        .p-accordion-header {
+            background: var(--surface-section);
+            border: none;
+
+            .p-accordion-header-link {
+                padding: 1rem;
+                font-weight: 600;
+                color: var(--text-color);
+                border: none;
+                background: transparent;
+
+                &:hover {
+                    background: var(--surface-hover);
+                }
+            }
+        }
+
+        .p-accordion-content {
+            border: none;
+            background: var(--surface-card);
+        }
+    }
+}
+
+// Group content styles
+.group-content {
+    .group-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--surface-border);
+
+        button {
+            min-width: auto;
+        }
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .group-content {
+        .group-actions {
+            flex-wrap: wrap;
+        }
+    }
+} 

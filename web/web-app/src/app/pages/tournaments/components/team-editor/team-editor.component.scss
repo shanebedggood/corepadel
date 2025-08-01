@@ -1,0 +1,76 @@
+// Team Editor Component Styles
+
+.field {
+    margin-bottom: 1rem;
+}
+
+.field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.field input,
+.field p-multiselect {
+    width: 100%;
+}
+
+// Form validation styles
+.text-red-500 {
+    color: #ef4444;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-gray-600 {
+    color: #4b5563;
+}
+
+.text-gray-700 {
+    color: #374151;
+}
+
+// Dark mode support
+.dark {
+    .text-gray-500 {
+        color: #9ca3af;
+    }
+    
+    .text-gray-600 {
+        color: #d1d5db;
+    }
+    
+    .text-gray-700 {
+        color: #e5e7eb;
+    }
+}
+
+// Button spacing
+.flex.gap-2 {
+    gap: 0.5rem;
+}
+
+// Form spacing
+.space-y-4 > * + * {
+    margin-top: 1rem;
+}
+
+// Dialog content padding
+.p-4 {
+    padding: 1rem;
+}
+
+// Responsive design
+@media (max-width: 640px) {
+    .flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .flex.gap-2 > * {
+        width: 100%;
+    }
+} 

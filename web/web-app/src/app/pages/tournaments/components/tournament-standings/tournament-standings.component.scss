@@ -1,0 +1,324 @@
+.standings-content {
+    margin-bottom: 3rem;
+    
+    .group-standings {
+        margin-bottom: 2rem;
+
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--surface-section);
+            border-radius: 8px 8px 0 0;
+            border: 1px solid var(--surface-border);
+            border-bottom: none;
+
+            h4 {
+                margin: 0;
+                color: var(--text-color);
+                font-size: 1.1rem;
+                font-weight: 600;
+            }
+
+            .team-count {
+                font-size: 0.875rem;
+                color: var(--text-color-secondary);
+                background: var(--surface-hover);
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+            }
+        }
+
+        .standings-table-container {
+            background: var(--surface-card);
+            border-radius: 0 0 8px 8px;
+            border: 1px solid var(--surface-border);
+            border-top: none;
+            overflow: hidden;
+
+            .standings-table {
+                .p-datatable-thead > tr > th {
+                    background: var(--surface-section);
+                    border-bottom: 1px solid var(--surface-border);
+                    font-weight: 600;
+                    color: var(--text-color);
+                    padding: 0.75rem 0.5rem;
+                    text-align: center;
+                    font-size: 0.875rem;
+
+                    &.position-col {
+                        width: 60px;
+                    }
+
+                    &.team-col {
+                        text-align: left;
+                    }
+
+                    &.stats-col {
+                        width: 50px;
+                    }
+
+                    &.points-col {
+                        width: 60px;
+                    }
+                }
+
+                .p-datatable-tbody > tr > td {
+                    padding: 0.75rem 0.5rem;
+                    border-bottom: 1px solid var(--surface-border);
+                    vertical-align: middle;
+                    text-align: center;
+                    font-size: 0.875rem;
+
+                    &.position-cell {
+                        width: 60px;
+
+                        .position-badge {
+                            display: inline-block;
+                            width: 30px;
+                            height: 30px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: 700;
+                            font-size: 1rem;
+
+                            &.position-first {
+                                background: var(--yellow-100);
+                                color: var(--yellow-800);
+                            }
+
+                            &.position-second {
+                                background: var(--gray-100);
+                                color: var(--gray-800);
+                            }
+
+                            &.position-third {
+                                background: var(--orange-100);
+                                color: var(--orange-800);
+                            }
+
+                            &.position-other {
+                                background: var(--surface-hover);
+                                color: var(--text-color);
+                            }
+                        }
+                    }
+
+                    &.team-cell {
+                        text-align: left;
+
+                        .team-name {
+                            font-weight: 600;
+                            color: var(--text-color);
+                        }
+                    }
+
+                    &.stats-cell {
+                        width: 50px;
+                        font-weight: 500;
+
+                        &.wins {
+                            color: var(--green-600);
+                        }
+
+                        &.draws {
+                            color: var(--yellow-600);
+                        }
+
+                        &.losses {
+                            color: var(--red-600);
+                        }
+
+                        &.goals-for {
+                            color: var(--blue-600);
+                        }
+
+                        &.goals-against {
+                            color: var(--orange-600);
+                        }
+
+                        &.goal-diff {
+                            font-weight: 600;
+
+                            &.positive {
+                                color: var(--green-600);
+                            }
+
+                            &.negative {
+                                color: var(--red-600);
+                            }
+                        }
+                    }
+
+                    &.points-cell {
+                        width: 60px;
+
+                        .points-badge {
+                            display: inline-block;
+                            background: var(--primary-color);
+                            color: white;
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 12px;
+                            font-weight: 700;
+                            font-size: 0.875rem;
+                            min-width: 35px;
+                        }
+                    }
+                }
+
+                // Position-based row styling
+                tr.position-first {
+                    background: var(--yellow-50);
+                    border-left: 4px solid var(--yellow-500);
+                }
+
+                tr.position-second {
+                    background: var(--gray-50);
+                    border-left: 4px solid var(--gray-500);
+                }
+
+                tr.position-third {
+                    background: var(--orange-50);
+                    border-left: 4px solid var(--orange-500);
+                }
+
+                tr.position-other {
+                    border-left: 4px solid transparent;
+                }
+            }
+        }
+    }
+
+    .no-standings {
+        text-align: center;
+        padding: 3rem;
+        background: var(--surface-card);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .empty-state {
+            i {
+                color: var(--text-color-secondary);
+                margin-bottom: 1rem;
+            }
+
+            h5 {
+                margin: 0 0 0.5rem 0;
+                color: var(--text-color);
+            }
+
+            p {
+                margin: 0 0 1rem 0;
+                color: var(--text-color-secondary);
+            }
+        }
+    }
+
+    .loading {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-color-secondary);
+    }
+
+    .standings-legend {
+        margin-bottom: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: var(--surface-section);
+        border: 1px solid var(--surface-border);
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: center;
+        font-size: 0.875rem;
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color-secondary);
+
+            .legend-label {
+                font-weight: 600;
+                color: var(--text-color);
+                min-width: 30px;
+            }
+
+            .legend-description {
+                color: var(--text-color-secondary);
+            }
+        }
+    }
+}
+
+// Accordion styles
+.standings-accordion {
+    .p-accordion-header {
+        background: var(--surface-section);
+        border: 1px solid var(--surface-border);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        
+        &:not(:last-child) {
+            border-bottom: none;
+        }
+        
+        .p-accordion-header-link {
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+            
+            &:focus {
+                box-shadow: none;
+            }
+        }
+    }
+    
+    .p-accordion-content {
+        border: 1px solid var(--surface-border);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        background: var(--surface-card);
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+
+    .standings-content {
+        .group-standings {
+            .group-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+
+            .standings-table-container {
+                .standings-table {
+                    .p-datatable-thead > tr > th,
+                    .p-datatable-tbody > tr > td {
+                        padding: 0.5rem 0.25rem;
+                        font-size: 0.75rem;
+                    }
+                }
+            }
+        }
+    }
+
+    .standings-legend {
+        .legend-items {
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+            gap: 1rem;
+            display: grid !important;
+        }
+
+        .legend-stats {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+} 

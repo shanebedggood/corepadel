@@ -1,0 +1,36 @@
+<p-toast>
+    </p-toast>
+<div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-[100vw] overflow-hidden relative">
+    <!-- Background Image -->
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30" [style.background-image]="'url(' + backgroundImageUrl + ')'">
+            </div>
+        <div class="flex flex-col items-center justify-center relative z-10">
+            <div class="w-full bg-surface-0 dark:bg-surface-900 py-20 px-8 sm:px-20 relative opacity-100" style="border-radius: 50px">
+                <!-- Back Arrow Button -->
+                    <button type="button" class="absolute top-6 left-6 p-2 rounded-full bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors duration-200 !text-lg" (click)="onCancel()" aria-label="Go back">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    <div class="text-center mb-8">
+                        <img src="assets/logo.svg" alt="Core Padel Logo" class="mb-8 w-32 shrink-0 mx-auto" />
+                        <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Core Padel</div>
+                        <span class="text-surfce-600 dark:text-surface-400 text-xl">Sign in with passwordless authentication. We'll send a magic link to your email.</span>
+                        </div>
+                    <form (ngSubmit)="onSubmit()" #emailForm="ngForm" class="w-full max-w-[30rem] mx-auto">
+                        <label for="email" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Email Address</label>
+                        <input pInputText id="email" name="email" type="email" placeholder="Enter your email address" class="w-full mb-6 text-2xl" [(ngModel)]="email" required [class.ng-invalid]="emailForm.submitted && !emailForm.form.valid" [class.ng-dirty]="emailForm.submitted && !emailForm.form.valid" />
+                        <div class="flex gap-4 w-full mb-8">
+                            <div class="w-full">
+                                <p-button label="{{ isLoading ? 'Sending Link...' : 'Send Sign-in Link' }}" styleClass="w-full" type="submit" [loading]="isLoading" [disabled]="isLoading || !emailForm.form.valid">
+                                    </p-button>
+                                </div>
+                            </div>
+                        </form>
+                    <div class="text-center">
+                        <p class="text-surface-500 dark:text-surface-400 text-xl mb-2"> New to Core Padel? <a routerLink="/auth/signup" class="text-primary-color hover:underline">Create an account</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>

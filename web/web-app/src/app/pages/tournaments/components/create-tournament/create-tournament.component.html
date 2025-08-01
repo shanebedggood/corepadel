@@ -1,0 +1,351 @@
+<div class="card">
+    <!-- Page Header -->
+    <app-page-header title="Create New Tournament"
+        subtitle=""
+        [breadcrumbs]="breadcrumbs">
+        <div header-actions class="flex items-center">
+            <div
+                class="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div class="flex items-center text-blue-700 dark:text-blue-300">
+                    <i class="pi pi-info-circle mr-2">
+                    </i>
+                    <span class="text-sm font-medium">Draft Mode</span>
+                </div>
+            </div>
+        </div>
+    </app-page-header>
+    <!-- Error Message -->
+    <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" [closable]="true"
+        (onClose)="errorMessage = ''">
+        <ng-template pTemplate="messageicon">
+            <button pButton type="button" label="Retry" icon="pi pi-refresh" class="p-button-sm"
+                (click)="retryLoading()">
+            </button>
+        </ng-template>
+    </p-message>
+    <!-- Success Message -->
+    <p-message *ngIf="successMessage" severity="success" [text]="successMessage" [closable]="true"
+        (onClose)="successMessage = ''">
+    </p-message>
+    <div *ngIf="loading" class="flex justify-center items-center p-8">
+        <p-message severity="info" text="Loading tournament configuration..." styleClass="w-full">
+            <ng-template pTemplate="messageicon">
+                <i class="pi pi-spin pi-spinner text-2xl">
+                </i>
+            </ng-template>
+        </p-message>
+    </div>
+    <div *ngIf="!loading" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <form id="tournamentForm" [formGroup]="tournamentForm" (ngSubmit)="saveTournament()"
+            class="w-full max-w-4xl mx-auto">
+            <!-- Form Sections -->
+            <div class="space-y-8">
+                <!-- Basic Information Section -->
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg mr-3">
+                            <i class="pi pi-info-circle text-blue-600 dark:text-blue-400">
+                            </i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Basic Information</h2>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="field">
+                            <label for="name" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                Tournament Name <span class="text-red-500">*</span>
+                            </label>
+                            <input pInputText id="name" formControlName="name" class="w-full" [pAutoFocus]="true"
+                                placeholder="Enter tournament name" autocomplete="off" />
+                        </div>
+                        <div class="field">
+                            <label id="format" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Format
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <p-select ariaLabelledBy="format" [options]="formats" formControlName="format"
+                                optionLabel="name" placeholder="Select a tournament format" class="w-full" />
+                        </div>
+                    </div>
+                    <div class="field mt-6">
+                        <label for="description" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                            Description <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="description" rows="4" pTextarea formControlName="description" class="w-full"
+                            placeholder="Describe your tournament...">
+                                                </textarea>
+                    </div>
+                </div>
+                <!-- Dates Section -->
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg mr-3">
+                            <i class="pi pi-calendar text-green-600 dark:text-green-400">
+                            </i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Dates</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field">
+                            <label for="startDate" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                Start Date <span class="text-red-500">*</span>
+                            </label>
+                            <p-datepicker inputId="startDate" formControlName="startDate"
+                                dateFormat="dd M yy" styleClass="w-full" placeholder="Select start date"
+                                [showIcon]="showIcon">
+                            </p-datepicker>
+                        </div>
+                        <div class="field">
+                            <label for="endDate" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> End
+                                Date <span class="text-red-500">*</span>
+                            </label>
+                            <p-datepicker inputId="endDate" formControlName="endDate"
+                                dateFormat="dd M yy" styleClass="w-full" placeholder="Select end date"
+                                [showIcon]="showIcon">
+                            </p-datepicker>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div class="field">
+                            <label for="registrationStartDate"
+                                class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Registration Start Date
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <p-datepicker inputId="registrationStartDate" formControlName="registrationStartDate"
+                                dateFormat="dd M yy" styleClass="w-full"
+                                placeholder="Select registration start date"
+                                [showIcon]="showIcon">
+                            </p-datepicker>
+                        </div>
+                        <div class="field">
+                            <label for="registrationEndDate"
+                                class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Registration End Date
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <p-datepicker inputId="registrationEndDate" formControlName="registrationEndDate"
+                                dateFormat="dd M yy" styleClass="w-full"
+                                placeholder="Select registration end date"
+                                [showIcon]="showIcon">
+                            </p-datepicker>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tournament Details Section -->
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg mr-3">
+                            <i class="pi pi-cog text-purple-600 dark:text-purple-400">
+                            </i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Details</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field">
+                            <label id="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                Category <span class="text-red-500">*</span>
+                            </label>
+                            <p-select ariaLabelledBy="category" [options]="categories" formControlName="category"
+                                optionLabel="name" placeholder="Select a tournament category" class="w-full" />
+                        </div>
+                        <div class="field">
+                            <label id="registrationType"
+                                class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Registration Type <span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <p-select ariaLabelledBy="registrationType" [options]="registrationTypes"
+                                formControlName="registrationType" optionLabel="name"
+                                placeholder="Select a registration type" class="w-full" />
+                        </div>
+                    </div>
+                </div>
+                <!-- Venue Section -->
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-lg mr-3">
+                            <i class="pi pi-map-marker text-orange-600 dark:text-orange-400">
+                            </i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Venue Information</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field">
+                            <label id="venueType" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Venue
+                                Type <span class="text-red-500">*</span>
+                            </label>
+                            <p-select ariaLabelledBy="venueType" [options]="venueTypes" formControlName="venueType"
+                                optionLabel="name" placeholder="Select a venue type" class="w-full" />
+                        </div>
+                        <div class="field" *ngIf="tournamentForm.get('venueType')?.value?.name === 'Single Venue'">
+                            <label id="venue" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Venue
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <p-select ariaLabelledBy="venue" [options]="venues" formControlName="venue"
+                                optionLabel="name" placeholder="Select a venue" class="w-full" [filter]="true"
+                                filterBy="name" [showClear]="true" [filterPlaceholder]="'Search venues...'" />
+                        </div>
+                    </div>
+                </div>
+                <!-- Tournament Configuration Section -->
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg mr-3">
+                            <i class="pi pi-users text-indigo-600 dark:text-indigo-400">
+                            </i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Configuration</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field">
+                            <label for="maxParticipants"
+                                class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Max Players<span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <input pInputText id="maxParticipants" type="number" formControlName="maxParticipants"
+                                class="w-full" placeholder="Enter max players" />
+                            <p-message *ngIf="tournamentForm.get('maxParticipants')?.errors?.['oddNumber']"
+                                severity="error"
+                                [text]="tournamentForm.get('maxParticipants')?.errors?.['oddNumber']?.message"
+                                styleClass="w-full mt-1">
+                            </p-message>
+                        </div>
+                        <div class="field">
+                            <label for="noOfGroups" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                Number of Groups <span class="text-red-500">*</span>
+                            </label>
+                            <input pInputText id="noOfGroups" type="number" formControlName="noOfGroups" class="w-full"
+                                placeholder="Enter number of groups" />
+                            <p-message *ngIf="tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']"
+                                severity="error"
+                                [text]="tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']?.message"
+                                styleClass="w-full mt-1">
+                            </p-message>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div class="field" *ngIf="isRoundRobinFormat()">
+                            <label id="progressionOption"
+                                class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Progression Type <span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <p-select ariaLabelledBy="progressionOption" [options]="progressionTypes"
+                                formControlName="progressionOption" optionLabel="name"
+                                placeholder="Select a progression type" class="w-full" />
+                        </div>
+                        <div class="field" [class.md:col-span-2]="!isRoundRobinFormat()">
+                            <label for="entryFee" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Entry
+                                Fee <span class="text-red-500">*</span>
+                            </label>
+                            <p-inputgroup>
+                                <p-inputgroup-addon>{{ currencySymbol }}</p-inputgroup-addon>
+                                <p-inputnumber inputId="entryFee" formControlName="entryFee" class="w-full"
+                                    placeholder="0.00" />
+                                <p-inputgroup-addon>.00</p-inputgroup-addon>
+                            </p-inputgroup>
+                        </div>
+                    </div>
+                    <!-- Group Advancement Settings Section (only for group-based elimination) -->
+                    <div *ngIf="isGroupBasedElimination()"
+                        class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded-lg mr-3">
+                                <i class="pi pi-sitemap text-yellow-600 dark:text-yellow-400">
+                                </i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Group Advancement Settings
+                            </h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="field">
+                                <label id="advancementModel"
+                                    class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Advancement Model
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="advancementModel" [options]="advancementModels"
+                                    formControlName="advancementModel" optionLabel="name"
+                                    placeholder="Select advancement model" class="w-full" />
+                            </div>
+                            <div class="field">
+                                <label id="eliminationBracketSize"
+                                    class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Elimination Bracket
+                                    Size <span class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="eliminationBracketSize" [options]="eliminationBracketSizes"
+                                    formControlName="eliminationBracketSize" optionLabel="name"
+                                    placeholder="Select bracket size" class="w-full" />
+                            </div>
+                        </div>
+                        <!-- Calculated Teams to Advance -->
+                        <div *ngIf="getTeamsToAdvancePerGroup() > 0"
+                            class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div class="flex items-center text-blue-700 dark:text-blue-300 mb-2">
+                                <i class="pi pi-calculator mr-2">
+                                </i>
+                                <span class="font-medium">Group Configuration</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-blue-600 dark:text-blue-400 text-lg">Teams per group:</span>
+                                    <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
+                                        getTeamsToAdvancePerGroup() }}</span>
+                                </div>
+                                <div *ngIf="isTrophyPlateModel()" class="space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-blue-600 dark:text-blue-400 text-lg">→ Trophy
+                                            (winners):</span>
+                                        <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
+                                            getTeamsAdvancingToElimination() }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-blue-600 dark:text-blue-400 text-lg">→ Plate (losers):</span>
+                                        <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
+                                            getTeamsAdvancingToPlate() }}</span>
+                                    </div>
+                                </div>
+                                <div *ngIf="!isTrophyPlateModel()" class="flex justify-between items-center">
+                                    <span class="text-blue-600 dark:text-blue-400 text-lg">Teams advancing to
+                                        elimination:</span>
+                                    <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
+                                        getTeamsAdvancingToElimination() }}</span>
+                                </div>
+                            </div>
+                            <p
+                                class="text-md text-blue-600 dark:text-blue-400 mt-3 pt-2 border-t border-blue-200 dark:border-blue-700">
+                                Based on {{ tournamentForm.get('maxParticipants')?.value }} participants and {{
+                                tournamentForm.get('noOfGroups')?.value }} groups </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Validation Error Message (Prominent) -->
+                <div *ngIf="errorMessage" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="pi pi-exclamation-triangle text-red-600 mt-1 mr-3">
+                        </i>
+                        <div class="flex-1">
+                            <h4 class="text-lg font-semibold text-red-800 mb-2">Validation Error</h4>
+                            <p class="text-red-700">{{ errorMessage }}</p>
+                            <button type="button"
+                                class="mt-3 text-red-600 hover:text-red-800 underline text-sm"
+                                (click)="errorMessage = ''"> Dismiss </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Form Actions -->
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div class="text-md text-gray-500 dark:text-gray-400">
+                        <i class="pi pi-info-circle mr-1">
+                        </i>
+                        <span class="text-red-500">*</span> Required fields
+                    </div>
+                    <div class="flex gap-2">
+                        <p-button label="Cancel" icon="pi pi-times" severity="secondary" (onClick)="cancel()" />
+                        <p-button label="Reset Form" icon="pi pi-refresh" severity="secondary"
+                            (onClick)="resetForm()" />
+                        <p-button label="Create Tournament" icon="pi pi-check" [loading]="saving" type="submit"
+                            [disabled]="!tournamentForm.valid" />
+                    </div>
+                </div>
+            </div>
+        </form>
+        
+
+    </div>
+</div>

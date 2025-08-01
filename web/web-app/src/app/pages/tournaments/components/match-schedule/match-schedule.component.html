@@ -1,0 +1,252 @@
+<div class="card">
+    <p-toast>
+    </p-toast>
+    <p-confirmDialog>
+    </p-confirmDialog>
+    <div *ngIf="loading" class="flex justify-center items-center p-8">
+        <p-message severity="info" text="Loading match schedule..." styleClass="w-full">
+            <ng-template pTemplate="messageicon">
+                <i class="pi pi-spin pi-spinner text-2xl">
+                </i>
+            </ng-template>
+        </p-message>
+    </div>
+    <div *ngIf="!loading && tournament" class="w-full">
+        <!-- Page Header -->
+        <app-page-header [title]="tournament.name + ' - Match Schedule'" subtitle="View and manage tournament matches"
+            [breadcrumbs]="breadcrumbs">
+            <div header-actions class="flex items-center gap-4">
+                <button pButton type="button" label="Back to Tournament" icon="pi pi-arrow-left"
+                    class="p-button-outlined lg " (click)="goBack()">
+                </button>
+            </div>
+        </app-page-header>
+        <!-- Match Statistics -->
+        <div class="mb-6">
+            <p-card styleClass="shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">Total Matches</div>
+                        <div class="text-2xl font-bold text-primary">{{ getMatchStats().total }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">Scheduled</div>
+                        <div class="text-2xl font-bold text-yellow-600">{{ getMatchStats().scheduled }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">In Progress</div>
+                        <div class="text-2xl font-bold text-blue-600">{{ getMatchStats().inProgress }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">Completed</div>
+                        <div class="text-2xl font-bold text-green-600">{{ getMatchStats().completed }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">Cancelled</div>
+                        <div class="text-2xl font-bold text-red-600">{{ getMatchStats().cancelled }}</div>
+                    </div>
+                </div>
+            </p-card>
+        </div>
+        <!-- Filters -->
+        <div class="mb-6">
+            <p-card styleClass="shadow-sm">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">Group:</label>
+                        <p-select [options]="groups" [(ngModel)]="selectedGroup" optionLabel="name" optionValue="id"
+                            placeholder="All Groups" [showClear]="true" styleClass="w-40">
+                        </p-select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">Status:</label>
+                        <p-select
+                            [options]="[ { label: 'Scheduled', value: 'scheduled'}, { label: 'In Progress', value: 'in_progress'}, { label: 'Completed', value: 'completed'}, { label: 'Cancelled', value: 'cancelled'} ]"
+                            [(ngModel)]="selectedStatus" optionLabel="label" optionValue="value"
+                            placeholder="All Statuses" [showClear]="true" styleClass="w-40">
+                        </p-select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">Round:</label>
+                        <p-select [options]="getRoundOptions()" [(ngModel)]="selectedRound" optionLabel="label"
+                            optionValue="value" placeholder="All Rounds" [showClear]="true" styleClass="w-40">
+                        </p-select>
+                    </div>
+                    <button pButton type="button" label="Clear Filters" icon="pi pi-times"
+                        class="p-button-outlined p-button-sm lg " (click)="clearFilters()">
+                    </button>
+                </div>
+            </p-card>
+        </div>
+        <!-- Matches Table -->
+        <div class="mb-6">
+            <p-card styleClass="shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Matches</h3>
+                    <span class="text-sm text-gray-600">{{ getFilteredMatches().length }} matches found</span>
+                </div>
+                <p-table [value]="getFilteredMatches()" [paginator]="true" [rows]="20" [showCurrentPageReport]="true"
+                    [tableStyle]="{'min-width': '50rem'}"
+                    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} matches"
+                    [rowsPerPageOptions]="[10, 20, 50]">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Round</th>
+                            <th>Group</th>
+                            <th>Team 1</th>
+                            <th>vs</th>
+                            <th>Team 2</th>
+                            <th>Score</th>
+                            <th>Winner</th>
+                            <th>Status</th>
+                            <th>Venue</th>
+                            <th>Scheduled Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-match>
+                        <tr>
+                            <td>
+                                <span class="font-semibold text-primary">Round {{ match.round }}</span>
+                            </td>
+                            <td>
+                                <span class="text-sm text-gray-600">{{ match.group?.name || 'Unknown Group' }}</span>
+                            </td>
+                            <td>
+                                <div class="font-medium text-gray-900">{{ match.team1?.name || 'Team 1 (ID: ' + getTeam1Id(match) + ')' }}</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-gray-500 font-medium">vs</span>
+                            </td>
+                            <td>
+                                <div class="font-medium text-gray-900">{{ match.team2?.name || 'Team 2 (ID: ' + getTeam2Id(match) + ')' }}</div>
+                            </td>
+                            <td>
+                                <span class="font-semibold">{{ getMatchScore(match) }}</span>
+                            </td>
+                            <td>
+                                <span class="text-sm">{{ getMatchWinner(match) }}</span>
+                            </td>
+                            <td>
+                                <span class="p-badge px-3 py-1 rounded-full text-xs font-medium"
+                                    [ngClass]="getStatusBadgeClass(match.status)"> {{ getStatusLabel(match.status) }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-sm text-gray-600">{{ match.venue?.name || 'TBD' }}</span>
+                            </td>
+                            <td>
+                                <span class="text-sm text-gray-600"> {{ match.scheduledTime ? (match.scheduledTime |
+                                    date:'short') : 'TBD' }} </span>
+                            </td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <button pButton type="button" icon="pi pi-pencil"
+                                        class="p-button-sm p-button-outlined" (click)="editMatch(match)"
+                                        pTooltip="Edit Match">
+                                    </button>
+                                    <button pButton type="button" icon="pi pi-trash"
+                                        class="p-button-sm p-button-outlined p-button-danger"
+                                        (click)="deleteMatch(match)" pTooltip="Delete Match">
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="11" class="text-center py-8">
+                                <p-message severity="info"
+                                    text="No matches found. No matches match the current filters or no matches have been generated yet."
+                                    styleClass="w-full">
+                                </p-message>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
+        </div>
+    </div>
+    <!-- Empty State -->
+    <div *ngIf="!loading && !tournament" class="text-center py-8">
+        <p-message severity="warn"
+            text="Tournament not found. The tournament you're looking for doesn't exist or has been deleted."
+            styleClass="w-full mb-4">
+        </p-message>
+        <button pButton type="button" label="Back to Tournaments" icon="pi pi-arrow-left" class="mt-4"
+            (click)="goBack()">
+        </button>
+    </div>
+</div>
+<!-- Edit Match Dialog -->
+<p-dialog header="Edit Match" [(visible)]="showEditDialog" [modal]="true" [style]="{ width: '600px'}"
+    [draggable]="false" [resizable]="false">
+    <div *ngIf="editingMatch" class="space-y-4">
+        <!-- Teams Display -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="flex items-center justify-between">
+                <div class="text-center flex-1">
+                    <div class="font-semibold text-lg">{{ editingMatch.team1?.name || 'Team 1 (ID: ' + getTeam1Id(editingMatch) + ')' }}</div>
+                    <div class="text-sm text-gray-600">Team 1</div>
+                </div>
+                <div class="text-center mx-4">
+                    <div class="text-2xl font-bold text-primary">vs</div>
+                </div>
+                <div class="text-center flex-1">
+                    <div class="font-semibold text-lg">{{ editingMatch.team2?.name || 'Team 2 (ID: ' + getTeam2Id(editingMatch) + ')' }}</div>
+                    <div class="text-sm text-gray-600">Team 2</div>
+                </div>
+            </div>
+        </div>
+        <!-- Match Details Form -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="field">
+                <label class="block mb-2 font-medium text-gray-700">Status</label>
+                <p-select
+                    [options]="[ { label: 'Scheduled', value: 'scheduled'}, { label: 'In Progress', value: 'in_progress'}, { label: 'Completed', value: 'completed'}, { label: 'Cancelled', value: 'cancelled'} ]"
+                    [(ngModel)]="editingMatch.status" optionLabel="label" optionValue="value"
+                    placeholder="Select status" class="w-full">
+                </p-select>
+            </div>
+            <div class="field">
+                <label class="block mb-2 font-medium text-gray-700">Venue</label>
+                <p-select [options]="venues" [(ngModel)]="editingMatch.venueId" optionLabel="name" optionValue="id"
+                    placeholder="Select venue" [showClear]="true" class="w-full">
+                </p-select>
+            </div>
+            <div class="field">
+                <label class="block mb-2 font-medium text-gray-700">Team 1 Score</label>
+                <input pInputText type="number" [(ngModel)]="editingMatch.team1Score" class="w-full" min="0"
+                    placeholder="Enter score" />
+            </div>
+            <div class="field">
+                <label class="block mb-2 font-medium text-gray-700">Team 2 Score</label>
+                <input pInputText type="number" [(ngModel)]="editingMatch.team2Score" class="w-full" min="0"
+                    placeholder="Enter score" />
+            </div>
+            <div class="field md:col-span-2">
+                <label class="block mb-2 font-medium text-gray-700">Scheduled Time</label>
+                <input type="datetime-local" [(ngModel)]="editingMatch.scheduledTime" 
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Select date and time">
+            </div>
+            <div class="field md:col-span-2" *ngIf="editingMatch.status === 'completed'">
+                <label class="block mb-2 font-medium text-gray-700">Winner</label>
+                <p-select
+                    [options]="[ { label: editingMatch.team1?.name || 'Team 1 (ID: ' + getTeam1Id(editingMatch) + ')', value: getTeam1Id(editingMatch)}, { label: editingMatch.team2?.name || 'Team 2 (ID: ' + getTeam2Id(editingMatch) + ')', value: getTeam2Id(editingMatch)} ]"
+                    [(ngModel)]="editingMatch.winnerId" optionLabel="label" optionValue="value"
+                    placeholder="Select winner" class="w-full">
+                </p-select>
+            </div>
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-2">
+            <button pButton type="button" label="Cancel" icon="pi pi-times" class="p-button-outlined"
+                (click)="cancelEdit()">
+            </button>
+            <button pButton type="button" label="Save" icon="pi pi-check" (click)="saveMatch()">
+            </button>
+        </div>
+    </ng-template>
+</p-dialog>

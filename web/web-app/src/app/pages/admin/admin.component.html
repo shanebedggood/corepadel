@@ -1,0 +1,80 @@
+<div class="card">
+    <!-- Page Header -->
+        <app-page-header title="Admin Dashboard" subtitle="Manage users and system administration" [breadcrumbs]="breadcrumbs">
+            </app-page-header>
+        <div class="grid">
+            <div class="col-12">
+                <p-card header="User Management" styleClass="mb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">All Users</h2>
+                        <button pButton type="button" label="Refresh" icon="pi pi-refresh" class="p-button-outlined" (click)="loadUsers()" [loading]="loading" >
+                            </button>
+                        </div>
+                    <p-table [value]="users" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users" [rowsPerPageOptions]="[10, 25, 50]" styleClass="p-datatable-sm" >
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Profile</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Rating</th>
+                                <th>Role</th>
+                                <th>Email Verified</th>
+                                <th>Created</th>
+                                <th>Last Sign In</th>
+                                <th>Actions</th>
+                                </tr>
+                            </ng-template>
+                        <ng-template pTemplate="body" let-user>
+                            <tr>
+                                <td>
+                                    <div class="flex items-center">
+                                        <img *ngIf="user.profilePicture" [src]="user.profilePicture" [alt]="user.displayName" class="w-8 h-8 rounded-full object-cover mr-2" />
+                                        <div *ngIf="!user.profilePicture" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2" >
+                                            <i class="pi pi-user text-gray-500">
+                                                </i>
+                                            </div>
+                                        </div>
+                                    </td>
+                                <td>{{ user.displayName || 'N/A' }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="px-2 py-1 text-md font-semibold rounded bg-yellow-100 text-yellow-800" *ngIf="user.rating !== undefined" > {{ user.rating | number:'1.2-2' }} </span>
+                                    <span class="text-gray-400 text-xs" *ngIf="user.rating === undefined">N/A</span>
+                                    </td>
+                                <td>
+                                    <span class="px-2 py-1 text-md font-semibold rounded" [ngClass]="{ 'bg-blue-100 text-blue-800': user.role === 'player', 'bg-red-100 text-red-800': user.role === 'admin' }" > {{ user.role | titlecase }} </span>
+                                    </td>
+                                <td>
+                                    <i class="pi" [ngClass]="{ 'pi-check text-green-500': user.emailVerified, 'pi-times text-red-500': !user.emailVerified }" >
+                                        </i>
+                                    </td>
+                                <td>{{ user.createdAt | date:'d MMM y, HH:mm' }}</td>
+                                <td>{{ user.lastSignInTime | date:'d MMM y, HH:mm' }}</td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <button *ngIf="user.role === 'player'" pButton type="button" label="Make Admin" icon="pi pi-user-plus" class="p-button-sm p-button-success" (click)="assignAdminRole(user.uid, user.email)" [loading]="user.loading" >
+                                            </button>
+                                        <button *ngIf="user.role === 'admin'" pButton type="button" label="Remove Admin" icon="pi pi-user-minus" class="p-button-sm p-button-danger" (click)="removeAdminRole(user.uid, user.email)" [loading]="user.loading" >
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <div class="text-gray-500">
+                                        <i class="pi pi-users text-4xl mb-2">
+                                            </i>
+                                        <p>No users found</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </p-card>
+                </div>
+            </div>
+        </div>
+    <p-toast>
+        </p-toast>

@@ -1,0 +1,146 @@
+<div class="card">
+    <!-- Error Message -->
+    <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" [closable]="true"
+        (onClose)="errorMessage = ''">
+    </p-message>
+    <div *ngIf="loading" class="flex justify-center items-center p-8">
+        <p-message severity="info" text="Loading standings..." styleClass="w-full">
+            <ng-template pTemplate="messageicon">
+                <i class="pi pi-spin pi-spinner text-2xl">
+                </i>
+            </ng-template>
+        </p-message>
+    </div>
+    <div *ngIf="!loading && tournament" class="w-full">
+        <!-- Page Header -->
+        <app-page-header [title]="tournament.name + ' - Standings'"
+            subtitle="Tournament group standings and points table" [breadcrumbs]="breadcrumbs">
+            <div header-actions class="flex items-center gap-4">
+                <button pButton type="button" label="View Tournament" icon="pi pi-eye" class="p-button-secondary"
+                    (click)="viewTournament()">
+                </button>
+            </div>
+        </app-page-header>
+        <!-- Tournament Info Card -->
+        <div class="mb-6">
+            <p-card styleClass="shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">Start Date</div>
+                        <div class="text-2xl font-bold text-primary">{{ tournament.startDate | date:'mediumDate' }}
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">End Date</div>
+                        <div class="text-2xl font-bold text-primary">{{ tournament.endDate | date:'mediumDate' }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-md text-gray-600">Groups</div>
+                        <div class="text-2xl font-bold text-primary">{{ groupStandings.length }}</div>
+                    </div>
+                </div>
+            </p-card>
+        </div>
+        <!-- Standings Tables -->
+        <div *ngIf="groupStandings.length > 0" class="space-y-6">
+            <div *ngFor="let groupStanding of groupStandings" class="bg-white rounded-lg shadow-sm border">
+                <!-- Group Header -->
+                <div class="bg-gray-50 px-6 py-4 border-b rounded-t-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-primary text-white p-2 rounded-lg">
+                                <i class="pi pi-users">
+                                </i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900"> {{ groupStanding.group.name }} <span
+                                        class="text-lg text-gray-600 font-normal" *ngIf="groupStanding.group.venue"> -
+                                        {{ groupStanding.group.venue.name }} </span>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Standings Table -->
+                <div class="overflow-x-auto">
+                    <p-table [value]="groupStanding.standings" styleClass="p-datatable-sm">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th class="text-center w-16">Pos</th>
+                                <th>Team</th>
+                                <th class="text-center">P</th>
+                                <th class="text-center">W</th>
+                                <th class="text-center">D</th>
+                                <th class="text-center">L</th>
+                                <th class="text-center">SF</th>
+                                <th class="text-center">SA</th>
+                                <th class="text-center">SD</th>
+                                <th class="text-center font-bold">Pts</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-standing>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="text-center">
+                                    <div class="flex items-center justify-center">
+                                        <span class="px-2 py-1 rounded-full text-xs font-bold border"
+                                            [ngClass]="getPositionClass(standing.position)">
+                                            <i [class]="getPositionIcon(standing.position)" class="mr-1">
+                                            </i> {{ standing.position }} </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">
+                                            {{ standing.team.name.charAt(0).toUpperCase() }} </div>
+                                        <div>
+                                            <div class="font-semibold">{{ standing.team.name }}</div>
+                                            <div class="text-xs text-gray-600"> {{ standing.team.players.length }}
+                                                players </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center font-medium">{{ standing.played }}</td>
+                                <td class="text-center text-green-600 font-medium">{{ standing.won }}</td>
+                                <td class="text-center text-blue-600 font-medium">{{ standing.drawn }}</td>
+                                <td class="text-center text-red-600 font-medium">{{ standing.lost }}</td>
+                                <td class="text-center font-medium">{{ standing.goalsFor }}</td>
+                                <td class="text-center font-medium">{{ standing.goalsAgainst }}</td>
+                                <td class="text-center font-medium"
+                                    [ngClass]="standing.goalDifference > 0 ? 'text-green-600' : standing.goalDifference < 0 ? 'text-red-600' : ''">
+                                    {{ standing.goalDifference > 0 ? '+' : '' }}{{ standing.goalDifference }} </td>
+                                <td class="text-center font-bold text-lg text-primary">{{ standing.points }}</td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="10" class="text-center py-8">
+                                    <p-message severity="info"
+                                        text="No Teams in Group. Teams will appear here once they are added to this group."
+                                        styleClass="w-full">
+                                    </p-message>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+        </div>
+        <!-- No Groups Message -->
+        <div *ngIf="!loading && groupStandings.length === 0" class="text-center py-12">
+            <p-message severity="info" text="No Groups Found. This tournament doesn't have any groups set up yet."
+                styleClass="w-full mb-6">
+            </p-message>
+            <button pButton type="button" label="View Tournament" icon="pi pi-eye" class="p-button-primary"
+                (click)="viewTournament()">
+            </button>
+        </div>
+    </div>
+    <!-- Tournament Not Found -->
+    <div *ngIf="!loading && !tournament" class="text-center py-12">
+        <p-message severity="warn"
+            text="Tournament Not Found. The tournament you're looking for doesn't exist or has been removed."
+            styleClass="w-full">
+        </p-message>
+    </div>
+</div>

@@ -1,0 +1,179 @@
+<div class="w-full">
+    <!-- Header with Add Button -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Players</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
+                Manage individual players in this tournament
+            </p>
+        </div>
+        <button pButton type="button" icon="pi pi-plus" 
+                [disabled]="!canAddMore" 
+                (click)="openAddDialog()"
+                class="p-button-success"
+                pTooltip="Add Player">
+            Add Player
+        </button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Players: {{ currentCount }}/{{ tournament?.maxParticipants }}
+            </span>
+            <span class="text-sm text-gray-500">
+                {{ getRemainingSlots() }} slots remaining
+            </span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div class="h-2.5 rounded-full transition-all duration-300 {{ getProgressColor() }}" 
+                 [style.width.%]="getProgressPercentage()"></div>
+        </div>
+    </div>
+
+    <!-- Participants Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-6">
+            <div *ngIf="loading" class="text-center py-8">
+                <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                <p class="mt-2 text-gray-600">Loading players...</p>
+            </div>
+
+            <div *ngIf="!loading && participants.length === 0" class="text-center py-8">
+                <i class="pi pi-users text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Players</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                    No players have been added to this tournament yet.
+                </p>
+                <button pButton type="button" icon="pi pi-plus" 
+                        [disabled]="!canAddMore" 
+                        (click)="openAddDialog()"
+                        class="p-button-outlined">
+                    Add First Player
+                </button>
+            </div>
+
+            <div *ngIf="!loading && participants.length > 0">
+                <p-table [value]="participants" 
+                         [paginator]="true" 
+                         [rows]="10"
+                         [showCurrentPageReport]="true"
+                         responsiveLayout="scroll"
+                         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} participants"
+                         [rowsPerPageOptions]="[5, 10, 25, 50]"
+                         styleClass="p-datatable-sm">
+                    
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th pSortableColumn="displayName">Player <p-sortIcon field="displayName"></p-sortIcon></th>
+                            <th pSortableColumn="rating">Rating <p-sortIcon field="rating"></p-sortIcon></th>
+                            <th>Actions</th>
+                        </tr>
+                    </ng-template>
+                    
+                    <ng-template pTemplate="body" let-participant>
+                        <tr>
+                            <td>
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-blue-600 font-semibold text-sm">
+                                            {{ participant.displayName?.charAt(0)?.toUpperCase() || 'U' }}
+                                        </span>
+                                    </div>
+                                    <div class="font-medium text-gray-900 dark:text-white">
+                                        {{ participant.displayName }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {{ participant.rating !== undefined && participant.rating !== null ? participant.rating : 'N/A' }}
+                            </td>
+                            <td>
+                                <button pButton type="button" 
+                                        icon="pi pi-trash" 
+                                        class="p-button-sm p-button-outlined p-button-danger"
+                                        (click)="removeParticipant(participant)"
+                                        pTooltip="Remove Participant">
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="3" class="text-center py-8">
+                                <i class="pi pi-users text-2xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">No participants found</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Participant Dialog -->
+    <p-dialog header="Add Participant" 
+              [(visible)]="showAddDialog" 
+              [modal]="true" 
+              [style]="{width: '600px'}"
+              [draggable]="false" 
+              [resizable]="false"
+              (onShow)="onDialogShow()"
+              (onHide)="closeAddDialog()">
+        <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+            <div class="flex gap-2 mb-4">
+                <input #searchInput pInputText formControlName="searchTerm" placeholder="Search for players by name or email" class="w-full" />
+                <button pButton type="submit" icon="pi pi-search" [disabled]="searchForm.invalid || searchLoading"></button>
+            </div>
+        </form>
+        <div *ngIf="searchLoading" class="text-center py-4">
+            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+            <p class="mt-2 text-gray-600">Searching...</p>
+        </div>
+        <div *ngIf="!searchLoading">
+            <div *ngIf="hasSearched" class="space-y-2 max-h-96 overflow-y-auto">
+                <p-message *ngIf="searchResults.length === 0" 
+                          severity="info"
+                          text="No players found matching your search. Note: Players already in the tournament are hidden."
+                          styleClass="w-full">
+                </p-message>
+                <div *ngFor="let player of searchResults" 
+                     class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                     (click)="addParticipant(player)">
+                    <div class="flex-1">
+                        <div class="font-medium">{{ player.display_name }}</div>
+                        <div class="text-sm text-gray-500">{{ player.email }}</div>
+                    </div>
+                    <button pButton type="button" 
+                            icon="pi pi-plus" 
+                            class="p-button-sm p-button-success p-button-text"
+                            pTooltip="Add Player">
+                    </button>
+                </div>
+            </div>
+            <div *ngIf="!hasSearched" class="text-center py-8">
+                <i class="pi pi-search text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Search for Players</h3>
+                <p class="text-gray-600">
+                    Use the search above to find players to add to the tournament.
+                </p>
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton type="button" 
+                    label="Cancel" 
+                    icon="pi pi-times" 
+                    (click)="closeAddDialog()"
+                    class="p-button-text">
+            </button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Toast Messages -->
+    <p-toast></p-toast>
+    
+    <!-- Confirmation Dialog -->
+    <p-confirmDialog></p-confirmDialog>
+</div> 

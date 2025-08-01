@@ -1,0 +1,86 @@
+<div class="w-full mt-16">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex justify-center items-center min-h-screen">
+        <div class="text-center">
+            <i class="pi pi-spin pi-spinner text-4xl text-blue-500 mb-4"></i>
+            <p class="text-gray-600">Loading tournament...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorMessage && !loading" class="flex justify-center items-center min-h-screen">
+        <div class="text-center">
+            <i class="pi pi-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+            <p class="text-red-600 mb-4">{{ errorMessage }}</p>
+            <button pButton type="button" label="Go Back" icon="pi pi-arrow-left" class="p-button-outlined"
+                (click)="goBack()">
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div *ngIf="!loading && !errorMessage && tournament" class="space-y-6">
+        <!-- Page Header -->
+        <app-page-header [title]="'Edit Tournament: ' + tournament.name" [breadcrumbs]="breadcrumbs">
+            <div header-actions>
+                <button pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined mr-4"
+                    (click)="goBack()">
+                </button>
+            </div>
+        </app-page-header>
+
+        <!-- Tournament Tabs -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <p-tabs value="0">
+                <p-tablist>
+                    <p-tab value="0">Details</p-tab>
+                    <p-tab value="1">Players</p-tab>
+                    <p-tab value="2">Groups</p-tab>
+                    <p-tab value="3">Matches</p-tab>
+                    <p-tab value="4">Standings</p-tab>
+                </p-tablist>
+                <p-tabpanels>
+                    <!-- Tournament Details Tab -->
+                    <p-tabpanel value="0">
+                        <app-tournament-details [tournament]="tournament" [tournamentConfig]="tournamentConfig"
+                            [roundRobinConfig]="roundRobinConfig" [venues]="venues"
+                            (saveTournament)="onTournamentSaved($event)" (cancelEdit)="onTournamentCancelled()"
+                            (resetForm)="onTournamentReset()">
+                        </app-tournament-details>
+                    </p-tabpanel>
+                    <!-- Participants Management Tab -->
+                    <p-tabpanel value="1">
+                        <app-tournament-participants [tournament]="tournament" [participants]="participants"
+                            (participantsChanged)="loadParticipants()">
+                        </app-tournament-participants>
+                    </p-tabpanel>
+                    <!-- Groups Management Tab -->
+                    <p-tabpanel value="2" disabled="!tournament">
+                        <app-tournament-groups *ngIf="tournament" [tournament]="tournament" [venues]="venues"
+                            [participants]="participants" (groupsUpdated)="onGroupsUpdated()"
+                            (teamsUpdated)="onTeamsUpdated()">
+                        </app-tournament-groups>
+                    </p-tabpanel>
+                    <!-- Matches Management Tab -->
+                    <p-tabpanel value="3" disabled="!tournament">
+                        <app-tournament-matches *ngIf="tournament" [tournament]="tournament" [groups]="groups"
+                            [teams]="teams" [matches]="matches" [venues]="venues" (matchesUpdated)="onMatchesUpdated()">
+                        </app-tournament-matches>
+                    </p-tabpanel>
+                    <!-- Standings Tab -->
+                    <p-tabpanel value="4" disabled="!tournament">
+                        <app-tournament-standings *ngIf="tournament" [tournament]="tournament" [groups]="groups"
+                            [teams]="teams" [matches]="matches" (standingsUpdated)="onStandingsUpdated()">
+                        </app-tournament-standings>
+                    </p-tabpanel>
+                </p-tabpanels>
+            </p-tabs>
+        </div>
+    </div>
+
+    <!-- Toast Messages -->
+    <p-toast></p-toast>
+
+    <!-- Confirmation Dialog -->
+    <p-confirmDialog></p-confirmDialog>
+</div>

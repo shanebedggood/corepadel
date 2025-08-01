@@ -1,0 +1,170 @@
+<div class="card">
+    <p-toast>
+    </p-toast>
+    <p-confirmDialog>
+    </p-confirmDialog>
+    <!-- Page Header -->
+    <app-page-header title="Tournaments" subtitle="Manage and view all tournaments for your club"
+        [breadcrumbs]="breadcrumbs">
+        <div header-actions class="flex gap-2 pr-2">
+            <button pButton type="button" icon="pi pi-refresh" [disabled]="loading" (click)="refreshTournaments()"
+                pTooltip="Refresh tournament statuses" class="lg ">
+            </button>
+            <button pButton type="button" icon="pi pi-plus" (click)="navigateToCreate()" class="lg ">
+            </button>
+        </div>
+    </app-page-header>
+</div>
+<div *ngIf="tournaments.length === 0 && !loading" class="text-center py-8">
+    <p-message severity="info" text="No tournaments found. Create your first tournament to get started."
+        styleClass="w-full mb-4">
+    </p-message>
+    <button pButton pRipple type="button" label="Create Tournament" icon="pi pi-plus" class="lg "
+        (click)="navigateToCreate()">
+    </button>
+</div>
+<!-- Tournament Table (Desktop) -->
+<div *ngIf="tournaments.length > 0" class="mb-6">
+    <!-- Desktop Table -->
+    <div class="hidden md:block">
+        <p-table [value]="tournaments" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tournaments"
+            [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [globalFilterFields]="['name', 'venue.name', 'venueType.name', 'status.name']" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="name">Name <p-sortIcon field="name">
+                        </p-sortIcon>
+                    </th>
+                    <th pSortableColumn="venue.name">Venue <p-sortIcon field="venue.name">
+                        </p-sortIcon>
+                    </th>
+                    <th pSortableColumn="startDate">Start Date <p-sortIcon field="startDate">
+                        </p-sortIcon>
+                    </th>
+                    <th pSortableColumn="endDate">End Date <p-sortIcon field="endDate">
+                        </p-sortIcon>
+                    </th>
+                    <th pSortableColumn="status.name">Status <p-sortIcon field="status.name">
+                        </p-sortIcon>
+                    </th>
+                    <th pSortableColumn="maxParticipants">Players<p-sortIcon field="maxParticipants">
+                        </p-sortIcon>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-tournament>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="cursor-pointer" (click)="viewTournament(tournament)">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-trophy text-primary">
+                            </i>
+                            <div class="flex flex-col">
+                                <span class="font-semibold">{{tournament.name}}</span>
+                                <span *ngIf="tournament.club?.name" class="text-sm text-gray-500">{{tournament.club.name}}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="cursor-pointer" (click)="viewTournament(tournament)">{{tournament.venue?.name ||
+                        tournament.venueType.name || 'Venue TBD'}}</td>
+                    <td class="cursor-pointer" (click)="viewTournament(tournament)">{{tournament.startDate |
+                        date:'mediumDate'}}</td>
+                    <td class="cursor-pointer" (click)="viewTournament(tournament)">{{tournament.endDate |
+                        date:'mediumDate'}}</td>
+                    <td class="cursor-pointer" (click)="viewTournament(tournament)">
+                        <span class="px-2 py-0.5 rounded text-xs font-medium"
+                            [style.background-color]="getStatusColor(tournament)"
+                            [style.color]="getStatusTextColor(tournament)"> {{getStatusName(tournament)}} </span>
+                    </td>
+                    <td class="cursor-pointer" (click)="viewTournament(tournament)">{{tournament.currentParticipants || 0}}/{{tournament.maxParticipants}}</td>
+                    <td class="text-center">
+                        <div class="flex gap-1 justify-center">
+                            <div *ngIf="isAdmin" class="flex gap-1">
+                                <button pButton type="button" icon="pi pi-times"
+                                    class="p-button-sm p-button-outlined p-button-danger"
+                                    [disabled]="getStatusId(tournament) === 'cancelled' || saving"
+                                    (click)="cancelTournament(tournament, $event)" pTooltip="Cancel tournament">
+                                </button>
+                                <button pButton type="button" icon="pi pi-trash"
+                                    class="p-button-sm p-button-outlined p-button-danger" [disabled]="saving"
+                                    (click)="deleteTournament(tournament, $event)" pTooltip="Delete tournament">
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center py-8">
+                        <i class="pi pi-trophy text-4xl text-400 mb-4">
+                        </i>
+                        <h3 class="text-xl font-semibold mb-2">No Tournaments Found</h3>
+                        <p class="text-500">No tournaments match your criteria.</p>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+    <!-- Mobile Cards -->
+    <div class="block md:hidden">
+        <div class="grid gap-4">
+            <div *ngFor="let tournament of tournaments"
+                class="bg-white rounded-lg shadow-md p-4 border hover:shadow-lg transition-shadow">
+                <div class="mb-3">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="cursor-pointer flex-1 min-w-0" (click)="viewTournament(tournament)">
+                            <h3 class="text-lg font-semibold text-gray-900 truncate">{{ tournament.name }}</h3>
+                            <p *ngIf="tournament.club?.name" class="text-sm text-gray-500 truncate">{{ tournament.club?.name }}</p>
+                        </div>
+                        <div class="flex items-center gap-2 ml-2 flex-shrink-0">
+                            <span class="px-2 py-0.5 text-xs font-medium rounded whitespace-nowrap"
+                                [style.background-color]="getStatusColor(tournament)"
+                                [style.color]="getStatusTextColor(tournament)"> {{ getStatusName(tournament) }} </span>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-1">
+                        <div *ngIf="isAdmin" class="flex gap-1">
+                            <button pButton type="button" icon="pi pi-times"
+                                class="p-button-sm p-button-outlined p-button-danger"
+                                [disabled]="getStatusId(tournament) === 'cancelled' || saving"
+                                (click)="cancelTournament(tournament, $event)" pTooltip="Cancel">
+                            </button>
+                            <button pButton type="button" icon="pi pi-trash"
+                                class="p-button-sm p-button-outlined p-button-danger" [disabled]="saving"
+                                (click)="deleteTournament(tournament, $event)" pTooltip="Delete">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm text-gray-600 cursor-pointer" (click)="viewTournament(tournament)">
+                    <div class="flex items-center">
+                        <i class="pi pi-map-marker mr-2">
+                        </i>
+                        <span>{{ tournament.venue?.name || tournament.venueType.name || 'Venue TBD' }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="pi pi-calendar mr-2">
+                        </i>
+                        <span>{{ formatDateRange(tournament.startDate, tournament.endDate) }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="pi pi-users mr-2">
+                        </i>
+                        <span>{{ tournament.currentParticipants || 0 }}/{{ tournament.maxParticipants }}
+                            participants</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="loading" class="text-center py-8">
+    <p-message severity="info" text="Loading tournaments..." styleClass="w-full">
+        <ng-template pTemplate="messageicon">
+            <i class="pi pi-spin pi-spinner text-2xl">
+            </i>
+        </ng-template>
+    </p-message>
+</div>

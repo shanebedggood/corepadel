@@ -1,0 +1,216 @@
+<div class="w-full">
+    <!-- Header with Action Buttons -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Groups</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
+                Manage tournament groups and team assignments
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button *ngIf="isAdmin" pButton type="button" label="Auto-create Teams" icon="pi pi-users"
+                (click)="autoCreateTeams()" class="p-button-info" [disabled]="loading || hasExistingTeams()">
+            </button>
+            <button *ngIf="isAdmin" pButton type="button" label="Regenerate Groups" icon="pi pi-refresh"
+                (click)="regenerateGroups()" class="p-button-warning" [disabled]="regeneratingGroups">
+            </button>
+            <span *ngIf="regeneratingGroups" class="flex items-center text-blue-600">
+                <i class="pi pi-spin pi-spinner mr-2"></i> Regenerating...
+            </span>
+        </div>
+    </div>
+
+    <!-- Groups Summary -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Groups: {{ groups.length }} | Teams: {{ getTeamCounts() }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Groups Container -->
+    <div *ngIf="loading" class="text-center py-8">
+        <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+        <p class="mt-2 text-gray-600">Loading groups...</p>
+    </div>
+
+    <div *ngIf="!loading && groups.length === 0" class="text-center py-8">
+        <i class="pi pi-sitemap text-4xl text-gray-00 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Groups</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">
+            No groups have been created for this tournament yet.
+        </p>
+        <button *ngIf="isAdmin" pButton type="button" label="Regenerate Groups" icon="pi pi-refresh"
+            (click)="regenerateGroups()" class="p-button-outlined">
+        </button>
+    </div>
+
+    <!-- Mobile view: Accordion -->
+    <div *ngIf="!loading && groups.length > 0 && isMobile" class="space-y-4">
+        <p-accordion [(value)]="activeGroupId" styleClass="groups-accordion">
+            <p-accordion-panel *ngFor="let group of groups; let i = index; trackBy: trackByGroupId" [value]="group.id!">
+                <p-accordion-header>
+                    <div class="flex items-center justify-between w-full">
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-semibold">{{ group.name }}</span>
+                            <span *ngIf="getGroupVenueName(group)" class="text-sm text-gray-500">• {{ getGroupVenueName(group) }}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">{{ group.teamCount || 0 }}/{{ group.maxTeams }} teams</span>
+                    </div>
+                </p-accordion-header>
+                <p-accordion-content>
+                    <div class="group-content">
+                        <div class="group-actions mb-4">
+                            <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-outlined"
+                                (click)="editGroup(group)" pTooltip="Edit Group">
+                            </button>
+                            <button pButton type="button" icon="pi pi-plus" class="p-button-sm p-button-success"
+                                (click)="openAddTeamDialog(group)" [disabled]="isGroupFull(group.id!)" pTooltip="Add Team">
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <div [ngClass]="{
+                                'border rounded-lg p-4 flex flex-col bg-gray-50 dark:bg-gray-700': true,
+                                'border-red-500 border-2': hasIncompleteTeam(team),
+                                'border-gray-200': !hasIncompleteTeam(team)
+                            }" *ngFor="let team of teams[group.id!]">
+                                <div class="flex-grow">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-bold text-lg">{{ team.name }}</span>
+                                        <div class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm">
+                                            {{ getTeamCombinedRating(team) }}
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="block text-md text-gray-600" *ngFor="let player of team.players">
+                                            {{ player.displayName }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex justify-end gap-2">
+                                    <button pButton type="button" icon="pi pi-pencil"
+                                        class="p-button-sm p-button-outlined" (click)="openEditTeamDialog(team, group)"
+                                        pTooltip="Edit Team">
+                                    </button>
+                                    <button pButton type="button" icon="pi pi-trash"
+                                        class="p-button-sm p-button-danger p-button-outlined" (click)="deleteTeam(team, group)"
+                                        pTooltip="Delete Team">
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="no-teams text-center py-8" *ngIf="!teams[group.id!] || teams[group.id!].length === 0">
+                                <i class="pi pi-users text-2xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">No teams in this group yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </p-accordion-content>
+            </p-accordion-panel>
+        </p-accordion>
+    </div>
+
+    <!-- Desktop view: Grid -->
+    <div *ngIf="!loading && groups.length > 0 && !isMobile" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div *ngFor="let group of groups; trackBy: trackByGroupId" class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div class="bg-gray-100 dark:bg-gray-700 px-3 py-2 border-b border-gray-200 dark:border-gray-600">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-baseline gap-2">
+                        <h4 class="font-semibold text-gray-900 dark:text-white m-0 text-sm">{{ group.name }}</h4>
+                        <span *ngIf="getGroupVenueName(group)" class="text-xs text-gray-500">• {{ getGroupVenueName(group) }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500">{{ group.teamCount || 0 }}/{{ group.maxTeams }} teams</span>
+                        <div class="flex gap-1">
+                            <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-outlined"
+                                (click)="editGroup(group)" pTooltip="Edit Group">
+                            </button>
+                            <button pButton type="button" icon="pi pi-plus" class="p-button-sm p-button-success"
+                                (click)="openAddTeamDialog(group)" [disabled]="isGroupFull(group.id!)" pTooltip="Add Team">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div [ngClass]="{
+                        'border rounded-lg p-3 flex flex-col bg-white dark:bg-gray-800': true,
+                        'border-red-500 border-2': hasIncompleteTeam(team),
+                        'border-gray-200': !hasIncompleteTeam(team)
+                    }" *ngFor="let team of teams[group.id!]">
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start">
+                                <span class="font-bold text-base">{{ team.name }}</span>
+                                <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-xs">
+                                    {{ getTeamCombinedRating(team) }}
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                <span class="block text-sm text-gray-600" *ngFor="let player of team.players">
+                                    {{ player.displayName }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mt-2 flex justify-end gap-1">
+                            <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-outlined"
+                                (click)="openEditTeamDialog(team, group)" pTooltip="Edit Team">
+                            </button>
+                            <button pButton type="button" icon="pi pi-trash"
+                                class="p-button-sm p-button-danger p-button-outlined" (click)="deleteTeam(team, group)"
+                                pTooltip="Delete Team">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="no-teams text-center py-4" *ngIf="!teams[group.id!] || teams[group.id!].length === 0">
+                    <i class="pi pi-users text-xl text-gray-400 mb-1"></i>
+                    <p class="text-gray-600 text-sm">No teams in this group yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Group Dialog -->
+    <p-dialog header="Edit Group" [(visible)]="showEditDialog" [modal]="true" [style]="{width: '450px'}" [contentStyle]="{'max-height': '80vh', 'overflow-y': 'auto'}" (onShow)="onEditDialogVisibleChange(true)">
+        <form [formGroup]="groupForm" (ngSubmit)="saveGroup()">
+            <div class="mb-4">
+                <label for="groupName" class="block font-medium mb-1">Group Name</label>
+                <input pInputText id="groupName" formControlName="name" class="w-full" placeholder="Enter group name" />
+                <div *ngIf="groupForm.get('name')?.invalid && groupForm.get('name')?.touched"
+                    class="text-red-500 text-xs mt-1">
+                    Group name is required.
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="maxTeams" class="block font-medium mb-1">Max Teams</label>
+                <p-inputNumber id="maxTeams" formControlName="maxTeams" [min]="1" [max]="20" class="w-full" />
+            </div>
+            <div class="mb-8" *ngIf="shouldShowVenueSelection()">
+                <label for="venueId" class="block font-medium mb-1">Venue</label>
+                <p-select id="venueId" formControlName="venueId" [options]="venues" optionLabel="name" optionValue="id"
+                    class="w-full" placeholder="Select venue" [filter]="true" filterBy="name" [showClear]="true" 
+                    [appendTo]="'body'" [dropdownIcon]="'pi pi-chevron-down'"></p-select>
+            </div>
+            <div class="flex justify-end gap-2 pt-4 border-t mt-8">
+                <button pButton type="button" label="Cancel" class="p-button-text" (click)="closeEditDialog()"></button>
+                <button pButton type="submit" label="Save" [disabled]="groupForm.invalid || saving" [loading]="saving"
+                    class="p-button-primary"></button>
+            </div>
+        </form>
+    </p-dialog>
+
+    <!-- Shared Team Editor -->
+    <app-team-editor [(visible)]="showTeamEditor" [data]="teamEditorData"
+        (teamSaved)="onTeamSaved($event)" (teamCancelled)="onTeamCancelled()"
+        (visibleChange)="onTeamEditorVisibleChange($event)">
+    </app-team-editor>
+
+    <!-- Toast Messages -->
+    <p-toast></p-toast>
+    
+    <!-- Confirmation Dialog -->
+    <p-confirmDialog></p-confirmDialog>
+</div> 

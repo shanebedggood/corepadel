@@ -1,0 +1,392 @@
+<div class="tournament-matches">
+    <!-- Match Generation Section -->
+    <div class="match-generation-section">
+        <div class="section-header">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Match Schedule</h2>
+            <div class="section-actions">
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Generate All Matches" 
+                    icon="pi pi-calendar-plus"
+                    class="p-button-success" 
+                    [loading]="generatingMatches"
+                    [disabled]="!canGenerateMatches()" 
+                    (click)="generateAllMatches()"
+                    pTooltip="Generate matches for all groups">
+                </button>
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Refresh Matches" 
+                    icon="pi pi-refresh"
+                    class="p-button-outlined p-button-sm" 
+                    (click)="refreshMatches()"
+                    pTooltip="Refresh matches from database">
+                </button>
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Clear All Matches" 
+                    icon="pi pi-trash"
+                    class="p-button-outlined p-button-sm p-button-danger"
+                    [disabled]="!hasMatchesInDatabase()" 
+                    [loading]="clearingMatches"
+                    (click)="clearAllMatches()">
+                </button>
+            </div>
+        </div>
+
+        <!-- Match Generation Status -->
+        <div *ngIf="matchGenerationStatus" class="generation-status">
+            <div class="status-message" [ngClass]="matchGenerationStatus.success ? 'success' : 'error'">
+                <i class="pi" [ngClass]="matchGenerationStatus.success ? 'pi-check-circle' : 'pi-exclamation-triangle'"></i>
+                <span>{{ matchGenerationStatus.message }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Statistics -->
+    <div class="match-statistics">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value total">{{ getMatchStats().total }}</div>
+                <div class="stat-label">Total Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value scheduled">{{ getMatchStats().scheduled }}</div>
+                <div class="stat-label">Scheduled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value in-progress">{{ getMatchStats().inProgress }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value completed">{{ getMatchStats().completed }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value cancelled">{{ getMatchStats().cancelled }}</div>
+                <div class="stat-label">Cancelled</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Filters -->
+    <div class="simple-filters mb-4" *ngIf="!isMobileView && !loading">
+        <div class="filter-row">
+            <div class="filter-item">
+                <label>Round:</label>
+                <input type="text" pInputText [(ngModel)]="filterRound" placeholder="Filter by round" class="w-full">
+            </div>
+            <div class="filter-item">
+                <label>Group:</label>
+                <input type="text" pInputText [(ngModel)]="filterGroup" placeholder="Filter by group" class="w-full">
+            </div>
+            <div class="filter-item">
+                <label>Venue:</label>
+                <input type="text" pInputText [(ngModel)]="filterVenue" placeholder="Filter by venue" class="w-full">
+            </div>
+            <div class="filter-item">
+                <label>Status:</label>
+                <select pInputText [(ngModel)]="filterStatus" class="w-full">
+                    <option value="">All Statuses</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>Date:</label>
+                <input type="date" pInputText [(ngModel)]="filterDate" class="w-full">
+            </div>
+            <div class="filter-item">
+                <button pButton type="button" label="Clear Filters" icon="pi pi-times" 
+                        class="p-button-outlined p-button-sm" (click)="clearFilters()">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="matches-table-view" *ngIf="!isMobileView && !loading">
+        <p-table [value]="getFilteredMatches()" 
+                [tableStyle]="{'min-width': '50rem'}"
+                styleClass="p-datatable-sm"
+                [rowHover]="true"
+                (onRowClick)="startEditMatch($event)">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="round">
+                        Round
+                        <p-sortIcon field="round"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="groupId">
+                        Group
+                        <p-sortIcon field="groupId"></p-sortIcon>
+                    </th>
+                    <th>Match</th>
+                    <th>Score</th>
+                    <th pSortableColumn="venueId">
+                        Venue
+                        <p-sortIcon field="venueId"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="scheduledTime">
+                        Date & Time
+                        <p-sortIcon field="scheduledTime"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="status">
+                        Status
+                        <p-sortIcon field="status"></p-sortIcon>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="body" let-match>
+                <tr [ngClass]="getMatchRowClass(match)">
+                    <td>{{ match.round }}</td>
+                    <td>{{ getGroupName(match.groupId || '') }}</td>
+                    <td class="match-cell">
+                        <div class="match-teams-vertical">
+                            <div class="team-name">{{ getTeamName(match.team1Id) }}</div>
+                            <div class="vs-separator">vs</div>
+                            <div class="team-name">{{ getTeamName(match.team2Id) }}</div>
+                        </div>
+                    </td>
+                    <td class="score-cell">
+                        <app-match-score-display [match]="match"></app-match-score-display>
+                    </td>
+                    <td>{{ getVenueName(match.venueId, match.groupId) }}</td>
+                    <td class="schedule-cell">
+                        <div *ngIf="match.scheduledTime" class="scheduled-time">
+                            <div>{{ match.scheduledTime | date:'mediumDate' }} {{ match.scheduledTime | date:'HH:mm' }}</div>
+                        </div>
+                        <div *ngIf="!match.scheduledTime" class="no-schedule">
+                            <span class="no-schedule-text">Not scheduled</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge" [ngClass]="getStatusClass(match.status)">
+                            {{ getStatusLabel(match.status) }}
+                        </span>
+                    </td>
+                    <td class="actions-cell">
+                        <div class="match-actions">
+                            <button 
+                                pButton 
+                                type="button" 
+                                icon="pi pi-pencil" 
+                                class="p-button-sm p-button-outlined"
+                                (click)="startEditMatch(match)"
+                                pTooltip="Enter/Edit Match Score">
+                            </button>
+                            <button 
+                                pButton 
+                                type="button" 
+                                icon="pi pi-calendar" 
+                                class="p-button-sm p-button-outlined"
+                                (click)="startEditSchedule(match, $event)"
+                                pTooltip="Edit Match Schedule">
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Mobile/Tablet Card View -->
+    <div class="matches-card-view" *ngIf="isMobileView && !loading">
+        <div class="matches-grid">
+            <div *ngFor="let match of getAllMatchesSorted()" class="match-card" [ngClass]="getMatchCardClass(match)">
+                <div class="match-header">
+                    <div class="match-round">Round {{ match.round }}</div>
+                    <div class="match-group">{{ getGroupName(match.groupId || '') }}</div>
+                    <div class="match-status">
+                        <span class="status-badge" [ngClass]="getStatusClass(match.status)">
+                            {{ getStatusLabel(match.status) }}
+                        </span>
+                        <div class="match-date" *ngIf="match.scheduledTime">
+                            {{ formatDate(match.scheduledTime) }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="match-teams">
+                    <div class="team team1" [ngClass]="{'winner': isWinner(match, match.team1Id)}">
+                        <div class="team-name text-center">{{ getTeamName(match.team1Id) }}</div>
+                        <div class="team-score" *ngIf="match.team1Score !== undefined && match.team1Score !== null">{{ match.team1Score }}</div>
+                    </div>
+                    
+                    <div class="vs-divider">
+                        <span class="vs-text">vs</span>
+                    </div>
+                    
+                    <div class="team team2" [ngClass]="{'winner': isWinner(match, match.team2Id)}">
+                        <div class="team-name text-center">{{ getTeamName(match.team2Id) }}</div>
+                        <div class="team-score" *ngIf="match.team2Score !== undefined && match.team2Score !== null">{{ match.team2Score }}</div>
+                    </div>
+                </div>
+                
+                <div class="match-details">
+                    <div class="match-info">
+                        <div class="match-venue">
+                            <i class="pi pi-map-marker"></i>
+                            {{ getVenueName(match.venueId, match.groupId) }}
+                        </div>
+                    </div>
+                    
+                    <div class="match-actions">
+                        <button 
+                            pButton 
+                            type="button" 
+                            icon="pi pi-pencil" 
+                            class="p-button-sm p-button-outlined"
+                            (click)="startEditMatch(match)"
+                            pTooltip="Enter/Edit Match Score">
+                        </button>
+                        <button 
+                            pButton 
+                            type="button" 
+                            icon="pi pi-calendar" 
+                            class="p-button-sm p-button-outlined"
+                            (click)="startEditSchedule(match, $event)"
+                            pTooltip="Edit Match Schedule">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Empty State -->
+        <div *ngIf="getFilteredMatches().length === 0" class="empty-state">
+            <div class="empty-content">
+                <i class="pi pi-calendar-times text-6xl mb-4 block text-gray-400"></i>
+                <h5 class="text-xl font-medium text-gray-600 mb-2">No matches found</h5>
+                <p class="text-sm text-gray-500 mb-4">
+                    No matches have been generated yet or no matches match your current filters.
+                </p>
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Generate Matches" 
+                    icon="pi pi-calendar-plus"
+                    class="p-button-sm" 
+                    (click)="generateAllMatches()"
+                    [disabled]="!canGenerateMatches()">
+                </button>
+            </div>
+    </div>
+
+    <ng-template #loadingTemplate>
+        <div class="loading">
+            <p>Loading matches...</p>
+        </div>
+    </ng-template>
+
+    <!-- Match Edit Dialog -->
+    <p-dialog 
+        [(visible)]="showEditDialog" 
+        [modal]="true" 
+        [closable]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="match-edit-dialog"
+        [style]="{width: '90vw', maxWidth: '450px'}"
+        (onHide)="cancelEditMatch()">
+        
+        <div class="match-edit-form" *ngIf="editingMatch">
+            <div class="match-header">
+                <h4>Enter Match Score</h4>
+                <div class="match-info">
+                    <div class="teams">{{ getTeamName(editingMatch.team1Id) }} vs {{ getTeamName(editingMatch.team2Id) }}</div>
+                    <div class="meta">{{ getGroupName(editingMatch.groupId || '') }} • {{ getVenueName(editingMatch.venueId, editingMatch.groupId) }}</div>
+                </div>
+            </div>
+            
+            <form [formGroup]="matchForm" (ngSubmit)="saveMatch()">
+                <div class="form-section">
+                    <label>Score</label>
+                    <div class="score-table">
+                        <div class="score-header">
+                            <div class="team-name-header"></div>
+                            <div class="set-header">Set 1</div>
+                            <div class="set-header">Set 2</div>
+                            <div class="set-header">Set 3</div>
+                        </div>
+                        <div class="score-row">
+                            <div class="team-name">{{ getTeamName(editingMatch.team1Id) }}</div>
+                            <input type="number" pInputText formControlName="team1Set1" placeholder="0" min="0" max="7">
+                            <input type="number" pInputText formControlName="team1Set2" placeholder="0" min="0" max="7">
+                            <input type="number" pInputText formControlName="team1Set3" placeholder="0" min="0" max="7">
+                        </div>
+                        <div class="score-row">
+                            <div class="team-name">{{ getTeamName(editingMatch.team2Id) }}</div>
+                            <input type="number" pInputText formControlName="team2Set1" placeholder="0" min="0" max="7">
+                            <input type="number" pInputText formControlName="team2Set2" placeholder="0" min="0" max="7">
+                            <input type="number" pInputText formControlName="team2Set3" placeholder="0" min="0" max="7">
+                        </div>
+                    </div>
+                    
+                    <!-- Score validation errors -->
+                    <div *ngIf="matchForm.errors && matchForm.errors['scoreValidation']" class="score-validation-errors">
+                        <div *ngFor="let error of matchForm.errors['scoreValidation']" class="error-message">
+                            <i class="pi pi-exclamation-triangle"></i>
+                            {{ error }}
+                        </div>
+                    </div>
+                    
+                    <!-- Score summary preview -->
+                    <div class="score-summary-preview" *ngIf="getFormScoreSummary()">
+                        <h5>Score Summary</h5>
+                        <p>{{ getFormScoreSummary() }}</p>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button pButton type="button" label="Cancel" class="p-button-text" (click)="cancelEditMatch()"></button>
+                    <button pButton type="submit" label="Save" class="p-button-sm" [disabled]="!matchForm.valid"></button>
+                </div>
+            </form>
+        </div>
+    </p-dialog>
+
+    <!-- Schedule Edit Dialog -->
+    <p-dialog 
+        [(visible)]="showScheduleDialog" 
+        [modal]="true" 
+        [closable]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="schedule-edit-dialog"
+        [style]="{width: '90vw', maxWidth: '400px'}"
+        (onHide)="cancelEditSchedule()">
+        
+        <div class="schedule-edit-form" *ngIf="editingMatch">
+            <div class="schedule-header">
+                <h4>Edit Match Schedule</h4>
+                <div class="match-info">
+                    <div class="teams">{{ getTeamName(editingMatch.team1Id) }} vs {{ getTeamName(editingMatch.team2Id) }}</div>
+                    <div class="meta">{{ getGroupName(editingMatch.groupId || '') }} • {{ getVenueName(editingMatch.venueId, editingMatch.groupId) }}</div>
+                </div>
+            </div>
+            
+            <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule()">
+                <div class="form-section">
+                    <label>Scheduled Date & Time</label>
+                    <input type="datetime-local" pInputText formControlName="scheduledTime" class="w-full">
+                    <small class="form-help">Leave empty to remove scheduling</small>
+                </div>
+
+                <div class="form-actions">
+                    <button pButton type="button" label="Cancel" class="p-button-text" (click)="cancelEditSchedule()"></button>
+                    <button pButton type="button" label="Save Schedule" class="p-button-sm" (click)="saveSchedule()" [disabled]="!scheduleForm.valid"></button>
+                </div>
+            </form>
+        </div>
+    </p-dialog>
+</div> 
