@@ -1,7 +1,8 @@
 import { ApplicationConfig, provideEnvironmentInitializer, inject, EnvironmentProviders, APP_INITIALIZER, LOCALE_ID } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authTokenInterceptorFn } from './app/interceptors/auth-token.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import { NgZone } from '@angular/core';
 import { appRoutes } from './app.routes';
@@ -10,12 +11,15 @@ import { definePreset } from '@primeng/themes';
 import Lara from '@primeng/themes/lara';
 import { MessageService } from 'primeng/api';
 import { StickyMessageService } from './app/services/sticky-message.service';
-import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
-import { provideAuth, getAuth } from '@angular/fire/auth';
-import { firebaseConfig } from './environments/firebase.config';
 import { registerLocaleData } from '@angular/common';
 import localeEnZA from '@angular/common/locales/en-ZA';
 import localeEnZAExtra from '@angular/common/locales/extra/en-ZA';
+
+// Firebase imports - use our configured instances
+import { provideFirebaseApp } from '@angular/fire/app';
+import { provideAuth } from '@angular/fire/auth';
+import { provideFunctions } from '@angular/fire/functions';
+import { app, auth, functions } from './environments/firebase.config';
 
 // Register South African locale data
 registerLocaleData(localeEnZA, 'en-ZA', localeEnZAExtra);
@@ -50,7 +54,9 @@ export const appConfig: ApplicationConfig = {
             }),
             withEnabledBlockingInitialNavigation()
         ),
-        provideHttpClient(withFetch()),
+        provideHttpClient(
+            withInterceptors([authTokenInterceptorFn])
+        ),
         provideAnimationsAsync(),
         providePrimeNG({
             theme: {
@@ -60,8 +66,11 @@ export const appConfig: ApplicationConfig = {
                 }
             }
         }),
-        provideFirebaseApp(() => initializeApp(firebaseConfig)),
-        provideAuth(() => getAuth()),
+        
+        // Firebase providers - use our pre-configured instances
+        provideFirebaseApp(() => app),
+        provideAuth(() => auth),
+        provideFunctions(() => functions),
 
         MessageService,
         StickyMessageService

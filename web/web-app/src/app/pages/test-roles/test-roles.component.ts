@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
-import { Observable, map } from 'rxjs';
+import { Observable, map, take } from 'rxjs';
 
 @Component({
     selector: 'app-test-roles',
@@ -18,11 +18,13 @@ import { Observable, map } from 'rxjs';
             
             <div class="test-content">
                 <p-card header="Current User Information" styleClass="test-card">
-                    <div class="user-info" *ngIf="userProfile$ | async as profile">
-                        <p><strong>Name:</strong> {{ profile.firstName }} {{ profile.lastName }}</p>
-                        <p><strong>Email:</strong> {{ profile.email }}</p>
-                        <p><strong>Username:</strong> {{ profile.username }}</p>
-                    </div>
+                    @if (userProfile$ | async; as profile) {
+                        <div class="user-info">
+                            <p><strong>Name:</strong> {{ profile.firstName }} {{ profile.lastName }}</p>
+                            <p><strong>Email:</strong> {{ profile.email }}</p>
+                            <p><strong>Username:</strong> {{ profile.username }}</p>
+                        </div>
+                    }
                 </p-card>
                 
                 <p-card header="Role Information" styleClass="test-card">
@@ -31,7 +33,9 @@ import { Observable, map } from 'rxjs';
                         <p><strong>Has Admin Role:</strong> {{ (hasAdminRole$ | async) ? 'Yes' : 'No' }}</p>
                         <p><strong>All Roles:</strong></p>
                         <div class="roles-list">
-                            <span *ngFor="let role of userRoles$ | async" class="role-badge">{{ role }}</span>
+                            @for (role of userRoles$ | async; track role) {
+                                <span class="role-badge">{{ role }}</span>
+                            }
                         </div>
                     </div>
                 </p-card>
@@ -119,10 +123,16 @@ export class TestRolesComponent implements OnInit {
     constructor(
         private authService: FirebaseAuthService
     ) {
-        this.userProfile$ = this.authService.getCurrentUserProfile();
-        this.userRoles$ = this.authService.getUserRoles();
-        this.hasPlayerRole$ = this.authService.hasRole('player');
-        this.hasAdminRole$ = this.authService.hasRole('admin');
+        this.userProfile$ = this.authService.userProfile$;
+        this.userRoles$ = this.authService.userProfile$.pipe(
+            map(profile => profile?.roles || [])
+        );
+        this.hasPlayerRole$ = this.authService.userProfile$.pipe(
+            map(profile => profile?.roles.includes('player') || false)
+        );
+        this.hasAdminRole$ = this.authService.userProfile$.pipe(
+            map(profile => profile?.roles.includes('admin') || false)
+        );
     }
 
     ngOnInit() {
@@ -130,7 +140,7 @@ export class TestRolesComponent implements OnInit {
     }
 
     testPlayerAccess() {
-        this.hasPlayerRole$.subscribe(hasPlayer => {
+        this.hasPlayerRole$.pipe(take(1)).subscribe(hasPlayer => {
             if (hasPlayer) {
                 alert('✅ Player access granted!');
             } else {
@@ -140,7 +150,7 @@ export class TestRolesComponent implements OnInit {
     }
 
     testAdminAccess() {
-        this.hasAdminRole$.subscribe(hasAdmin => {
+        this.hasAdminRole$.pipe(take(1)).subscribe(hasAdmin => {
             if (hasAdmin) {
                 alert('✅ Admin access granted!');
             } else {

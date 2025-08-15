@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: corepadel-postgres-dev
+    environment:
+      POSTGRES_DB: corepadel
+      POSTGRES_USER: corepadel
+      POSTGRES_PASSWORD: corepadel123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - corepadel-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U corepadel -d corepadel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  corepadel-network:
+    driver: bridge

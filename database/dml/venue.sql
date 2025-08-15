@@ -124,7 +124,7 @@ VALUES (
 
 INSERT INTO core.venue (name, facilities, address_id) 
 VALUES (
-    'Padel 365 Richmond PArk',
+    'Padel 365 Richmond Park',
     '5 Courts, WiFi, Equipment rental, Restaurant, Pro Shop, Changing rooms, Showers, Free parking',
     (SELECT address_id FROM core.address WHERE street = 'Richmond Northern CI' AND city = 'Cape Town') -- This subquery helps link if you don't capture the UUID immediately
 );

@@ -14,25 +14,6 @@
             <div class="field">
                 <label for="teamName" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">Team Name</label>
                 
-                <!-- Name Style Selector -->
-                <div class="mb-3">
-                    <label for="nameStyle" class="block mb-1 text-sm font-medium text-gray-600 dark:text-gray-400">Name Style</label>
-                    <select 
-                        id="nameStyle"
-                        pInputText
-                        class="w-full"
-                        [(ngModel)]="teamNameConfig.style"
-                        [ngModelOptions]="{ standalone: true }"
-                        (change)="onNameStyleChange()">
-                        <option *ngFor="let style of availableNameStyles" [value]="style.value">
-                            {{ style.label }} - {{ style.description }}
-                        </option>
-                    </select>
-                    <small class="text-gray-500 mt-1 block">
-                        Choose a style to generate unique team names. Each style creates different types of names.
-                    </small>
-                </div>
-                
                 <div class="flex gap-2">
                     <input 
                         pInputText 
@@ -46,7 +27,7 @@
                         icon="pi pi-refresh" 
                         class="p-button-outlined"
                         (click)="generateRandomTeamName()" 
-                        pTooltip="Generate Random Name">
+                        pTooltip="Generate Sequential Name">
                     </button>
                 </div>
             </div>
@@ -58,37 +39,40 @@
                 </label>
                 
                 <!-- Current Players List -->
-                <div class="mb-4" *ngIf="getCurrentPlayers().length > 0">
+                @if (getCurrentPlayers().length > 0) {
+                    <div class="mb-4">
                     <div class="space-y-2">
-                        <div *ngFor="let player of getCurrentPlayers(); trackBy: trackByPlayerUid" 
-                             class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                                    {{ player.display_name?.charAt(0) || '?' }}
+                        @for (player of currentPlayers; track trackByPlayerUid($index, player)) {
+                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                                        {{ player.display_name?.charAt(0) || '?' }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900 dark:text-white">
+                                            {{ player.display_name || 'Unknown Player' }}
+                                        </div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                                            {{ player.email }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            Rating: {{ player.rating || 'N/A' }}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="font-medium text-gray-900 dark:text-white">
-                                        {{ player.display_name || 'Unknown Player' }}
-                                    </div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ player.email }}
-                                    </div>
-                                    <div class="text-xs text-gray-500">
-                                        Rating: {{ player.rating || 'N/A' }}
-                                    </div>
-                                </div>
+                                <button 
+                                    pButton 
+                                    type="button" 
+                                    icon="pi pi-trash" 
+                                    class="p-button-danger p-button-text p-button-sm"
+                                    (click)="removePlayer(player)"
+                                    pTooltip="Remove Player">
+                                </button>
                             </div>
-                            <button 
-                                pButton 
-                                type="button" 
-                                icon="pi pi-trash" 
-                                class="p-button-danger p-button-text p-button-sm"
-                                (click)="removePlayer(player)"
-                                pTooltip="Remove Player">
-                            </button>
-                        </div>
+                        }
                     </div>
-                </div>
+                    </div>
+                }
 
                 <!-- Add Player Section -->
                 <div class="space-y-3">

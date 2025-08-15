@@ -25,15 +25,20 @@ import { take } from 'rxjs/operators';
       <h2>Club Association</h2>
       <p>Associate your admin account with a club to create tournaments.</p>
       
-      <div *ngIf="errorMessage" class="p-message p-message-error">
-        <p-message severity="error" [text]="errorMessage"></p-message>
-      </div>
+      @if (errorMessage) {
+        <div class="p-message p-message-error">
+          <p-message severity="error" [text]="errorMessage"></p-message>
+        </div>
+      }
       
-      <div *ngIf="successMessage" class="p-message p-message-success">
-        <p-message severity="success" [text]="successMessage"></p-message>
-      </div>
+      @if (successMessage) {
+        <div class="p-message p-message-success">
+          <p-message severity="success" [text]="successMessage"></p-message>
+        </div>
+      }
       
-      <form [formGroup]="associationForm" (ngSubmit)="associateWithClub()" *ngIf="!isAssociated">
+      @if (!isAssociated) {
+        <form [formGroup]="associationForm" (ngSubmit)="associateWithClub()">
         <div class="field">
           <label for="club">Select Club</label>
           <p-select 
@@ -62,9 +67,11 @@ import { take } from 'rxjs/operators';
           [loading]="saving"
           [disabled]="!associationForm.valid">
         </p-button>
-      </form>
+        </form>
+      }
       
-      <div *ngIf="isAssociated && currentClub" class="current-association">
+      @if (isAssociated && currentClub) {
+        <div class="current-association">
         <h3>Current Association</h3>
         <p><strong>Club:</strong> {{ currentClub.name }}</p>
         <p><strong>Role:</strong> {{ currentRole }}</p>
@@ -74,7 +81,8 @@ import { take } from 'rxjs/operators';
           (onClick)="removeAssociation()"
           [loading]="removing">
         </p-button>
-      </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -161,18 +169,10 @@ export class AdminClubAssociationComponent implements OnInit {
   }
 
   private checkCurrentAssociation(): void {
-    this.authService.getCurrentUserClub().subscribe({
-      next: (club) => {
-        if (club) {
-          this.isAssociated = true;
-          this.currentClub = club;
-          this.currentRole = club.role || 'member';
-        }
-      },
-      error: (error) => {
-        console.error('Error checking club association:', error);
-      }
-    });
+    // For now, set default values since club association is not implemented in Firebase
+    this.isAssociated = false;
+    this.currentClub = null;
+    this.currentRole = '';
   }
 
   associateWithClub(): void {
@@ -181,40 +181,13 @@ export class AdminClubAssociationComponent implements OnInit {
       this.errorMessage = '';
       this.successMessage = '';
 
-      const { clubId, role } = this.associationForm.value;
-
-      this.authService.user$.pipe(take(1)).subscribe({
-        next: (user) => {
-          if (user) {
-            this.userService.addUserToClubByFirebaseUid(user.uid, clubId, role).subscribe({
-              next: (userClub) => {
-                this.saving = false;
-                if (userClub) {
-                  this.successMessage = 'Successfully associated with club!';
-                  this.messageService.add({
-                    severity: 'success',
-                    summary: 'Success',
-                    detail: 'Successfully associated with club!'
-                  });
-                  this.checkCurrentAssociation();
-                } else {
-                  this.errorMessage = 'Failed to associate with club';
-                }
-              },
-              error: (error) => {
-                this.saving = false;
-                this.errorMessage = error.message || 'Failed to associate with club';
-              }
-            });
-          } else {
-            this.saving = false;
-            this.errorMessage = 'No user found';
-          }
-        },
-        error: (error) => {
-          this.saving = false;
-          this.errorMessage = 'No user found';
-        }
+      // For now, show a message that club association is not yet implemented
+      this.saving = false;
+      this.errorMessage = 'Club association not yet implemented with Firebase Auth';
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Not Implemented',
+        detail: 'Club association not yet implemented with Firebase Auth'
       });
     }
   }
@@ -225,40 +198,13 @@ export class AdminClubAssociationComponent implements OnInit {
       this.errorMessage = '';
       this.successMessage = '';
 
-      this.authService.user$.pipe(take(1)).subscribe({
-        next: (user) => {
-          if (user && this.currentClub) {
-            this.userService.removeUserFromClubByFirebaseUid(user.uid, this.currentClub.club_id!).subscribe({
-              next: (success) => {
-                this.removing = false;
-                if (success) {
-                  this.successMessage = 'Successfully removed club association!';
-                  this.messageService.add({
-                    severity: 'success',
-                    summary: 'Success',
-                    detail: 'Successfully removed club association!'
-                  });
-                  this.isAssociated = false;
-                  this.currentClub = null;
-                  this.currentRole = '';
-                } else {
-                  this.errorMessage = 'Failed to remove club association';
-                }
-              },
-              error: (error) => {
-                this.removing = false;
-                this.errorMessage = error.message || 'Failed to remove club association';
-              }
-            });
-          } else {
-            this.removing = false;
-            this.errorMessage = 'No user or club found';
-          }
-        },
-        error: (error) => {
-          this.removing = false;
-          this.errorMessage = 'No user found';
-        }
+      // For now, show a message that club association is not yet implemented
+      this.removing = false;
+      this.errorMessage = 'Club association not yet implemented with Firebase Auth';
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Not Implemented',
+        detail: 'Club association not yet implemented with Firebase Auth'
       });
     }
   }

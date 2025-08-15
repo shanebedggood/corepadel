@@ -1,338 +1,293 @@
-import { Injectable, inject } from '@angular/core';
-import { Auth, User, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, user, sendSignInLinkToEmail, signInWithEmailLink, isSignInWithEmailLink } from '@angular/fire/auth';
-import { Observable, from, of, throwError } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
-import { UserService } from './user.service';
-
-export enum UserRole {
-  PLAYER = 'player',
-  ADMIN = 'admin'
-}
+import { Injectable, inject, runInInjectionContext, Injector } from '@angular/core';
+import { 
+  Auth, 
+  signInWithEmailLink, 
+  sendSignInLinkToEmail, 
+  isSignInWithEmailLink,
+  signOut,
+  onAuthStateChanged,
+  User
+} from '@angular/fire/auth';
+import { 
+  Functions, 
+  httpsCallable 
+} from '@angular/fire/functions';
+import { BehaviorSubject, Observable, from } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { actionCodeSettings } from '../../environments/firebase.config';
 
 export interface UserProfile {
-  // Database fields
-  user_id: string; // user_id (uuid)
-  firebase_uid: string; // firebase_uid
+  userId?: string;
+  firebaseUid: string;
   email: string;
   username: string;
-  first_name?: string;
-  last_name?: string;
-  display_name?: string;
+  displayName?: string;
+  firstName?: string;
+  lastName?: string;
+  emailVerified?: boolean;
+  roles: string[];
   mobile?: string;
   rating?: number;
+  profilePicture?: string;
+  // Legacy snake_case properties for backward compatibility
+  first_name?: string;
+  last_name?: string;
+  email_verified?: boolean;
   profile_picture?: string;
-  email_verified: boolean;
-  roles: string[]; // Not in DB, populated from user_roles table
 }
-
-
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirebaseAuthService {
-  private auth = inject(Auth);
-  private userService = inject(UserService);
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private userProfileSubject = new BehaviorSubject<UserProfile | null>(null);
+  
+  public currentUser$ = this.currentUserSubject.asObservable();
+  public userProfile$ = this.userProfileSubject.asObservable();
+  public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
 
-  // Observable of the current user
-  user$ = user(this.auth);
-
-  /**
-   * Check if user is authenticated
-   */
-  isAuthenticated(): Observable<boolean> {
-    return this.user$.pipe(
-      map(user => !!user)
-    );
-  }
-
-  /**
-   * Get current user profile
-   */
-  getCurrentUserProfile(): Observable<UserProfile | null> {
-    return this.user$.pipe(
-      map(user => {
-        if (!user) return null;
+  constructor(
+    private auth: Auth,
+    private functions: Functions,
+    private injector: Injector
+  ) {
+    // Listen to authentication state changes
+    runInInjectionContext(this.injector, () => {
+      onAuthStateChanged(this.auth, async (user) => {
+        this.currentUserSubject.next(user);
         
-        const displayName = user.displayName || '';
-        const [firstName, ...lastNameParts] = displayName.split(' ');
-        const lastName = lastNameParts.join(' ') || '';
-
-        return {
-          // Database fields
-          user_id: user.uid, // Using firebase UID as user_id for now
-          firebase_uid: user.uid,
-          email: user.email || '',
-          username: user.displayName || user.email || '',
-          first_name: firstName,
-          last_name: lastName,
-          display_name: user.displayName || '',
-          mobile: '', // Not available in Firebase Auth
-          rating: 1.0, // Default value
-          profile_picture: user.photoURL || undefined,
-          email_verified: user.emailVerified,
-          roles: [] // Will be populated from PostgreSQL
-        };
-      })
-    );
-  }
-
-  /**
-   * Get user profile and sync to PostgreSQL
-   */
-  getUserProfileAndSync(): Observable<UserProfile | null> {
-    return this.getCurrentUserProfile().pipe(
-      switchMap(profile => {
-        if (!profile) return of(null);
-        
-        // Sync user to PostgreSQL
-        return this.userService.getOrCreateUserFromFirebase(profile).pipe(
-          map(() => profile) // Return the original profile
-        );
-      })
-    );
-  }
-
-  /**
-   * Get current user's role claims
-   */
-  getCurrentUserRole(): Observable<{ roles: string[]; email: string; emailVerified: boolean }> {
-    return this.getCurrentUserProfile().pipe(
-      map(profile => {
-        if (!profile) {
-          return { roles: [], email: '', emailVerified: false };
+        if (user) {
+          // Add a small delay to ensure user is fully authenticated
+          setTimeout(async () => {
+            try {
+              await this.loadUserProfile();
+            } catch (error: any) {
+              console.error('User profile not yet available, will retry later:', error.message);
+            }
+          }, 1000);
+        } else {
+          this.userProfileSubject.next(null);
         }
-        return {
-          roles: profile.roles,
-          email: profile.email,
-          emailVerified: profile.email_verified || false
-        };
-      })
-    );
-  }
-
-  /**
-   * Login with email and password
-   */
-  loginWithEmail(email: string, password: string): Observable<User> {
-    return from(signInWithEmailAndPassword(this.auth, email, password)).pipe(
-      map(result => result.user),
-      catchError(error => {
-        console.error('Email login failed:', error);
-        return throwError(() => error);
-      })
-    );
+      });
+    });
   }
 
   /**
    * Send passwordless sign-in link to email
    */
-  sendSignInLinkToEmail(email: string): Observable<void> {
-    const actionCodeSettings = {
-      url: window.location.origin + '/auth/check-email',
-      handleCodeInApp: true,
-    };
-    
-    return from(sendSignInLinkToEmail(this.auth, email, actionCodeSettings)).pipe(
-      map(() => {
-        // Save the email for later use
+  async sendSignInLink(email: string): Promise<void> {
+    return runInInjectionContext(this.injector, async () => {
+      try {
+        // Store email in localStorage before sending the link
         window.localStorage.setItem('emailForSignIn', email);
-      }),
-      catchError(error => {
-        console.error('Failed to send sign-in link:', error);
-        return throwError(() => error);
-      })
-    );
+        await sendSignInLinkToEmail(this.auth, email, actionCodeSettings);
+        
+      } catch (error) {
+        console.error('❌ Error sending sign-in link:', error);
+        // Remove email from localStorage if sending failed
+        window.localStorage.removeItem('emailForSignIn');
+        throw error;
+      }
+    });
   }
 
   /**
-   * Check if the current URL is a sign-in link
+   * Complete passwordless sign-in with email link
    */
-  isSignInWithEmailLink(): boolean {
-    return isSignInWithEmailLink(this.auth, window.location.href);
+  async completeSignInWithEmailLink(): Promise<User | null> {
+    return runInInjectionContext(this.injector, async () => {
+      try {
+        if (!this.isSignInLink()) {
+          throw new Error('Invalid sign-in link');
+        }
+
+        // Try to get email from multiple sources
+        let email = window.localStorage.getItem('emailForSignIn');
+        
+        // If not in localStorage, try to get from URL parameters
+        if (!email) {
+          const urlParams = new URLSearchParams(window.location.search);
+          email = urlParams.get('email');
+        }
+        
+        // If still not found, try to extract from the URL itself
+        if (!email) {
+          const url = new URL(window.location.href);
+          email = url.searchParams.get('email');
+        }
+        
+        if (!email) {
+          throw new Error('Email not found. Please try signing in again.');
+        }
+        // Complete sign-in
+        const result = await signInWithEmailLink(this.auth, email, window.location.href);
+        
+        // Clear email from localStorage
+        window.localStorage.removeItem('emailForSignIn');
+
+        // Wait a moment for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Sync user to database
+        await this.syncUserToDatabase();
+        
+        return result.user;
+        
+      } catch (error) {
+        console.error('Error completing sign-in:', error);
+        throw error;
+      }
+    });
   }
 
   /**
-   * Sign in with email link
+   * Sync user to PostgreSQL database
    */
-  signInWithEmailLink(email: string): Observable<User> {
-    return from(signInWithEmailLink(this.auth, email, window.location.href)).pipe(
-      map(result => result.user),
-      catchError(error => {
-        console.error('Failed to sign in with email link:', error);
-        return throwError(() => error);
-      })
-    );
+  async syncUserToDatabase(): Promise<void> {
+    return runInInjectionContext(this.injector, async () => {
+      try {
+        // Ensure user is authenticated
+        const currentUser = this.auth.currentUser;
+        if (!currentUser) {
+          throw new Error('User not authenticated');
+        }
+        
+        // Pass user information directly to the function
+        const syncUserFunction = httpsCallable(this.functions, 'syncUserToDatabase');
+        const result = await syncUserFunction({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
+        });
+        
+        // Reload user profile after a short delay
+        setTimeout(async () => {
+          try {
+            await this.loadUserProfile();
+          } catch (error: any) {
+            console.error('User profile not yet available:', error.message);
+          }
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Error syncing user to database:', error);
+        throw error;
+      }
+    });
   }
 
   /**
-   * Login with Google
+   * Load user profile from database
    */
-  loginWithGoogle(): Observable<User> {
-    const provider = new GoogleAuthProvider();
-    return from(signInWithPopup(this.auth, provider)).pipe(
-      map(result => result.user),
-      catchError(error => {
-        console.error('Google login failed:', error);
-        return throwError(() => error);
-      })
-    );
+  async loadUserProfile(): Promise<void> {
+    return runInInjectionContext(this.injector, async () => {
+      try {
+        const currentUser = this.auth.currentUser;
+        if (!currentUser) {
+          return;
+        }
+        
+        const getUserProfileFunction = httpsCallable(this.functions, 'getUserProfile');
+        const result: any = await getUserProfileFunction({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
+        });
+        
+        if (result.data.success) {
+          this.userProfileSubject.next(result.data.user);
+        } else {
+          console.error('Failed to load user profile:', result.data);
+        }
+        
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        // Don't throw error here as it might be a new user not yet in database
+      }
+    });
   }
 
   /**
-   * Login (defaults to Google)
+   * Assign role to user (admin only)
    */
-  login(): Observable<void> {
-    return this.loginWithGoogle().pipe(
-      map(() => {
-        // Login successful, user will be redirected automatically
-      })
-    );
+  async assignUserRole(targetUserId: string, role: 'admin' | 'player'): Promise<void> {
+    return runInInjectionContext(this.injector, async () => {
+      try {
+        const assignRoleFunction = httpsCallable(this.functions, 'assignUserRole');
+        const result = await assignRoleFunction({ targetUserId, role });
+        
+      } catch (error) {
+        console.error('Error assigning role:', error);
+        throw error;
+      }
+    });
   }
 
   /**
-   * Direct login that bypasses user info page completely
+   * Sign out user
    */
-  loginDirect(): Observable<void> {
-    return this.loginWithGoogle().pipe(
-      map(() => {
-      })
-    );
+  async signOut(): Promise<void> {
+    return runInInjectionContext(this.injector, async () => {
+      try {
+        await signOut(this.auth);
+        this.userProfileSubject.next(null);
+      } catch (error) {
+        console.error('Error signing out:', error);
+        throw error;
+      }
+    });
   }
 
   /**
-   * Logout
+   * Get current user
    */
-  logout(): Observable<void> {
-    return from(signOut(this.auth)).pipe(
-      map(() => {
-      }),
-      catchError(error => {
-        console.error('Logout failed:', error);
-        // If logout fails, try to redirect to home page anyway
-        window.location.href = '/';
-        return throwError(() => error);
-      })
-    );
+  getCurrentUser(): User | null {
+    return this.currentUserSubject.value;
   }
 
   /**
-   * Get user roles from PostgreSQL
+   * Get current user profile
    */
-  getUserRoles(): Observable<string[]> {
-    return this.getCurrentUserProfile().pipe(
-      switchMap(profile => {
-        if (!profile) return of([]);
-        return this.userService.getUserRolesByFirebaseUid(profile.firebase_uid);
-      }),
-      map(roles => roles.map(role => role.role_name))
-    );
+  getCurrentUserProfile(): UserProfile | null {
+    return this.userProfileSubject.value;
   }
 
   /**
-   * Check if user has a specific role
+   * Check if user has specific role
    */
-  hasRole(role: string): Observable<boolean> {
-    return this.getUserRoles().pipe(
-      map(roles => roles.includes(role))
-    );
+  hasRole(role: string): boolean {
+    const profile = this.getCurrentUserProfile();
+    return profile?.roles.includes(role) || false;
   }
 
   /**
    * Check if user is admin
    */
-  isAdmin(): Observable<boolean> {
+  isAdmin(): boolean {
     return this.hasRole('admin');
   }
 
   /**
-   * Get access token
+   * Check if user is player
    */
-  getToken(): Observable<string> {
-    return this.user$.pipe(
-      switchMap(user => {
-        if (!user) return throwError(() => new Error('No user logged in'));
-        return from(user.getIdToken());
-      })
-    );
+  isPlayer(): boolean {
+    return this.hasRole('player');
   }
 
   /**
-   * Refresh token
+   * Check if sign-in link is valid
    */
-  refreshToken(): Observable<string> {
-    return this.getToken();
+  isSignInLink(): boolean {
+    return runInInjectionContext(this.injector, () => {
+      try {
+        return isSignInWithEmailLink(this.auth, window.location.href);
+      } catch (error) {
+        console.warn('Firebase API called outside injection context, attempting to handle gracefully');
+        // Fallback: check URL parameters manually
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.has('apiKey') && urlParams.has('oobCode');
+      }
+    });
   }
-
-  /**
-   * Update token if needed
-   */
-  updateToken(): Observable<boolean> {
-    return this.user$.pipe(
-      switchMap(user => {
-        if (!user) return of(false);
-        return from(user.getIdToken(true)).pipe(
-          map(() => true)
-        );
-      })
-    );
-  }
-
-  /**
-   * Sign out (alias for logout)
-   */
-  signOut(): Observable<void> {
-    return this.logout();
-  }
-
-  /**
-   * Mock method for backward compatibility - returns empty array
-   * This was used in Firebase to list users, but Firebase Auth doesn't provide this functionality
-   */
-  listPlayersWithPagination(page: number = 1, limit: number = 10): Observable<{ users: UserProfile[]; total: number }> {
-    // Return empty result since Firebase Auth doesn't provide user listing functionality
-    return of({ users: [], total: 0 });
-  }
-
-  /**
-   * Get user profile by ID (mock implementation for backward compatibility)
-   */
-  getUserProfileById(userId: string): Observable<UserProfile | null> {
-    // For now, return current user's profile if ID matches, otherwise throw error
-    return this.getCurrentUserProfile().pipe(
-      map(profile => {
-        if (profile && (profile.firebase_uid === userId || profile.user_id === userId)) {
-          return profile;
-        }
-        throw new Error('User not found');
-      })
-    );
-  }
-
-  /**
-   * Get current user's club
-   */
-  getCurrentUserClub(): Observable<any> {
-    return this.getCurrentUserProfile().pipe(
-      switchMap(profile => {
-        if (!profile) return of(null);
-        return this.userService.getUserClubsByFirebaseUid(profile.firebase_uid).pipe(
-          map(userClubs => {
-            // Return the first club (assuming admin users are associated with one club)
-            // You might want to modify this logic based on your requirements
-            if (userClubs && userClubs.length > 0) {
-              const userClub = userClubs[0];
-              return {
-                id: userClub.club.club_id,
-                name: userClub.club.name,
-                website: userClub.club.website,
-                role: userClub.role
-              };
-            }
-            return null;
-          })
-        );
-      })
-    );
-  }
-} 
+}

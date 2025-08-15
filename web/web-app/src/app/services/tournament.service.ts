@@ -3,7 +3,7 @@ import { Observable, of, catchError, throwError, map, combineLatest } from 'rxjs
 import { Venue } from './venue.service';
 import { environment } from '../../environments/environment';
 import { QuarkusTournamentService } from './quarkus-tournament.service';
-import { TeamNameGeneratorService, TeamNameConfig } from './team-name-generator.service';
+
 
 // Tournament Configuration Types
 export interface TournamentFormat {
@@ -183,8 +183,7 @@ export interface TournamentConfig {
 export class TournamentService {
     
     constructor(
-        private quarkusTournamentService: QuarkusTournamentService,
-        private teamNameGenerator: TeamNameGeneratorService
+        private quarkusTournamentService: QuarkusTournamentService
     ) {}
 
     // Tournament Configuration Methods - Using PostgreSQL backend
@@ -494,7 +493,9 @@ export class TournamentService {
         if (!tournamentData.format) {
             errors.push('Tournament format is required');
         } else {
-            const validFormat = config.formats?.find((f: any) => f.id === tournamentData.format.id && f.isActive);
+            // Handle both object format (with .id) and string format (direct ID)
+            const formatId = typeof tournamentData.format === 'string' ? tournamentData.format : tournamentData.format.id;
+            const validFormat = config.formats?.find((f: any) => f.id === formatId && f.isActive);
             if (!validFormat) {
                 errors.push('Invalid or inactive tournament format');
             }
@@ -504,7 +505,9 @@ export class TournamentService {
         if (!tournamentData.category) {
             errors.push('Tournament category is required');
         } else {
-            const validCategory = config.categories?.find((c: any) => c.id === tournamentData.category.id && c.isActive);
+            // Handle both object format (with .id) and string format (direct ID)
+            const categoryId = typeof tournamentData.category === 'string' ? tournamentData.category : tournamentData.category.id;
+            const validCategory = config.categories?.find((c: any) => c.id === categoryId && c.isActive);
             if (!validCategory) {
                 errors.push('Invalid or inactive tournament category');
             }
@@ -514,7 +517,9 @@ export class TournamentService {
         if (!tournamentData.registrationType) {
             errors.push('Registration type is required');
         } else {
-            const validRegistrationType = config.registrationTypes?.find((r: any) => r.id === tournamentData.registrationType.id && r.isActive);
+            // Handle both object format (with .id) and string format (direct ID)
+            const registrationTypeId = typeof tournamentData.registrationType === 'string' ? tournamentData.registrationType : tournamentData.registrationType.id;
+            const validRegistrationType = config.registrationTypes?.find((r: any) => r.id === registrationTypeId && r.isActive);
             if (!validRegistrationType) {
                 errors.push('Invalid or inactive registration type');
             }
@@ -524,7 +529,9 @@ export class TournamentService {
         if (!tournamentData.venueType) {
             errors.push('Venue type is required');
         } else {
-            const validVenueType = config.venueTypes?.find((v: any) => v.id === tournamentData.venueType.id && v.isActive);
+            // Handle both object format (with .id) and string format (direct ID)
+            const venueTypeId = typeof tournamentData.venueType === 'string' ? tournamentData.venueType : tournamentData.venueType.id;
+            const validVenueType = config.venueTypes?.find((v: any) => v.id === venueTypeId && v.isActive);
             if (!validVenueType) {
                 errors.push('Invalid or inactive venue type');
             }
@@ -538,12 +545,14 @@ export class TournamentService {
         }
 
         // Progression option validation for round-robin format
-        if (tournamentData.format?.id === 'round_robin') {
+        const formatId = typeof tournamentData.format === 'string' ? tournamentData.format : tournamentData.format?.id;
+        if (formatId === 'round_robin') {
             if (!tournamentData.progressionOption) {
                 errors.push('Progression option is required for round-robin format');
             } else {
                 // Additional validation for group-based elimination
-                if (tournamentData.progressionOption.id === 'group_based_elimination') {
+                const progressionOptionId = typeof tournamentData.progressionOption === 'string' ? tournamentData.progressionOption : tournamentData.progressionOption.id;
+                if (progressionOptionId === 'group_based_elimination') {
                     if (!tournamentData.advancementModel) {
                         errors.push('Advancement model is required for group-based elimination');
                     }
@@ -580,21 +589,7 @@ export class TournamentService {
         );
     }
 
-    generateRandomTeamName(config: TeamNameConfig = { style: 'sports' }): string {
-        return this.teamNameGenerator.generateTeamName(config);
-    }
 
-    generateMultipleTeamNames(count: number, config: TeamNameConfig = { style: 'sports' }): string[] {
-        return this.teamNameGenerator.generateTeamNames(count, config);
-    }
-
-    getTeamNameStyles(): { value: string; label: string; description: string }[] {
-        return this.teamNameGenerator.getAvailableStyles();
-    }
-
-    markTeamNameAsUsed(name: string): void {
-        this.teamNameGenerator.markNameAsUsed(name);
-    }
 
     generateAllGroupMatches(tournamentId: string): Observable<TournamentMatch[][]> {
         return this.quarkusTournamentService.generateAllGroupMatches(tournamentId).pipe(

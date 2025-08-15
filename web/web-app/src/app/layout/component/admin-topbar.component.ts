@@ -6,7 +6,7 @@ import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
 import { PopoverModule } from 'primeng/popover';
-import { FirebaseAuthService, UserRole } from '../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { UserService } from '../../services/user.service';
 import { LayoutService } from '../service/layout.service';
 import { Observable, map, Subscription, switchMap } from 'rxjs';
@@ -35,23 +35,20 @@ export class AdminTopbarComponent implements OnInit, OnDestroy {
         private authService: FirebaseAuthService,
         private userService: UserService
     ) {
-        this.isAuthenticated$ = this.authService.isAuthenticated();
-        this.userProfile$ = this.authService.getCurrentUserProfile();
-        this.hasMultipleRoles$ = this.authService.getUserRoles().pipe(
-            map(roles => roles.length > 1)
-        );
-        this.hasAdminRole$ = this.authService.hasRole('admin');
+        this.isAuthenticated$ = this.authService.isAuthenticated$;
+        this.userProfile$ = this.authService.userProfile$;
+        this.hasMultipleRoles$ = this.authService.userProfile$.pipe(map(profile => (profile?.roles || []).length > 1));
+        this.hasAdminRole$ = this.authService.userProfile$.pipe(map(profile => profile?.roles.includes('admin') || false));
     }
 
     ngOnInit() {
-        // Verify admin access
-        this.subscriptions.add(
-            this.hasAdminRole$.subscribe(isAdmin => {
-                if (!isAdmin) {
-                    this.router.navigate(['/choose-role']);
-                }
-            })
-        );
+        // Subscribe to admin role status
+        this.hasAdminRole$.subscribe(isAdmin => {
+            if (!isAdmin) {
+                // Redirect to player dashboard if not admin
+                this.router.navigate(['/player']);
+            }
+        });
     }
 
     ngOnDestroy() {
@@ -84,45 +81,18 @@ export class AdminTopbarComponent implements OnInit, OnDestroy {
     }
 
     switchToPlayer() {
-        // First ensure user is synced to PostgreSQL, then assign role
-        this.authService.getUserProfileAndSync().pipe(
-            switchMap(profile => {
-                if (!profile) {
-                    throw new Error('No user profile found');
-                }
-                // Use the new method that handles Firebase UID to PostgreSQL user ID conversion
-                return this.userService.addRoleToUserByFirebaseUid(profile.firebase_uid, 'player');
-            })
-        ).subscribe({
-            next: (userRole) => {
-                // Close mobile menu
-                this.isMobileMenuVisible = false;
-                // Navigate to player dashboard
-                this.router.navigate(['/player']);
-            },
-            error: (error) => {
-                console.error('Failed to assign player role:', error);
-                // Close mobile menu
-                this.isMobileMenuVisible = false;
-                // Check if it's a duplicate role error (which is actually OK)
-                if (error.status === 500 && error.error && error.error.includes('duplicate key')) {
-                    console.log('User already has player role, proceeding with navigation');
-                }
-                // Navigate to player dashboard regardless
-                this.router.navigate(['/player']);
-            }
-        });
+        // User creation is now handled automatically by Lambda trigger
+        // Just navigate to player dashboard
+        this.isMobileMenuVisible = false;
+        this.router.navigate(['/player']);
     }
 
     onLogoutClick() {
         this.isMobileMenuVisible = false;
-        this.authService.signOut().subscribe({
-            next: () => {
-                this.router.navigate(['/']);
-            },
-            error: (error: any) => {
-                console.error('Logout error:', error);
-            }
+        this.authService.signOut().then(() => {
+            this.router.navigate(['/']);
+        }).catch((error: any) => {
+            console.error('Logout error:', error);
         });
     }
 }

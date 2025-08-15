@@ -37,15 +37,37 @@ public class TournamentService {
     @Inject
     za.cf.cp.club.service.ClubService clubService;
     
+    @Inject
+    za.cf.cp.venue.service.VenueService venueService;
+    
     /**
      * Get all tournaments ordered by creation date (newest first).
      */
     @Transactional
     public List<TournamentDto> getAllTournaments() {
-        List<Tournament> tournaments = Tournament.listAll();
-        return tournaments.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        try {
+            System.out.println("Getting all tournaments from database...");
+            List<Tournament> tournaments = Tournament.listAll();
+            System.out.println("Found " + tournaments.size() + " tournaments in database");
+            
+            List<TournamentDto> dtos = new ArrayList<>();
+            for (Tournament tournament : tournaments) {
+                try {
+                    TournamentDto dto = convertToDto(tournament);
+                    dtos.add(dto);
+                } catch (Exception e) {
+                    System.err.println("Error converting tournament " + tournament.getTournamentId() + " to DTO: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            System.out.println("Successfully converted " + dtos.size() + " tournaments to DTOs");
+            return dtos;
+        } catch (Exception e) {
+            System.err.println("Error in getAllTournaments: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
     
     /**
@@ -132,57 +154,95 @@ public class TournamentService {
      * Convert Tournament entity to DTO.
      */
     private TournamentDto convertToDto(Tournament tournament) {
-        TournamentDto dto = new TournamentDto();
-        dto.setId(tournament.getTournamentId().toString());
-        dto.setName(tournament.getName());
-        dto.setDescription(tournament.getDescription());
-        dto.setStartDate(tournament.getStartDate());
-        dto.setEndDate(tournament.getEndDate());
-        dto.setRegistrationStartDate(tournament.getRegistrationStartDate());
-        dto.setRegistrationEndDate(tournament.getRegistrationEndDate());
-        dto.setMaxParticipants(tournament.getMaxParticipants());
-        dto.setCurrentParticipants(tournament.getCurrentParticipants());
-        dto.setEntryFee(tournament.getEntryFee());
-        dto.setNoOfGroups(tournament.getNoOfGroups());
-        dto.setClubId(tournament.getClubId());
-        dto.setUserId(tournament.getUserId());
+        try {
+            System.out.println("Converting tournament to DTO: " + tournament.getTournamentId());
+            TournamentDto dto = new TournamentDto();
+            dto.setId(tournament.getTournamentId().toString());
+            dto.setName(tournament.getName());
+            dto.setDescription(tournament.getDescription());
+            dto.setStartDate(tournament.getStartDate());
+            dto.setEndDate(tournament.getEndDate());
+            dto.setRegistrationStartDate(tournament.getRegistrationStartDate());
+            dto.setRegistrationEndDate(tournament.getRegistrationEndDate());
+            dto.setMaxParticipants(tournament.getMaxParticipants());
+            dto.setCurrentParticipants(tournament.getCurrentParticipants());
+            dto.setEntryFee(tournament.getEntryFee());
+            dto.setNoOfGroups(tournament.getNoOfGroups());
+            dto.setClubId(tournament.getClubId());
+            dto.setUserId(tournament.getUserId());
 
-        dto.setVenueId(tournament.getVenueId());
+            dto.setVenueId(tournament.getVenueId());
+            
+            // Add venue information if venueId is provided
+            if (tournament.getVenueId() != null) {
+                try {
+                    za.cf.cp.venue.dto.VenueDto venue = venueService.getVenueById(tournament.getVenueId());
+                    if (venue != null) {
+                        // Create a venue object that matches the frontend interface
+                        Map<String, Object> venueObject = new HashMap<>();
+                        venueObject.put("id", venue.id);
+                        venueObject.put("name", venue.name);
+                        venueObject.put("website", venue.website);
+                        venueObject.put("facilities", venue.facilities);
+                        
+                        // Add address information
+                        Map<String, Object> address = new HashMap<>();
+                        address.put("street", venue.address.street);
+                        address.put("suburb", venue.address.suburb);
+                        address.put("city", venue.address.city);
+                        address.put("province", venue.address.province);
+                        address.put("postalCode", venue.address.postalCode);
+                        address.put("country", venue.address.country);
+                        venueObject.put("address", address);
+                        
+                        // Set the venue object in the DTO
+                        dto.setVenue(venueObject);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error loading venue for tournament " + tournament.getTournamentId() + ": " + e.getMessage());
+                }
+            }
         
-        // Add club information
-        if (tournament.getClubId() != null) {
-            clubService.getClubById(tournament.getClubId()).ifPresent(club -> {
-                dto.setClub(new za.cf.cp.tournament.dto.ClubDto(club.getClubId().toString(), club.getName(), club.getWebsite()));
-            });
+            // Add club information
+            if (tournament.getClubId() != null) {
+                clubService.getClubById(tournament.getClubId()).ifPresent(club -> {
+                    dto.setClub(new za.cf.cp.tournament.dto.ClubDto(club.getClubId().toString(), club.getName(), club.getWebsite()));
+                });
+            }
+            
+            // Convert related entities to DTOs
+            if (tournament.getFormat() != null) {
+                dto.setFormat(tournamentConfigService.convertFormatToDto(tournament.getFormat()));
+            }
+            if (tournament.getCategory() != null) {
+                dto.setCategory(tournamentConfigService.convertCategoryToDto(tournament.getCategory()));
+            }
+            if (tournament.getRegistrationType() != null) {
+                dto.setRegistrationType(tournamentConfigService.convertRegistrationTypeToDto(tournament.getRegistrationType()));
+            }
+            if (tournament.getStatus() != null) {
+                dto.setStatus(tournamentConfigService.convertStatusToDto(tournament.getStatus()));
+            }
+            if (tournament.getVenueType() != null) {
+                dto.setVenueType(tournamentConfigService.convertVenueTypeToDto(tournament.getVenueType()));
+            }
+            if (tournament.getProgressionType() != null) {
+                dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
+            }
+            if (tournament.getAdvancementModel() != null) {
+                dto.setAdvancementModel(tournamentConfigService.convertAdvancementModelToDto(tournament.getAdvancementModel()));
+            }
+            if (tournament.getEliminationBracketSize() != null) {
+                dto.setEliminationBracketSize(tournamentConfigService.convertEliminationBracketSizeToDto(tournament.getEliminationBracketSize()));
+            }
+            
+            System.out.println("Successfully converted tournament to DTO: " + tournament.getTournamentId());
+            return dto;
+        } catch (Exception e) {
+            System.err.println("Error converting tournament " + tournament.getTournamentId() + " to DTO: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-        
-        // Convert related entities to DTOs
-        if (tournament.getFormat() != null) {
-            dto.setFormat(tournamentConfigService.convertFormatToDto(tournament.getFormat()));
-        }
-        if (tournament.getCategory() != null) {
-            dto.setCategory(tournamentConfigService.convertCategoryToDto(tournament.getCategory()));
-        }
-        if (tournament.getRegistrationType() != null) {
-            dto.setRegistrationType(tournamentConfigService.convertRegistrationTypeToDto(tournament.getRegistrationType()));
-        }
-        if (tournament.getStatus() != null) {
-            dto.setStatus(tournamentConfigService.convertStatusToDto(tournament.getStatus()));
-        }
-        if (tournament.getVenueType() != null) {
-            dto.setVenueType(tournamentConfigService.convertVenueTypeToDto(tournament.getVenueType()));
-        }
-        if (tournament.getProgressionType() != null) {
-            dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
-        }
-        if (tournament.getAdvancementModel() != null) {
-            dto.setAdvancementModel(tournamentConfigService.convertAdvancementModelToDto(tournament.getAdvancementModel()));
-        }
-        if (tournament.getEliminationBracketSize() != null) {
-            dto.setEliminationBracketSize(tournamentConfigService.convertEliminationBracketSizeToDto(tournament.getEliminationBracketSize()));
-        }
-        
-        return dto;
     }
     
     /**
@@ -191,6 +251,11 @@ public class TournamentService {
     private Tournament convertToEntity(TournamentDto dto) {
         try {
             System.out.println("Converting DTO to entity: " + dto);
+            System.out.println("DTO format: " + dto.getFormat());
+            System.out.println("DTO category: " + dto.getCategory());
+            System.out.println("DTO registrationType: " + dto.getRegistrationType());
+            System.out.println("DTO venueType: " + dto.getVenueType());
+            System.out.println("DTO status: " + dto.getStatus());
             Tournament tournament = new Tournament();
             if (dto.getId() != null) {
                 tournament.setTournamentId(UUID.fromString(dto.getId()));
@@ -218,7 +283,10 @@ public class TournamentService {
                 if (format == null) {
                     throw new RuntimeException("Format not found with ID: " + dto.getFormat().getId());
                 }
+                System.out.println("Found format: " + format.getName());
                 tournament.setFormat(format);
+            } else {
+                System.out.println("Format is null or has no ID: " + dto.getFormat());
             }
             if (dto.getCategory() != null && dto.getCategory().getId() != null) {
                 System.out.println("Looking up category with ID: " + dto.getCategory().getId());
@@ -226,7 +294,10 @@ public class TournamentService {
                 if (category == null) {
                     throw new RuntimeException("Category not found with ID: " + dto.getCategory().getId());
                 }
+                System.out.println("Found category: " + category.getName());
                 tournament.setCategory(category);
+            } else {
+                System.out.println("Category is null or has no ID: " + dto.getCategory());
             }
             if (dto.getRegistrationType() != null && dto.getRegistrationType().getId() != null) {
                 System.out.println("Looking up registration type with ID: " + dto.getRegistrationType().getId());
@@ -234,7 +305,10 @@ public class TournamentService {
                 if (registrationType == null) {
                     throw new RuntimeException("RegistrationType not found with ID: " + dto.getRegistrationType().getId());
                 }
+                System.out.println("Found registration type: " + registrationType.getName());
                 tournament.setRegistrationType(registrationType);
+            } else {
+                System.out.println("Registration type is null or has no ID: " + dto.getRegistrationType());
             }
             if (dto.getStatus() != null && dto.getStatus().getId() != null) {
                 System.out.println("Looking up status with ID: " + dto.getStatus().getId());
@@ -250,6 +324,7 @@ public class TournamentService {
                 if (venueType == null) {
                     throw new RuntimeException("VenueType not found with ID: " + dto.getVenueType().getId());
                 }
+                System.out.println("Found venue type: " + venueType.getName());
                 tournament.setVenueType(venueType);
             }
             if (dto.getProgressionOption() != null && dto.getProgressionOption().getId() != null) {
@@ -345,40 +420,76 @@ public class TournamentService {
     @Transactional
     public List<Object> getTournamentParticipants(String tournamentId) {
         try {
-            UUID id = UUID.fromString(tournamentId);
+            System.out.println("Getting participants for tournament: " + tournamentId);
+            
+            // Validate tournament ID format
+            if (tournamentId == null || tournamentId.trim().isEmpty()) {
+                throw new IllegalArgumentException("Tournament ID cannot be null or empty");
+            }
+            
+            UUID id;
+            try {
+                id = UUID.fromString(tournamentId);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid tournament ID format: " + tournamentId);
+            }
+            
+            // Check if tournament exists
+            Tournament tournament = Tournament.findById(id);
+            if (tournament == null) {
+                System.out.println("Tournament not found with ID: " + tournamentId);
+                return new ArrayList<>();
+            }
             
             // Use a native query to join with the user table
+            // Use LEFT JOIN to handle cases where user might not exist
             String query = """
                 SELECT tp.participant_id, tp.tournament_id, tp.user_id, tp.added_by,
                        u.firebase_uid, u.email, u.display_name, u.first_name, u.last_name, 
                        u.mobile, u.rating
                 FROM core.tournament_participant tp
-                JOIN core.user u ON tp.user_id = u.firebase_uid
+                LEFT JOIN core.user u ON tp.user_id = u.firebase_uid
                 WHERE tp.tournament_id = ?
                 """;
             
-            List<Object[]> results = entityManager.createNativeQuery(query)
-                    .setParameter(1, id)
-                    .getResultList();
+            System.out.println("Executing query: " + query);
+            System.out.println("Tournament ID parameter: " + id);
+            
+            List<Object[]> results;
+            try {
+                results = entityManager.createNativeQuery(query)
+                        .setParameter(1, id)
+                        .getResultList();
+            } catch (Exception e) {
+                System.err.println("Database query error: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Database query failed: " + e.getMessage(), e);
+            }
             
             System.out.println("Found " + results.size() + " participants for tournament " + tournamentId);
             
             return results.stream().map(row -> {
-                Map<String, Object> participantDto = new HashMap<>();
-                participantDto.put("id", row[0].toString()); // participant_id
-                participantDto.put("tournamentId", tournamentId);
-                participantDto.put("uid", row[4]); // firebase_uid
-                participantDto.put("email", row[5]); // email
-                participantDto.put("displayName", row[6]); // display_name
-                participantDto.put("firstName", row[7]); // first_name
-                participantDto.put("lastName", row[8]); // last_name
-                participantDto.put("mobile", row[9]); // mobile
-                participantDto.put("rating", row[10]); // rating
-                participantDto.put("addedBy", row[3]); // added_by
+                try {
+                    Map<String, Object> participantDto = new HashMap<>();
+                    participantDto.put("id", row[0] != null ? row[0].toString() : null); // participant_id
+                    participantDto.put("tournamentId", tournamentId);
+                    participantDto.put("uid", row[4] != null ? row[4] : row[2]); // firebase_uid or user_id as fallback
+                    participantDto.put("email", row[5]); // email
+                    participantDto.put("displayName", row[6] != null ? row[6] : "Unknown User"); // display_name
+                    participantDto.put("firstName", row[7]); // first_name
+                    participantDto.put("lastName", row[8]); // last_name
+                    participantDto.put("mobile", row[9]); // mobile
+                    participantDto.put("rating", row[10] != null ? row[10] : 0); // rating
+                    participantDto.put("addedBy", row[3]); // added_by
 
-                System.out.println("Participant " + row[6] + " (UID: " + row[4] + ") has rating: " + row[10]);
+                    System.out.println("Participant " + (row[6] != null ? row[6] : "Unknown") + " (UID: " + (row[4] != null ? row[4] : row[2]) + ") has rating: " + (row[10] != null ? row[10] : 0));
 
-                return participantDto;
+                    return participantDto;
+                } catch (Exception e) {
+                    System.err.println("Error processing participant row: " + e.getMessage());
+                    e.printStackTrace();
+                    throw new RuntimeException("Error processing participant data: " + e.getMessage(), e);
+                }
             }).collect(Collectors.toList());
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving tournament participants: " + e.getMessage(), e);

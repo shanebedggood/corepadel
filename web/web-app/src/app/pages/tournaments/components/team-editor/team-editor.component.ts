@@ -14,8 +14,9 @@ import { Observable, Subject, combineLatest } from 'rxjs';
 import { map, catchError, of } from 'rxjs';
 
 import { TournamentService, TournamentTeam, TournamentPlayer, TournamentParticipant } from '../../../../services/tournament.service';
-import { FirebaseAuthService, UserProfile } from '../../../../services/firebase-auth.service';
-import { TeamNameConfig } from '../../../../services/team-name-generator.service';
+import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
+import { UserProfile } from '../../../../models/user-profile';
+
 
 export interface TeamEditorData {
     team?: TournamentTeam;
@@ -48,7 +49,7 @@ export interface TeamEditorData {
 export class TeamEditorComponent implements OnInit, OnDestroy {
     @Input() set visible(value: boolean) {
         this._visible = value;
-        
+
         // If the dialog is becoming visible and we have data, load the team data
         if (value && this._data) {
             setTimeout(() => this.loadTeamData(), 0);
@@ -61,10 +62,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         return this._visible;
     }
     private _visible: boolean = false;
-    
+
     @Input() set data(value: TeamEditorData | null) {
         this._data = value;
-        
+
         // If the dialog is visible and we have data, load the team data immediately
         if (this._visible && value) {
             setTimeout(() => this.loadTeamData(), 0);
@@ -74,7 +75,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         return this._data;
     }
     private _data: TeamEditorData | null = null;
-    
+
     @Output() visibleChange = new EventEmitter<boolean>();
     @Output() teamSaved = new EventEmitter<TournamentTeam>();
     @Output() teamCancelled = new EventEmitter<void>();
@@ -88,10 +89,14 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     // Track if we're in edit mode to handle player display differently
     private isEditMode = false;
 
+    // Cache for current players to prevent unnecessary array recreation
+    private _currentPlayersCache: UserProfile[] = [];
+    private _lastPlayerUids: string[] = [];
+
     teamForm!: FormGroup;
     loading: boolean = false;
     saving: boolean = false;
-    
+
     // Player search state (kept for compatibility but not used)
     playerSearchState = {
         loading: false,
@@ -99,9 +104,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         hasSearched: false
     };
 
-    // Team name generation state
-    teamNameConfig: TeamNameConfig = { style: 'sports' };
-    availableNameStyles: { value: string; label: string; description: string }[] = [];
+
 
     private destroy$ = new Subject<void>();
 
@@ -113,7 +116,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         private cdr: ChangeDetectorRef
     ) {
         this.initializeForm();
-        this.availableNameStyles = this.tournamentService.getTeamNameStyles();
     }
 
     ngOnInit(): void {
@@ -149,18 +151,18 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
             // Editing existing team
             const team = this.data.team;
             const playerUids = team.players?.map(p => p.uid) || [];
-            
+
             // Ensure form is initialized
             if (!this.teamForm) {
                 this.initializeForm();
             }
-            
+
             // Patch the form with team data
             this.teamForm.patchValue({
                 name: team.name,
                 players: playerUids
             });
-            
+
 
         } else {
             // Creating new team
@@ -178,7 +180,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         }
 
         let availablePlayers = this.data.participants.map(participant => ({
-            user_id: participant.uid,
             firebase_uid: participant.uid,
             email: participant.email,
             display_name: participant.displayName || `${participant.firstName || ''} ${participant.lastName || ''}`.trim() || participant.email,
@@ -196,12 +197,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         if (this.data.team && this.data.team.players) {
             const currentPlayerUids = this.data.team.players.map(p => p.uid);
             const availablePlayerUids = availablePlayers.map(p => p.firebase_uid);
-            
+
             // Add team players that are not already in available players
             this.data.team.players.forEach(teamPlayer => {
                 if (!availablePlayerUids.includes(teamPlayer.uid)) {
                     availablePlayers.push({
-                        user_id: teamPlayer.uid,
                         firebase_uid: teamPlayer.uid,
                         email: teamPlayer.email,
                         display_name: teamPlayer.displayName || `${teamPlayer.firstName || ''} ${teamPlayer.lastName || ''}`.trim() || teamPlayer.email,
@@ -216,44 +216,48 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
                     });
                 }
             });
-            
+
             // Check if any current team players are no longer in participants
-            const removedPlayers = currentPlayerUids.filter(uid => 
+            const removedPlayers = currentPlayerUids.filter(uid =>
                 !this.data!.participants!.some(p => p.uid === uid)
             );
-            
+
             if (removedPlayers.length > 0) {
                 this.messageService.add({
                     severity: 'warn',
                     summary: 'Players Removed',
                     detail: `Some team players are no longer tournament participants and will be removed from the team.`
                 });
-                
+
                 // Update the team data to remove players that are no longer participants
-                this.data.team.players = this.data.team.players.filter(player => 
+                this.data.team.players = this.data.team.players.filter(player =>
                     this.data!.participants!.some(p => p.uid === player.uid)
                 );
             }
         }
 
         this.availablePlayers = availablePlayers;
+        // Clear cache when available players change
+        this._currentPlayersCache = [];
+        this._lastPlayerUids = [];
     }
 
     private resetForm(): void {
         this.teamForm.reset();
         this.selectedPlayerToAdd = null;
         this.saving = false;
+        // Clear cache when form is reset
+        this._currentPlayersCache = [];
+        this._lastPlayerUids = [];
     }
 
     generateRandomTeamName(): void {
-        const teamName = this.tournamentService.generateRandomTeamName(this.teamNameConfig);
+        // Generate a simple sequential team name
+        const teamName = `Team ${Math.floor(Math.random() * 1000) + 1}`;
         this.teamForm.patchValue({ name: teamName });
     }
 
-    onNameStyleChange(): void {
-        // Generate a new name when style changes
-        this.generateRandomTeamName();
-    }
+
 
     saveTeam(): void {
         if (!this.teamForm.valid || !this.data) {
@@ -296,8 +300,8 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
         // Check if any player is already in another team (only for new players, not existing team members)
         const currentTeam = this.data.team;
-        const newPlayerUids = currentTeam && currentTeam.players ? 
-            selectedPlayerUids.filter((uid: string) => !currentTeam.players!.some(p => p.uid === uid)) : 
+        const newPlayerUids = currentTeam && currentTeam.players ?
+            selectedPlayerUids.filter((uid: string) => !currentTeam.players!.some(p => p.uid === uid)) :
             selectedPlayerUids;
 
         if (newPlayerUids.length === 0) {
@@ -309,15 +313,16 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         // Check if new players are already in other teams
         let checkedPlayers = 0;
         let hasConflict = false;
+        const subscriptions: any[] = [];
 
         for (const uid of newPlayerUids) {
             const player = teamPlayers.find(p => p.uid === uid);
             if (!player) continue;
 
-            this.tournamentService.isPlayerInTournament(this.data!.tournamentId, uid).subscribe({
+            const subscription = this.tournamentService.isPlayerInTournament(this.data!.tournamentId, uid).subscribe({
                 next: (isInTournament: boolean) => {
                     checkedPlayers++;
-                    
+
                     if (isInTournament) {
                         hasConflict = true;
                         this.messageService.add({
@@ -326,12 +331,16 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
                             detail: `${player.displayName} is already registered in another team`
                         });
                         this.saving = false;
+                        // Unsubscribe all subscriptions
+                        subscriptions.forEach(sub => sub.unsubscribe());
                         return;
                     }
 
                     // If all players have been checked and no conflicts, save the team
                     if (checkedPlayers === newPlayerUids.length && !hasConflict) {
                         this.performTeamSave(teamPlayers, formValue);
+                        // Unsubscribe all subscriptions
+                        subscriptions.forEach(sub => sub.unsubscribe());
                     }
                 },
                 error: (error: any) => {
@@ -342,8 +351,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
                         detail: 'Failed to verify player availability'
                     });
                     this.saving = false;
+                    // Unsubscribe all subscriptions
+                    subscriptions.forEach(sub => sub.unsubscribe());
                 }
             });
+            subscriptions.push(subscription);
         }
 
         // If no new players to check, save immediately
@@ -362,7 +374,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
         if (this.data.team) {
             // Update existing team
-            (this.tournamentService as any).updateTournamentTeam(
+            const subscription = (this.tournamentService as any).updateTournamentTeam(
                 this.data.tournamentId,
                 this.data.groupId,
                 this.data.team.id!,
@@ -376,6 +388,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
                     });
                     this.teamSaved.emit(updatedTeam);
                     this.onVisibleChange(false);
+                    subscription.unsubscribe();
                 },
                 error: (error: any) => {
                     console.error('Error updating team:', error);
@@ -385,11 +398,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
                         detail: 'Failed to update team'
                     });
                     this.saving = false;
+                    subscription.unsubscribe();
                 }
             });
         } else {
             // Create new team
-            (this.tournamentService as any).createTournamentTeam(
+            const subscription = (this.tournamentService as any).createTournamentTeam(
                 this.data.tournamentId,
                 this.data.groupId,
                 teamData
@@ -402,6 +416,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
                     });
                     this.teamSaved.emit(newTeam);
                     this.onVisibleChange(false);
+                    subscription.unsubscribe();
                 },
                 error: (error: any) => {
                     console.error('Error creating team:', error);
@@ -411,6 +426,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
                         detail: 'Failed to create team'
                     });
                     this.saving = false;
+                    subscription.unsubscribe();
                 }
             });
         }
@@ -427,7 +443,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         if (!this.availablePlayers) {
             return [];
         }
-        
+
         // Return all available players (including current team players)
         // The add player logic will handle preventing duplicates
         return this.availablePlayers;
@@ -438,18 +454,32 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         return this.availablePlayers || [];
     }
 
-    getCurrentPlayers(): UserProfile[] {
+    get currentPlayers(): UserProfile[] {
         const playerUids = this.teamForm.get('players')?.value || [];
-        
+
         if (!this.availablePlayers || this.availablePlayers.length === 0) {
+            this._currentPlayersCache = [];
+            this._lastPlayerUids = [];
             return [];
         }
-        
-        const currentPlayers = this.availablePlayers.filter(player => playerUids.includes(player.firebase_uid));
-        
 
-        
-        return currentPlayers;
+        // Check if the player UIDs have changed
+        const uidsChanged = this._lastPlayerUids.length !== playerUids.length ||
+            !this._lastPlayerUids.every((uid, index) => uid === playerUids[index]);
+
+        if (uidsChanged) {
+            // Update cache only when necessary
+            this._currentPlayersCache = this.availablePlayers.filter(player => 
+                playerUids.includes(player.firebase_uid)
+            );
+            this._lastPlayerUids = [...playerUids];
+        }
+
+        return this._currentPlayersCache;
+    }
+
+    getCurrentPlayers(): UserProfile[] {
+        return this.currentPlayers;
     }
 
     getCurrentPlayerCount(): number {
@@ -469,7 +499,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         const currentPlayers = this.teamForm.get('players')?.value || [];
         const updatedPlayers = currentPlayers.filter((uid: string) => uid !== player.firebase_uid);
         this.teamForm.patchValue({ players: updatedPlayers });
-        
+
         // Clear the selected player to add if it was the same player
         if (this.selectedPlayerToAdd === player.firebase_uid) {
             this.selectedPlayerToAdd = null;
@@ -477,13 +507,13 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     }
 
     onPlayerSelected(event: any, multiselect: any): void {
-        
+
         // Handle both single value and array values
         let selectedValue = event.value;
         if (Array.isArray(selectedValue) && selectedValue.length > 0) {
             selectedValue = selectedValue[0]; // Take the first item from the array
         }
-        
+
         if (selectedValue) {
             this.selectedPlayerToAdd = selectedValue;
             this.addPlayer();
@@ -509,14 +539,14 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         }
 
         const updatedPlayers = [...currentPlayers, this.selectedPlayerToAdd];
-        
+
         // Update the form
         this.teamForm.patchValue({ players: updatedPlayers });
-        
+
         // Mark the form control as dirty and touched
         this.teamForm.get('players')?.markAsDirty();
         this.teamForm.get('players')?.markAsTouched();
-        
+
         // Clear the selection
         this.selectedPlayerToAdd = null;
     }

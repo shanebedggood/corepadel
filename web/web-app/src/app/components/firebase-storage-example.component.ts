@@ -14,22 +14,26 @@ import { Subscription } from 'rxjs';
       <!-- Responsive Image URLs -->
       <div class="mb-6">
         <h3 class="text-lg font-semibold mb-2">Responsive Image URLs</h3>
-        <div *ngIf="responsiveUrls" class="space-y-2">
-          <div><strong>WebP Small:</strong> {{ responsiveUrls.webp.small }}</div>
-          <div><strong>WebP Medium:</strong> {{ responsiveUrls.webp.medium }}</div>
-          <div><strong>WebP Large:</strong> {{ responsiveUrls.webp.large }}</div>
-          <div><strong>JPG Small:</strong> {{ responsiveUrls.jpg.small }}</div>
-          <div><strong>JPG Medium:</strong> {{ responsiveUrls.jpg.medium }}</div>
-          <div><strong>JPG Large:</strong> {{ responsiveUrls.jpg.large }}</div>
-        </div>
+        @if (responsiveUrls) {
+          <div class="space-y-2">
+            <div><strong>WebP Small:</strong> {{ responsiveUrls.webp.small }}</div>
+            <div><strong>WebP Medium:</strong> {{ responsiveUrls.webp.medium }}</div>
+            <div><strong>WebP Large:</strong> {{ responsiveUrls.webp.large }}</div>
+            <div><strong>JPG Small:</strong> {{ responsiveUrls.jpg.small }}</div>
+            <div><strong>JPG Medium:</strong> {{ responsiveUrls.jpg.medium }}</div>
+            <div><strong>JPG Large:</strong> {{ responsiveUrls.jpg.large }}</div>
+          </div>
+        }
       </div>
 
       <!-- Single Image URL -->
       <div class="mb-6">
         <h3 class="text-lg font-semibold mb-2">Single Image URL</h3>
-        <div *ngIf="singleImageUrl">
-          <strong>Large WebP:</strong> {{ singleImageUrl }}
-        </div>
+        @if (singleImageUrl) {
+          <div>
+            <strong>Large WebP:</strong> {{ singleImageUrl }}
+          </div>
+        }
       </div>
 
       <!-- Upload Example -->
@@ -39,9 +43,11 @@ import { Subscription } from 'rxjs';
         <button (click)="uploadFile()" class="px-4 py-2 bg-blue-500 text-white rounded">
           Upload File
         </button>
-        <div *ngIf="uploadedUrl" class="mt-2">
-          <strong>Uploaded URL:</strong> {{ uploadedUrl }}
-        </div>
+        @if (uploadedUrl) {
+          <div class="mt-2">
+            <strong>Uploaded URL:</strong> {{ uploadedUrl }}
+          </div>
+        }
       </div>
     </div>
   `,

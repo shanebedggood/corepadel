@@ -70,6 +70,9 @@ public class TournamentDto {
     @JsonProperty("venueId")
     public String venueId;
     
+    @JsonProperty("venue")
+    public Object venue;
+    
     // Round-robin specific fields
     @JsonProperty("progressionOption")
     public TournamentProgressionOptionDto progressionOption;
@@ -257,6 +260,14 @@ public class TournamentDto {
     
     public void setVenueId(String venueId) {
         this.venueId = venueId;
+    }
+    
+    public Object getVenue() {
+        return venue;
+    }
+    
+    public void setVenue(Object venue) {
+        this.venue = venue;
     }
     
     public TournamentProgressionOptionDto getProgressionOption() {

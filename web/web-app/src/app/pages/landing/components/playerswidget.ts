@@ -23,14 +23,16 @@ import { Subscription } from 'rxjs';
         <div class="grid md:grid-cols-2 gap-8 items-center">
           <!-- Image -->
           <div class="relative">
-            <div *ngIf="imageUrl" class="rounded-lg overflow-hidden shadow-lg">
-              <img 
-                [src]="imageUrl" 
-                alt="Padel Players" 
-                class="w-full h-64 md:h-96 object-cover"
-                loading="lazy"
-              />
-            </div>
+            @if (imageUrl) {
+              <div class="rounded-lg overflow-hidden shadow-lg">
+                <img 
+                  [src]="imageUrl" 
+                  alt="Padel Players" 
+                  class="w-full h-64 md:h-96 object-cover"
+                  loading="lazy"
+                />
+              </div>
+            }
           </div>
 
           <!-- Content -->

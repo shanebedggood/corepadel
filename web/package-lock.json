@@ -1,7 +1,7 @@
 {
   "name": "padel-app",
   "version": "1.0.0",
-  "description": "Padel application with Firebase backend",
+  "description": "Padel application with AWS Cognito backend",
   "scripts": {
     "dev": "./scripts/dev.sh",
     "import:storage": "./scripts/import-storage.sh",

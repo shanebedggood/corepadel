@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 /**
- * User entity representing Firebase users stored in PostgreSQL.
+ * User entity representing Cognito users stored in PostgreSQL.
  * Maps to the 'user' table in the database.
  */
 @Entity
@@ -19,7 +19,7 @@ public class User extends PanacheEntityBase {
     @JsonProperty("user_id")
     public UUID userId;
     
-    @Column(name = "firebase_uid", nullable = false, unique = true)
+    @Column(name = "firebase_uid", unique = true)
     @JsonProperty("firebase_uid")
     public String firebaseUid;
     

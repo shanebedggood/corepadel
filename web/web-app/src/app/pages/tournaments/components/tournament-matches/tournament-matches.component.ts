@@ -636,6 +636,18 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         return 'Unknown Team';
     }
 
+    getTeamPlayerNames(teamId: string | undefined): string {
+        if (!teamId) return '';
+        
+        for (const groupId in this.teams) {
+            const team = this.teams[groupId].find(t => t.id === teamId);
+            if (team && team.players && team.players.length > 0) {
+                return team.players.map(player => player.displayName || player.email || 'Unknown Player').join(', ');
+            }
+        }
+        return '';
+    }
+
     getGroupName(groupId: string): string {
         const group = this.groups.find(g => g.id === groupId);
         return group ? group.name : 'Unknown Group';

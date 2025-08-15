@@ -19,7 +19,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { MultiSelectModule } from 'primeng/multiselect';
 
 import { TournamentService, TournamentPlayer, Tournament, TournamentParticipant } from '../../../../services/tournament.service';
-import { FirebaseAuthService, UserProfile } from '../../../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
+import { UserProfile } from '../../../../models/user-profile';
 import { UserService, User } from '../../../../services/user.service';
 
 @Component({
@@ -106,10 +107,10 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
     }
 
     private loadCurrentUser(): void {
-        this.authService.user$.pipe(
+        this.authService.userProfile$.pipe(
             takeUntil(this.destroy$)
-        ).subscribe((user: any) => {
-            this.currentUser = user;
+        ).subscribe((profile: any) => {
+            this.currentUser = profile;
         });
     }
 
@@ -120,7 +121,18 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
             this.canAddMore = false;
             return;
         }
+        const previousCanAddMore = this.canAddMore;
         this.canAddMore = this.currentCount < this.tournament.maxParticipants;
+        
+        // If we just reached the maximum participants and the dialog is open, close it
+        if (previousCanAddMore && !this.canAddMore && this.showAddDialog) {
+            this.closeAddDialog();
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Tournament Full',
+                detail: 'All tournament slots have been filled. The add player dialog has been closed.'
+            });
+        }
     }
 
     searchPlayers(): void {
@@ -145,7 +157,7 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
             next: (users: User[]) => {
                 // Convert User objects to UserProfile format
                 this.searchResults = users.map(user => ({
-                    user_id: user.firebase_uid,
+                    user_id: user.user_id, // Use the actual database UUID if available
                     firebase_uid: user.firebase_uid,
                     email: user.email,
                     display_name: user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
@@ -200,10 +212,10 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
         const tournamentId = this.tournament!.id; // Store to avoid undefined issues
 
         // Get the user's actual rating from the database
-        this.userService.getUserByFirebaseUid(player.firebase_uid).pipe(
+                    this.userService.getUserByFirebaseUid(player.firebase_uid).pipe(
             takeUntil(this.destroy$)
         ).subscribe({
-            next: (userFromDb) => {
+            next: (userFromDb: any) => {
                 const participant: TournamentPlayer = {
                     uid: player.firebase_uid,
                     email: player.email || '',
@@ -223,7 +235,8 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
                             detail: `${participant.displayName} has been added to the tournament.`
                         });
                         this.participantsChanged.emit();
-                        this.closeAddDialog();
+                        // Clear search field and results instead of closing dialog
+                        this.clearSearchField();
                     },
                     error: (error) => {
                         console.error('Error adding participant:', error);
@@ -257,7 +270,8 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
                             detail: `${participant.displayName} has been added to the tournament.`
                         });
                         this.participantsChanged.emit();
-                        this.closeAddDialog();
+                        // Clear search field and results instead of closing dialog
+                        this.clearSearchField();
                     },
                     error: (error) => {
                         console.error('Error adding player:', error);
@@ -336,6 +350,19 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
         this.searchForm.reset();
     }
 
+    clearSearchField(): void {
+        this.searchResults = [];
+        this.hasSearched = false;
+        this.searchTerm = '';
+        this.searchForm.reset();
+        // Focus the search input for the next search
+        setTimeout(() => {
+            if (this.searchInput) {
+                this.searchInput.nativeElement.focus();
+            }
+        }, 100);
+    }
+
     getRemainingSlots(): number {
         if (!this.tournament) return 0;
         return Math.max(0, this.tournament.maxParticipants - this.currentCount);
@@ -354,5 +381,10 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
     private updateParticipantCount(): void {
         this.currentCount = this.participants.length;
         this.checkCanAddMore();
+    }
+
+    // TrackBy method for better performance
+    trackByPlayerUid(index: number, player: UserProfile): string {
+        return player.firebase_uid || `player-${index}`;
     }
 } 

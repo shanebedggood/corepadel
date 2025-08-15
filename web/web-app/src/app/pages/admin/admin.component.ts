@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { FirebaseAuthService, UserRole, UserProfile } from '../../services/firebase-auth.service';
+import { FirebaseAuthService, UserProfile } from '../../services/firebase-auth.service';
 import { Observable, map } from 'rxjs';
 
 @Component({
@@ -89,8 +89,10 @@ export class AdminComponent implements OnInit {
         private authService: FirebaseAuthService,
         private router: Router
     ) {
-        this.isAdmin$ = this.authService.hasRole('admin');
-        this.userProfile$ = this.authService.getCurrentUserProfile();
+        this.isAdmin$ = this.authService.userProfile$.pipe(
+            map(profile => profile?.roles.includes('admin') || false)
+        );
+        this.userProfile$ = this.authService.userProfile$;
     }
 
     ngOnInit() {

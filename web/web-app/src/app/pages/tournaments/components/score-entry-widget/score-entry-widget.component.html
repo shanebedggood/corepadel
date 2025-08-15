@@ -11,12 +11,15 @@
         </p-select>
     </div>
     <!-- Loading State -->
-    <div *ngIf="loading" class="flex justify-center items-center py-8">
-        <p-progressSpinner>
-        </p-progressSpinner>
-    </div>
+    @if (loading) {
+        <div class="flex justify-center items-center py-8">
+            <p-progressSpinner>
+            </p-progressSpinner>
+        </div>
+    }
     <!-- Matches Table -->
-    <div *ngIf="!loading && matches.length > 0" class="mb-6">
+    @if (!loading && matches.length > 0) {
+        <div class="mb-6">
         <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Matches</h3>
         <p-table [value]="matches" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} matches"
@@ -52,8 +55,10 @@
                         <div class="text-surface-900 dark:text-surface-0 font-medium"> {{ match.team1Score !== undefined
                             ? match.team1Score : '-' }} - {{ match.team2Score !== undefined ? match.team2Score : '-' }}
                         </div>
-                        <div *ngIf="match.winnerId" class="text-sm text-surface-600 dark:text-surface-400"> Winner: {{
-                            match.winnerId === match.team1Id ? match.team1?.name : match.team2?.name }} </div>
+                        @if (match.winnerId) {
+                            <div class="text-sm text-surface-600 dark:text-surface-400"> Winner: {{
+                                match.winnerId === match.team1Id ? match.team1?.name : match.team2?.name }} </div>
+                        }
                     </td>
                     <td>
                         <div class="flex gap-2">
@@ -72,26 +77,32 @@
                 </tr>
             </ng-template>
         </p-table>
-    </div>
+        </div>
+    }
     <!-- Empty State -->
-    <div *ngIf="!loading && selectedTournamentId && matches.length === 0" class="text-center py-8">
+    @if (!loading && selectedTournamentId && matches.length === 0) {
+        <div class="text-center py-8">
         <i class="pi pi-calendar-times text-4xl text-surface-400 mb-4">
         </i>
         <h3 class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">No Matches Found</h3>
         <p class="text-surface-600 dark:text-surface-400">This tournament doesn't have any matches yet.</p>
-    </div>
+        </div>
+    }
     <!-- No Tournament Selected -->
-    <div *ngIf="!loading && !selectedTournamentId" class="text-center py-8">
+    @if (!loading && !selectedTournamentId) {
+        <div class="text-center py-8">
         <i class="pi pi-trophy text-4xl text-surface-400 mb-4">
         </i>
         <h3 class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">Select a Tournament</h3>
         <p class="text-surface-600 dark:text-surface-400">Choose a tournament from the dropdown above to view and enter
             match scores.</p>
-    </div>
+        </div>
+    }
     <!-- Score Entry Dialog -->
     <p-dialog header="Enter Match Score" [(visible)]="showScoreDialog" [modal]="true" [style]="{ width: '500px'}"
         [draggable]="false" [resizable]="false">
-        <div *ngIf="editingMatch" class="space-y-4">
+        @if (editingMatch) {
+            <div class="space-y-4">
             <!-- Match Details -->
             <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
                 <div class="text-center">
@@ -118,14 +129,15 @@
                 </div>
             </div>
             <!-- Winner Display -->
-            <div *ngIf="editingMatch.team1Score !== undefined && editingMatch.team2Score !== undefined"
-                class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
-                <div class="text-center">
-                    <div class="text-sm text-surface-600 dark:text-surface-400 mb-1">Winner</div>
-                    <div class="text-lg font-semibold text-surface-900 dark:text-surface-0"> {{ getWinnerName() }}
+            @if (editingMatch.team1Score !== undefined && editingMatch.team2Score !== undefined) {
+                <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
+                    <div class="text-center">
+                        <div class="text-sm text-surface-600 dark:text-surface-400 mb-1">Winner</div>
+                        <div class="text-lg font-semibold text-surface-900 dark:text-surface-0"> {{ getWinnerName() }}
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
             <!-- Status Selection -->
             <div>
                 <label class="block text-sm font-medium text-surface-900 dark:text-surface-0 mb-2"> Match Status
@@ -142,10 +154,11 @@
                 </button>
                 <button pButton type="button" label="Save Score" icon="pi pi-check" (click)="saveScore()"
                     [loading]="saving"
-                    [disabled]="editingMatch?.team1Score === undefined || editingMatch?.team2Score === undefined || saving">
+                    [disabled]="editingMatch.team1Score === undefined || editingMatch.team2Score === undefined || saving">
                 </button>
             </div>
         </ng-template>
+    }
     </p-dialog>
     <!-- Toast Messages -->
     <p-toast>

@@ -24,14 +24,16 @@ import { map, catchError } from 'rxjs/operators';
           <!-- Wattshot Sponsor -->
           <div class="text-center">
             <div class="bg-white rounded-lg p-6 shadow-md">
-              <div *ngIf="wattshotUrl$ | async as wattshotUrl" class="mb-4">
-                <img 
-                  [src]="wattshotUrl" 
-                  alt="Wattshot Sponsor" 
-                  class="w-32 h-32 mx-auto object-contain"
-                  loading="lazy"
-                />
-              </div>
+              @if (wattshotUrl$ | async; as wattshotUrl) {
+                <div class="mb-4">
+                  <img 
+                    [src]="wattshotUrl" 
+                    alt="Wattshot Sponsor" 
+                    class="w-32 h-32 mx-auto object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              }
               <h3 class="text-xl font-semibold text-gray-900 mb-2">The world's best shot.</h3>
             </div>
           </div>
@@ -39,14 +41,16 @@ import { map, catchError } from 'rxjs/operators';
           <!-- 5am Club Sponsor -->
           <div class="text-center">
             <div class="bg-white rounded-lg p-6 shadow-md">
-              <div *ngIf="fiveAmClubUrl$ | async as fiveAmClubUrl" class="mb-4">
-                <img 
-                  [src]="fiveAmClubUrl" 
-                  alt="5am Club Sponsor" 
-                  class="w-32 h-32 mx-auto object-contain"
-                  loading="lazy"
-                />
-              </div>
+              @if (fiveAmClubUrl$ | async; as fiveAmClubUrl) {
+                <div class="mb-4">
+                  <img 
+                    [src]="fiveAmClubUrl" 
+                    alt="5am Club Sponsor" 
+                    class="w-32 h-32 mx-auto object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              }
               <h3 class="text-lg font-semibold text-gray-900 mb-2">Club Partner</h3>
             </div>
           </div>

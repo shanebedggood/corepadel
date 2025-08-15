@@ -174,7 +174,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             progressionOption: [null],
             advancementModel: [null],
             eliminationBracketSize: [null],
-            maxParticipants: [null, [Validators.required, Validators.min(2), this.evenNumberValidator()]],
+            maxParticipants: [null, [Validators.required, Validators.min(2)]],
             noOfGroups: [null, [Validators.required, Validators.min(1)]],
             entryFee: [null, [Validators.required, Validators.min(0)]]
         });
@@ -182,18 +182,35 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
 
     ngOnInit(): void {
         this.setupFormSubscriptions();
+        
+        // Add a timeout to ensure form is populated after all data is loaded
+        setTimeout(() => {
+            if (this.tournament && this.venues && this.venues.length > 0) {
+                this.populateForm();
+            }
+        }, 1000);
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         // Check if tournament data has changed
         if (changes['tournament'] && changes['tournament'].currentValue) {
             this.populateDropdownData();
-            this.populateForm();
+            // Only populate form if venues are available
+            if (this.venues && this.venues.length > 0) {
+                this.populateForm();
+            }
         }
         
         // Check if config data has changed
         if (changes['tournamentConfig'] && changes['tournamentConfig'].currentValue) {
             this.populateDropdownData();
+            if (this.tournament && this.venues && this.venues.length > 0) {
+                this.populateForm();
+            }
+        }
+        
+        // Check if venues data has changed
+        if (changes['venues'] && changes['venues'].currentValue) {
             if (this.tournament) {
                 this.populateForm();
             }
@@ -267,6 +284,8 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
     private populateForm(): void {
         if (!this.tournament) return;
 
+        const matchingVenue = this.findMatchingVenue(this.tournament.venue);
+
         this.tournamentForm.patchValue({
             name: this.tournament.name,
             description: this.tournament.description,
@@ -278,7 +297,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             category: this.tournament.category?.id,
             registrationType: this.tournament.registrationType?.id,
             venueType: this.tournament.venueType?.id,
-            venue: this.findMatchingVenue(this.tournament.venue)?.id,
+            venue: matchingVenue?.id,
             progressionOption: this.tournament.progressionOption?.id,
             advancementModel: this.tournament.advancementModel?.id,
             eliminationBracketSize: this.tournament.eliminationBracketSize?.id,
@@ -286,11 +305,27 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             noOfGroups: this.tournament.noOfGroups,
             entryFee: this.tournament.entryFee
         });
+        
+        // Force update the venue field specifically
+        if (matchingVenue) {
+            this.tournamentForm.get('venue')?.setValue(matchingVenue.id);
+        }
     }
 
     private findMatchingVenue(tournamentVenue: Venue | undefined): Venue | null {
-        if (!tournamentVenue || !this.venues) return null;
-        return this.venues.find(v => v.id === tournamentVenue.id) || null;
+        if (!tournamentVenue || !this.venues) {
+            return null;
+        }
+        
+        // Try exact ID match first
+        let matchingVenue = this.venues.find(v => v.id === tournamentVenue.id);
+        
+        // If no exact match, try matching by name as fallback
+        if (!matchingVenue && tournamentVenue.name) {
+            matchingVenue = this.venues.find(v => v.name === tournamentVenue.name);
+        }
+        
+        return matchingVenue || null;
     }
 
     onSave(): void {
@@ -417,14 +452,21 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     isRoundRobinFormat(): boolean {
-        const format = this.tournamentForm.get('format')?.value;
-        return format === 'round_robin';
+        const selectedFormatId = this.tournamentForm.get('format')?.value;
+        if (!selectedFormatId) return false;
+        
+        const selectedFormat = this.formats.find(f => f.id === selectedFormatId);
+        return selectedFormat?.name === 'Round Robin';
     }
 
     isGroupBasedElimination(): boolean {
-        const format = this.tournamentForm.get('format')?.value;
+        const selectedFormatId = this.tournamentForm.get('format')?.value;
         const progressionOption = this.tournamentForm.get('progressionOption')?.value;
-        return format === 'round_robin' && progressionOption === 'group_based_elimination';
+        
+        if (!selectedFormatId) return false;
+        const selectedFormat = this.formats.find(f => f.id === selectedFormatId);
+        
+        return selectedFormat?.name === 'Round Robin' && progressionOption === 'group-based';
     }
 
     getTeamsPerGroup(): number {
@@ -499,7 +541,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
 
     isTrophyPlateModel(): boolean {
         const advancementModel = this.tournamentForm.get('advancementModel')?.value;
-        return advancementModel === 'trophy_plate';
+        return advancementModel === 'trophy-plate';
     }
 
     private evenNumberValidator() {

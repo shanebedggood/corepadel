@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
-import { FirebaseAuthService, UserRole } from '../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { UserService } from '../../services/user.service';
 import { LayoutService } from '../service/layout.service';
 import { Observable, map, Subscription, switchMap } from 'rxjs';
@@ -49,12 +49,14 @@ import { Observable, map, Subscription, switchMap } from 'rxjs';
                         </button>
 
                         <!-- Role switcher for users with multiple roles -->
-                        <div *ngIf="hasMultipleRoles$ | async" class="border-t border-gray-200 mt-2 pt-2">
-                            <button type="button" class="layout-topbar-action text-green-900 hover:bg-green-50 text-base font-semibold !text-lg" (click)="switchToAdmin()">
-                                <i class="pi pi-arrow-right-arrow-left text-lg"></i>
-                                <span class="text-base font-semibold">Switch to Admin</span>
-                            </button>
-                        </div>
+                        @if (hasMultipleRoles$ | async) {
+                            <div class="border-t border-gray-200 mt-2 pt-2">
+                                <button type="button" class="layout-topbar-action text-green-900 hover:bg-green-50 text-base font-semibold !text-lg" (click)="switchToAdmin()">
+                                    <i class="pi pi-arrow-right-arrow-left text-lg"></i>
+                                    <span class="text-base font-semibold">Switch to Admin</span>
+                                </button>
+                            </div>
+                        }
 
                         <div class="border-t border-gray-200 mt-2 pt-2">
                             <button type="button" class="layout-topbar-action text-green-900 hover:bg-green-50 !text-lg" (click)="onLogoutClick()">
@@ -79,9 +81,11 @@ import { Observable, map, Subscription, switchMap } from 'rxjs';
                         </button>
 
                         <!-- Role switcher for users with multiple roles -->
-                        <button *ngIf="hasMultipleRoles$ | async" type="button" class="layout-topbar-action flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-green-50 transition-colors duration-200 text-white !text-lg" (click)="switchToAdmin()">
-                            <i class="pi pi-arrow-right-arrow-left text-white text-lg"></i>
-                        </button>
+                        @if (hasMultipleRoles$ | async) {
+                            <button type="button" class="layout-topbar-action flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-green-50 transition-colors duration-200 text-white !text-lg" (click)="switchToAdmin()">
+                                <i class="pi pi-arrow-right-arrow-left text-white text-lg"></i>
+                            </button>
+                        }
                         <button type="button" class="layout-topbar-action flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-green-50 transition-colors duration-200 text-white !text-lg" (click)="onLogoutClick()">
                             <i class="pi pi-sign-out text-white"></i>
                         </button>
@@ -108,12 +112,14 @@ export class PlayerTopbarComponent implements OnInit, OnDestroy {
         private authService: FirebaseAuthService,
         private userService: UserService
     ) {
-        this.isAuthenticated$ = this.authService.isAuthenticated();
-        this.userProfile$ = this.authService.getCurrentUserProfile();
-        this.hasMultipleRoles$ = this.authService.getUserRoles().pipe(
-            map(roles => roles.length > 1)
+        this.isAuthenticated$ = this.authService.isAuthenticated$;
+        this.userProfile$ = this.authService.userProfile$;
+        this.hasMultipleRoles$ = this.authService.userProfile$.pipe(
+            map((profile: any) => profile?.roles?.length > 1 || false)
         );
-        this.hasPlayerRole$ = this.authService.hasRole('player');
+        this.hasPlayerRole$ = this.authService.userProfile$.pipe(
+            map((profile: any) => profile?.roles?.includes('player') || false)
+        );
     }
 
     ngOnInit() {
@@ -153,45 +159,28 @@ export class PlayerTopbarComponent implements OnInit, OnDestroy {
         this.router.navigate(['/player/profile']);
     }
 
-    switchToAdmin() {
-        // First ensure user is synced to PostgreSQL, then assign role
-        this.authService.getUserProfileAndSync().pipe(
-            switchMap(profile => {
-                if (!profile) {
-                    throw new Error('No user profile found');
-                }
-                // Use the new method that handles Firebase UID to PostgreSQL user ID conversion
-                return this.userService.addRoleToUserByFirebaseUid(profile.firebase_uid, 'admin');
-            })
-        ).subscribe({
-            next: (userRole) => {
-                // Close mobile menu
-                this.isMobileMenuVisible = false;
-                // Navigate to admin dashboard
-                this.router.navigate(['/admin']);
-            },
-            error: (error) => {
-                console.error('Failed to assign admin role:', error);
-                // Close mobile menu
-                this.isMobileMenuVisible = false;
-                // Check if it's a duplicate role error (which is actually OK)
-                if (error.status === 500 && error.error && error.error.includes('duplicate key')) {
-                    console.log('User already has admin role, proceeding with navigation');
-                }
-                // Navigate to admin dashboard regardless
-                this.router.navigate(['/admin']);
+    async switchToAdmin() {
+        try {
+            const currentUser = this.authService.getCurrentUser();
+            if (!currentUser) {
+                console.error('No user found');
+                return;
             }
-        });
+
+            // For now, just navigate to admin - role assignment can be handled later
+            this.isMobileMenuVisible = false;
+            this.router.navigate(['/admin']);
+        } catch (error) {
+            console.error('Failed to switch to admin:', error);
+        }
     }
 
-    onLogoutClick() {
-        this.authService.signOut().subscribe({
-            next: () => {
-                this.router.navigate(['/']);
-            },
-            error: (error: any) => {
-                console.error('Logout error:', error);
-            }
-        });
+    async onLogoutClick() {
+        try {
+            await this.authService.signOut();
+            this.router.navigate(['/']);
+        } catch (error: any) {
+            console.error('Logout error:', error);
+        }
     }
 }

@@ -5,7 +5,8 @@ import { Observable, of, Subject, takeUntil, combineLatest } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { TournamentService, TournamentGroup, TournamentTeam, TournamentPlayer } from '../../../../services/tournament.service';
-import { FirebaseAuthService, UserProfile } from '../../../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
+import { UserProfile } from '../../../../models/user-profile';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from "@angular/forms";
 import { InputTextModule } from 'primeng/inputtext';
 import { InputGroupModule } from 'primeng/inputgroup';
@@ -206,7 +207,6 @@ export class AddTeamComponent implements OnInit, AfterViewInit {
 
                 // Convert TournamentPlayer to UserProfile for selected players
                 this.selectedPlayers = (this.editingTeam.players || []).map(player => ({
-                    user_id: player.uid,
                     firebase_uid: player.uid,
                     email: player.email,
                     display_name: player.displayName || `${player.firstName || ''} ${player.lastName || ''}`.trim() || player.email,
@@ -253,71 +253,13 @@ export class AddTeamComponent implements OnInit, AfterViewInit {
         this.searchLoading = true;
         this.searchResults = [];
 
-        this.authService.listPlayersWithPagination(
-            1, // page
-            50  // limit
-        ).subscribe({
-            next: (result) => {
-                // Debug: Check for duplicates in server response
-                const uidCounts = new Map<string, number>();
-                result.users.forEach(user => {
-                    if (user && user.firebase_uid) {
-                        uidCounts.set(user.firebase_uid, (uidCounts.get(user.firebase_uid) || 0) + 1);
-                    }
-                });
-
-                const duplicates = Array.from(uidCounts.entries()).filter(([uid, count]) => count > 1);
-                // Create a Map to deduplicate users by UID
-                const userMap = new Map<string, any>();
-
-                result.users
-                    .filter(user => user && user.firebase_uid && user.email)
-                    .forEach(user => {
-                        // Only add if not already in map (deduplication by UID)
-                        if (!userMap.has(user.firebase_uid)) {
-                            userMap.set(user.firebase_uid, {
-                                user_id: user.firebase_uid,
-                                firebase_uid: user.firebase_uid,
-                                email: user.email,
-                                display_name: user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
-                                first_name: user.first_name || '',
-                                last_name: user.last_name || '',
-                                username: user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
-                                roles: ['player'],
-                                email_verified: true,
-                                mobile: '',
-                                rating: 1.0,
-                                profile_picture: undefined,
-                            });
-                        }
-                    });
-
-                const allUsers = Array.from(userMap.values())
-                    .filter(player => player.displayName && player.displayName.trim() !== '');
-
-                // Filter out already selected players
-                this.searchResults = allUsers.filter(player =>
-                    !this.selectedPlayers.some(sp => sp.firebase_uid === player.firebase_uid)
-                );
-
-                // Force change detection to ensure the view updates
-                this.cdr.detectChanges();
-
-                this.hasSearched = true;
-                this.searchLoading = false;
-            },
-            error: (error) => {
-                console.error('Error searching players:', error);
-                this.searchResults = [];
-                this.hasSearched = false;
-                this.searchLoading = false;
-                this.messageService.add({
-                    life: 0, // Make toast sticky
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to search players'
-                });
-            }
+        // For now, show a message that player search is not yet implemented with Firebase
+        this.searchLoading = false;
+        this.messageService.add({
+            life: 0, // Make toast sticky
+            severity: 'warn',
+            summary: 'Not Implemented',
+            detail: 'Player search not yet implemented with Firebase Auth'
         });
     }
 
@@ -339,7 +281,7 @@ export class AddTeamComponent implements OnInit, AfterViewInit {
 
     selectPlayer(player: UserProfile): void {
 
-        if (this.selectedPlayers.some(sp => sp.firebase_uid === player.firebase_uid)) {
+                    if (this.selectedPlayers.some(sp => sp.firebase_uid === player.firebase_uid)) {
             this.messageService.add({
                 life: 0, // Make toast sticky
                 severity: 'warn',
@@ -383,7 +325,7 @@ export class AddTeamComponent implements OnInit, AfterViewInit {
 
         // Convert selected players to TournamentPlayer format
         const teamPlayers: TournamentPlayer[] = this.selectedPlayers.map(player => ({
-            uid: player.firebase_uid,
+                            uid: player.firebase_uid,
             email: player.email,
             displayName: player.display_name || `${player.first_name || ''} ${player.last_name || ''}`.trim() || player.email,
             firstName: player.first_name,
@@ -468,9 +410,14 @@ export class AddTeamComponent implements OnInit, AfterViewInit {
     }
 
     generateRandomTeamName(): void {
-        const randomName = this.tournamentService.generateRandomTeamName();
-        this.teamName = randomName;
-        this.teamForm.patchValue({ name: randomName });
+        // Get the next available team number for this group
+        this.tournamentService.getAllTournamentTeams(this.tournamentId).subscribe(teamsArray => {
+            const groupTeams = teamsArray.find(group => group.some(team => team.groupId === this.groupId)) || [];
+            const nextTeamNumber = groupTeams.length + 1;
+            const teamName = `Team ${nextTeamNumber}`;
+            this.teamName = teamName;
+            this.teamForm.patchValue({ name: teamName });
+        });
     }
 
     onTeamNameInput(event: any): void {

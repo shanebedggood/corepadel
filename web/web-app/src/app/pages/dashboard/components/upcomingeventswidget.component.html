@@ -12,7 +12,9 @@
         <ng-template let-event let-i="index" pTemplate="item">
             <div class="h-full w-full">
                 <div class="border-2 border-gray-400 dark:border-gray-600 rounded-lg hover:shadow-md transition-shadow p-4 sm:p-6 w-full bg-gray-200 md:bg-transparent">
-                    <img *ngIf="event.image" [src]="event.image" alt="Event image" class="w-full h-32 sm:h-40 object-cover rounded-t-md mb-4" />
+                    @if (event.image) {
+                        <img [src]="event.image" alt="Event image" class="w-full h-32 sm:h-40 object-cover rounded-t-md mb-4" />
+                    }
                     <div class="flex items-center gap-3 mb-3">
                         <div class="w-10 h-10 flex items-center justify-center bg-primary-100 dark:bg-primary-400/10 rounded-full shrink-0">
                             <i class="pi pi-calendar !text-lg text-white">

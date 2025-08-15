@@ -88,10 +88,11 @@
                     </label>
                     <input pInputText id="maxParticipants" type="number" formControlName="maxParticipants" 
                            class="w-full" placeholder="Enter max participants" />
-                    <div *ngIf="tournamentForm.get('maxParticipants')?.errors?.['oddNumber']" 
-                         class="text-red-500 text-sm mt-1">
-                        {{ tournamentForm.get('maxParticipants')?.errors?.['oddNumber']?.message }}
-                    </div>
+                    @if (tournamentForm.get('maxParticipants')?.errors?.['oddNumber']) {
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ tournamentForm.get('maxParticipants')?.errors?.['oddNumber']?.message }}
+                        </div>
+                    }
                 </div>
                 <div class="field">
                     <label for="noOfGroups" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
@@ -99,23 +100,26 @@
                     </label>
                     <input pInputText id="noOfGroups" type="number" formControlName="noOfGroups" 
                            class="w-full" placeholder="Enter number of groups" />
-                    <div *ngIf="tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']" 
-                         class="text-red-500 text-sm mt-1">
-                        {{ tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']?.message }}
-                    </div>
+                    @if (tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']) {
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']?.message }}
+                        </div>
+                    }
                 </div>
             </div>
             
             <!-- Group Configuration Summary -->
-            <div *ngIf="getTeamsPerGroup() > 0" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div class="flex items-center">
-                    <i class="pi pi-info-circle text-blue-600 dark:text-blue-400 mr-2"></i>
-                    <p class="text-md text-blue-600 dark:text-blue-400">
-                        Based on {{ tournamentForm.get('maxParticipants')?.value }} participants
-                        and {{ tournamentForm.get('noOfGroups')?.value }} groups.
-                    </p>
+            @if (getTeamsPerGroup() > 0) {
+                <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="pi pi-info-circle text-blue-600 dark:text-blue-400 mr-2"></i>
+                        <p class="text-md text-blue-600 dark:text-blue-400">
+                            Based on {{ tournamentForm.get('maxParticipants')?.value }} participants
+                            and {{ tournamentForm.get('noOfGroups')?.value }} groups.
+                        </p>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
 
         <!-- Tournament Settings Section -->
@@ -179,19 +183,22 @@
                     optionLabel="name" optionValue="id" placeholder="Select venue type"
                     class="w-full"></p-select>
                 </div>
-                <div class="field" *ngIf="shouldShowVenueSelection()">
-                    <label for="venue" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                        Venue <span class="text-red-500">*</span>
-                    </label>
-                                    <p-select id="venue" formControlName="venue" [options]="venues"
-                    optionLabel="name" optionValue="id" placeholder="Select venue"
-                    class="w-full"></p-select>
-                </div>
+                @if (shouldShowVenueSelection()) {
+                    <div class="field">
+                        <label for="venue" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                            Venue <span class="text-red-500">*</span>
+                        </label>
+                                        <p-select id="venue" formControlName="venue" [options]="venues"
+                        optionLabel="name" optionValue="id" placeholder="Select venue"
+                        class="w-full"></p-select>
+                    </div>
+                }
             </div>
         </div>
 
         <!-- Round Robin Configuration Section -->
-        <div *ngIf="isRoundRobinFormat()" class="border-b border-gray-200 dark:border-gray-700 pb-6">
+        @if (isRoundRobinFormat()) {
+            <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
             <div class="flex items-center mb-4">
                 <div class="bg-teal-100 dark:bg-teal-900/30 p-2 rounded-lg mr-3">
                     <i class="pi pi-sitemap text-teal-600 dark:text-teal-400"></i>
@@ -210,49 +217,57 @@
             </div>
 
             <!-- Group Advancement Settings -->
-            <div *ngIf="shouldShowGroupAdvancementSettings()" class="mt-6">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Group Advancement Settings</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="field">
-                        <label for="advancementModel" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                            Advancement Model <span class="text-red-500">*</span>
-                        </label>
-                                        <p-select id="advancementModel" formControlName="advancementModel" [options]="advancementModels"
-                    optionLabel="name" optionValue="id" placeholder="Select advancement model"
-                    class="w-full"></p-select>
+            @if (shouldShowGroupAdvancementSettings()) {
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Group Advancement Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field">
+                            <label for="advancementModel" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                Advancement Model <span class="text-red-500">*</span>
+                            </label>
+                            <p-select id="advancementModel" formControlName="advancementModel" [options]="advancementModels"
+                                optionLabel="name" optionValue="id" placeholder="Select advancement model"
+                                class="w-full"></p-select>
+                        </div>
+                        <div class="field">
+                            <label for="eliminationBracketSize" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                Elimination Bracket Size <span class="text-red-500">*</span>
+                            </label>
+                            <p-select id="eliminationBracketSize" formControlName="eliminationBracketSize"
+                                [options]="eliminationBracketSizes" optionLabel="name" optionValue="id"
+                                placeholder="Select bracket size" class="w-full"></p-select>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label for="eliminationBracketSize" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                            Elimination Bracket Size <span class="text-red-500">*</span>
-                        </label>
-                                        <p-select id="eliminationBracketSize" formControlName="eliminationBracketSize"
-                    [options]="eliminationBracketSizes" optionLabel="name" optionValue="id"
-                    placeholder="Select bracket size" class="w-full"></p-select>
-                    </div>
-                </div>
 
-                <!-- Advancement Summary -->
-                <div *ngIf="isGroupBasedElimination()" class="mt-4 p-4 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div class="text-center">
-                            <div class="font-semibold text-teal-800 dark:text-teal-200">Teams per Group</div>
-                            <div class="text-teal-600 dark:text-teal-400">{{ getTeamsPerGroup() }}</div>
+                    <!-- Advancement Summary -->
+                    @if (isGroupBasedElimination()) {
+                        <div class="mt-4 p-4 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div class="text-center">
+                                    <div class="font-semibold text-teal-800 dark:text-teal-200">Teams per Group</div>
+                                    <div class="text-teal-600 dark:text-teal-400">{{ getTeamsPerGroup() }}</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="font-semibold text-teal-800 dark:text-teal-200">To Elimination</div>
+                                    <div class="text-teal-600 dark:text-teal-400">{{ getTeamsAdvancingToElimination() }}</div>
+                                </div>
+                                @if (isTrophyPlateModel()) {
+                                    <div class="text-center">
+                                        <div class="font-semibold text-teal-800 dark:text-teal-200">To Plate</div>
+                                        <div class="text-teal-600 dark:text-teal-400">{{ getTeamsAdvancingToPlate() }}</div>
+                                    </div>
+                                }
+                            </div>
                         </div>
-                        <div class="text-center">
-                            <div class="font-semibold text-teal-800 dark:text-teal-200">To Elimination</div>
-                            <div class="text-teal-600 dark:text-teal-400">{{ getTeamsAdvancingToElimination() }}</div>
-                        </div>
-                        <div class="text-center" *ngIf="isTrophyPlateModel()">
-                            <div class="font-semibold text-teal-800 dark:text-teal-200">To Plate</div>
-                            <div class="text-teal-600 dark:text-teal-400">{{ getTeamsAdvancingToPlate() }}</div>
-                        </div>
-                    </div>
+                    }
                 </div>
-            </div>
+            }
         </div>
+    }
 
         <!-- Validation Error Message -->
-        <div *ngIf="errorMessage" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        @if (errorMessage) {
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div class="flex items-start">
                 <i class="pi pi-exclamation-triangle text-red-600 mt-1 mr-3"></i>
                 <div class="flex-1">
@@ -263,9 +278,11 @@
                 </div>
             </div>
         </div>
+        }
 
         <!-- Success Message -->
-        <div *ngIf="successMessage" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        @if (successMessage) {
+            <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-start">
                 <i class="pi pi-check-circle text-green-600 mt-1 mr-3"></i>
                 <div class="flex-1">
@@ -276,6 +293,7 @@
                 </div>
             </div>
         </div>
+        }
 
         <!-- Form Actions -->
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">

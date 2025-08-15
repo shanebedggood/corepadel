@@ -7,22 +7,34 @@ import { TournamentMatch } from '../../../../services/tournament.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="match-score-display" *ngIf="match">
-      <div class="score-sets">
-        <div class="score-set">
-          <div class="set-score">
-            <span *ngFor="let score of getTeam1ScoresArray()" class="score-number">{{ score }}</span>
-          </div>
-          <div *ngIf="getCompletedSets().length > 1" class="set-separator">—</div>
-          <div *ngIf="getCompletedSets().length > 1" class="set-score">
-            <span *ngFor="let score of getTeam2ScoresArray()" class="score-number">{{ score }}</span>
+    @if (match) {
+      <div class="match-score-display">
+        <div class="score-sets">
+          <div class="score-set">
+            <div class="set-score">
+              @for (score of getTeam1ScoresArray(); track score) {
+                <span class="score-number">{{ score }}</span>
+              }
+            </div>
+            @if (getCompletedSets().length > 1) {
+              <div class="set-separator">—</div>
+            }
+            @if (getCompletedSets().length > 1) {
+              <div class="set-score">
+                @for (score of getTeam2ScoresArray(); track score) {
+                  <span class="score-number">{{ score }}</span>
+                }
+              </div>
+            }
           </div>
         </div>
+        @if (getCompletedSets().length === 0) {
+          <div class="no-score">
+            No score
+          </div>
+        }
       </div>
-      <div *ngIf="getCompletedSets().length === 0" class="no-score">
-        No score
-      </div>
-    </div>
+    }
   `,
   styles: [`
     .match-score-display {

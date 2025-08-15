@@ -1,6 +1,7 @@
 <div class="relative min-h-screen flex items-center justify-center overflow-hidden">
   <!-- Responsive background image -->
-  <picture class="absolute inset-0" *ngIf="imageUrls">
+  @if (imageUrls) {
+    <picture class="absolute inset-0">
     <!-- Small WebP -->
     <source [srcset]="imageUrls.webp.small" media="(max-width: 768px)" type="image/webp" />
     <!-- Medium WebP -->
@@ -11,7 +12,8 @@
     <source [srcset]="imageUrls.jpg.small" media="(max-width: 768px)" />
     <source [srcset]="imageUrls.jpg.medium" media="(max-width: 1200px)" />
     <img [src]="imageUrls.jpg.large" alt="Hero background" class="absolute inset-0 w-full h-full object-cover" />
-  </picture>
+    </picture>
+  }
   
   <div class="absolute inset-0 bg-black/50"></div>
 
@@ -21,35 +23,60 @@
             <div class="text-center mb-8">
                 <!-- App Icon -->
                 <img src="assets/logo.svg" alt="Core Padel Logo" class="mb-6 w-24 shrink-0 mx-auto" />
-                <h1 class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Welcome to Core Padel</h1>
-                <p class="text-surface-600 dark:text-surface-400 text-lg">Choose your role to continue</p>
+                <h1 class="text-white text-3xl font-medium mb-4">Welcome to Core Padel</h1>
+                <p class="text-gray-200 text-lg">Choose your role to continue</p>
             </div>
 
             <div class="space-y-6">
-                <!-- Player Role -->
-                <div class="transition-all duration-200 ease-in-out hover:-translate-y-0.5">
+                <!-- Player Role (visible only if user has role) -->
+                @if (hasPlayerRole$ | async) {
+                    <div class="transition-all duration-200 ease-in-out hover:-translate-y-0.5">
                     <button pButton type="button" label="Continue as Player" icon="pi pi-user"
                         class="w-full p-button-lg pRipple lg:font-semibold py-4 px-8" (click)="switchToRole('player')">
                     </button>
-                    <p class="text-lg text-surface-500 dark:text-surface-400 mt-2 text-center">
+                    <p class="text-lg text-gray-300 mt-2 text-center">
                         Access tournaments, matches, and player features
                     </p>
-                </div>
+                    </div>
+                }
 
-                <!-- Admin Role -->
-                <div class="transition-all duration-200 ease-in-out hover:-translate-y-0.5">
+                <!-- Admin Role (visible only if user has role) -->
+                @if (hasAdminRole$ | async) {
+                    <div class="transition-all duration-200 ease-in-out hover:-translate-y-0.5">
                     <button pButton type="button" label="Continue as Admin" icon="pi pi-shield"
                         class="w-full p-button-lg pRipple lg:font-semibold py-4 px-8" (click)="switchToRole('admin')">
                     </button>
-                    <p class="text-lg text-surface-500 dark:text-surface-400 mt-2 text-center">
+                    <p class="text-lg text-gray-300 mt-2 text-center">
                         Manage tournaments, users, and system administration
                     </p>
-                </div>
+                    </div>
+                }
+
+                <!-- Fallback: Show both roles if API fails -->
+                @if ((hasPlayerRole$ | async) === false && (hasAdminRole$ | async) === false && showFallbackRoles) {
+                    <div class="transition-all duration-200 ease-in-out hover:-translate-y-0.5">
+                    <div class="text-center mb-4">
+                        <p class="text-gray-200 text-lg mb-4">
+                            Unable to load your roles. You can try to continue with either role:
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <button pButton type="button" label="Continue as Player" icon="pi pi-user"
+                            class="w-full p-button-lg pRipple lg:font-semibold py-4 px-8" (click)="switchToRole('player')">
+                        </button>
+                        
+                        <button pButton type="button" label="Continue as Admin" icon="pi pi-shield"
+                            class="w-full p-button-lg pRipple lg:font-semibold py-4 px-8" (click)="switchToRole('admin')">
+                        </button>
+                    </div>
+                    </div>
+                }
 
                 <!-- More prominent Sign Out option -->
-                <div class="text-center pt-4 border-t border-surface-200 dark:border-surface-700">
+                <div class="text-center pt-4 border-t border-gray-600">
                     <a href="#"
-                        class="inline-flex items-center gap-2 text-blue-600 text-xl hover:text-blue-800 underline hover:no-underline transition-colors duration-200"
+                        class="inline-flex items-center gap-2 text-blue-300 text-xl hover:text-blue-100 underline hover:no-underline transition-colors duration-200"
                         (click)="signOut(); $event.preventDefault()">
                         <i class="pi pi-sign-out"></i>
                         Sign Out

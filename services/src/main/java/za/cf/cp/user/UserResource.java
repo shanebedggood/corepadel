@@ -240,6 +240,22 @@ public class UserResource {
                     .build();
         }
     }
+
+    /**
+     * Get all roles for a user by Firebase UID
+     */
+    @GET
+    @Path("/firebase/{firebaseUid}/roles")
+    public Response getUserRolesByFirebaseUid(@PathParam("firebaseUid") String firebaseUid) {
+        try {
+            List<za.cf.cp.user.UserRole> roles = userService.getUserRolesByFirebaseUid(firebaseUid);
+            return Response.ok(roles).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error retrieving user roles: " + e.getMessage())
+                    .build();
+        }
+    }
     
     /**
      * Add a role to a user
@@ -262,6 +278,26 @@ public class UserResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Invalid user ID format: " + userIdStr)
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error adding role to user: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    /**
+     * Add a role to a user by Firebase UID
+     */
+    @POST
+    @Path("/firebase/{firebaseUid}/roles")
+    public Response addRoleToUserByFirebaseUid(@PathParam("firebaseUid") String firebaseUid, @QueryParam("role") String roleName) {
+        try {
+            za.cf.cp.user.UserRole userRole = userService.addRoleToUserByFirebaseUid(firebaseUid, roleName);
+            return Response.status(Response.Status.CREATED).entity(userRole).build();
+        } catch (RuntimeException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(e.getMessage())
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)

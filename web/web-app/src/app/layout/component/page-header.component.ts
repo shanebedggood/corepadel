@@ -26,17 +26,18 @@ interface PrimeBreadcrumbItem {
     <div class="page-header-container">
       <!-- Breadcrumbs -->
       <div class="mb-2 pl-0">
-        <p-breadcrumb 
-          *ngIf="breadcrumbs && breadcrumbs.length > 0" 
-          [model]="primeBreadcrumbItems" 
-          [home]="(homeItem$ | async) || undefined">
-          <ng-template #item let-item>
-            <a class="cursor-pointer" [routerLink]="item.url">
-              {{ item.label }}
-            </a>
-          </ng-template>
-          <ng-template #separator> / </ng-template>
-        </p-breadcrumb>
+        @if (breadcrumbs && breadcrumbs.length > 0) {
+          <p-breadcrumb 
+            [model]="primeBreadcrumbItems" 
+            [home]="(homeItem$ | async) || undefined">
+            <ng-template #item let-item>
+              <a class="cursor-pointer" [routerLink]="item.url">
+                {{ item.label }}
+              </a>
+            </ng-template>
+            <ng-template #separator> / </ng-template>
+          </p-breadcrumb>
+        }
       </div>
 
       <!-- Page Title -->
@@ -45,9 +46,11 @@ interface PrimeBreadcrumbItem {
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
             {{ title }}
           </h1>
-          <p *ngIf="subtitle" class="text-gray-600 dark:text-gray-400 mb-1">
-            {{ subtitle }}
-          </p>
+          @if (subtitle) {
+            <p class="text-gray-600 dark:text-gray-400 mb-1">
+              {{ subtitle }}
+            </p>
+          }
         </div>
         <div class="flex items-center">
           <ng-content select="[header-actions]"></ng-content>
@@ -66,8 +69,9 @@ export class PageHeaderComponent implements OnInit, OnDestroy {
 
   constructor(private authService: FirebaseAuthService) {
     // Create dynamic home item based on user role
-    this.homeItem$ = this.authService.getUserRoles().pipe(
-      map(roles => {
+    this.homeItem$ = this.authService.userProfile$.pipe(
+      map(profile => {
+        const roles = profile?.roles || [];
         // Determine the appropriate home route based on user roles
         if (roles.includes('admin')) {
           return {

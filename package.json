@@ -1,0 +1,27 @@
+{
+  "name": "core-padel",
+  "version": "1.0.0",
+  "description": "Core Padel Tournament Management System",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:angular\" \"npm run dev:firebase\" \"npm run dev:quarkus\"",
+    "dev:angular": "cd web/web-app && npm start",
+    "dev:firebase": "firebase emulators:start --only auth,functions",
+    "dev:quarkus": "cd services && ./mvnw quarkus:dev",
+    "dev:postgres": "docker-compose up -d postgres",
+    "build": "cd web/web-app && npm run build",
+    "test": "cd web/web-app && npm test",
+    "firebase:emulators": "firebase emulators:start",
+    "firebase:deploy": "firebase deploy",
+    "functions:build": "cd functions && npm run build",
+    "functions:serve": "cd functions && npm run serve",
+    "quarkus:dev": "cd services && ./mvnw quarkus:dev",
+    "quarkus:build": "cd services && ./mvnw clean package",
+    "quarkus:test": "cd services && ./mvnw test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["padel", "tournament", "firebase", "angular", "quarkus"],
+  "author": "Core Padel Team",
+  "license": "MIT"
+}

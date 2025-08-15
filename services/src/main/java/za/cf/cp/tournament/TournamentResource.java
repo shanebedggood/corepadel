@@ -28,9 +28,14 @@ public class TournamentResource {
     @GET
     public Response getAllTournaments() {
         try {
+            System.out.println("=== GET ALL TOURNAMENTS API CALLED ===");
             List<TournamentDto> tournaments = tournamentService.getAllTournaments();
+            System.out.println("Returning " + tournaments.size() + " tournaments");
             return Response.ok(tournaments).build();
         } catch (Exception e) {
+            System.err.println("=== GET ALL TOURNAMENTS API ERROR ===");
+            System.err.println("Error in getAllTournaments: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving tournaments: " + e.getMessage())
                     .build();
@@ -175,9 +180,15 @@ public class TournamentResource {
     @Path("/{tournamentId}/participants")
     public Response getTournamentParticipants(@PathParam("tournamentId") String tournamentId) {
         try {
+            System.out.println("=== GET TOURNAMENT PARTICIPANTS API CALLED ===");
+            System.out.println("Tournament ID: " + tournamentId);
             List<Object> participants = tournamentService.getTournamentParticipants(tournamentId);
+            System.out.println("Returning " + participants.size() + " participants");
             return Response.ok(participants).build();
         } catch (Exception e) {
+            System.err.println("=== GET TOURNAMENT PARTICIPANTS API ERROR ===");
+            System.err.println("Error in getTournamentParticipants: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving participants: " + e.getMessage())
                     .build();

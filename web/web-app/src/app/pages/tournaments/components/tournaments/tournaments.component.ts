@@ -62,7 +62,7 @@ export class TournamentsComponent implements OnInit {
 
     ngOnInit(): void {
         // Wait for authentication state to be properly initialized before loading data
-        this.authService.isAuthenticated().pipe(
+        this.authService.isAuthenticated$.pipe(
             filter(isAuthenticated => isAuthenticated !== null),
             take(1)
         ).subscribe(() => {
@@ -118,6 +118,11 @@ export class TournamentsComponent implements OnInit {
             config: this.tournamentConfigService.getTournamentConfig()
         }).pipe(
             switchMap(({ tournaments, config }) => {
+                // If no tournaments, return empty array immediately
+                if (tournaments.length === 0) {
+                    return of([]);
+                }
+                
                 // Create a map of statuses for quick lookup
                 const statusMap = new Map<string, TournamentStatus>();
                 config.statuses.forEach(status => {
@@ -162,10 +167,8 @@ export class TournamentsComponent implements OnInit {
      * Check admin status
      */
     checkAdminStatus(): Observable<boolean> {
-        return this.authService.isAdmin().pipe(
-            map(isAdmin => {
-                return isAdmin;
-            }),
+        return this.authService.userProfile$.pipe(
+            map(profile => profile?.roles.includes('admin') || false),
             catchError(error => {
                 console.error('Error checking admin status: ', error);
                 return of(false);
@@ -351,5 +354,10 @@ export class TournamentsComponent implements OnInit {
         if (!start || !end) return '';
         
         return `${start} - ${end}`;
+    }
+
+    // TrackBy method for better performance
+    trackByTournamentId(index: number, tournament: Tournament): string {
+        return tournament.id || `tournament-${index}`;
     }
 } 

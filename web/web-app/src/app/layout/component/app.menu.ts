@@ -10,9 +10,10 @@ export class AppMenu {
     constructor(private authService: FirebaseAuthService) {}
 
     getMenuItems(): Observable<MenuItem[]> {
-        return this.authService.getUserRoles().pipe(
-            map(roles => {
+        return this.authService.userProfile$.pipe(
+            map(profile => {
                 const menuItems: MenuItem[] = [];
+                const roles = profile?.roles || [];
 
                 // Add menu items based on user roles
                 if (roles.includes('player')) {

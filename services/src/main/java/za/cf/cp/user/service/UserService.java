@@ -138,6 +138,29 @@ public class UserService {
     public List<UserRole> getUserRoles(UUID userId) {
         return UserRole.find("user.userId", userId).list();
     }
+
+    /**
+     * Get all roles for a user by Firebase UID
+     */
+    public List<UserRole> getUserRolesByFirebaseUid(String firebaseUid) {
+        return UserRole.find("user.firebaseUid", firebaseUid).list();
+    }
+
+    /**
+     * Add a role to a user by Firebase UID
+     * Note: User creation is now handled automatically by Lambda trigger on email confirmation.
+     * This method is only for role assignment to existing users.
+     */
+    @Transactional
+    public UserRole addRoleToUserByFirebaseUid(String firebaseUid, String roleName) {
+        Optional<User> userOpt = findByFirebaseUid(firebaseUid);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with Firebase UID: " + firebaseUid);
+        }
+        
+        User user = userOpt.get();
+        return addRoleToUser(user, roleName);
+    }
     
     /**
      * Add a user to a club

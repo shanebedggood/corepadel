@@ -13,7 +13,7 @@ export class AdminGuard implements CanActivate {
     ) { }
 
     canActivate(): Observable<boolean> {
-        return this.authService.isAuthenticated().pipe(
+        return this.authService.isAuthenticated$.pipe(
             take(1),
             switchMap(isAuthenticated => {
                 if (!isAuthenticated) {
@@ -23,9 +23,9 @@ export class AdminGuard implements CanActivate {
                 }
                 
                 // Check if user has admin role
-                return this.authService.isAdmin().pipe(
-                    map(isAdmin => {
-                        if (!isAdmin) {
+                return this.authService.userProfile$.pipe(
+                    map(profile => {
+                        if (!profile || !profile.roles.includes('admin')) {
                             this.router.navigate(['/choose-role']);
                             return false;
                         }

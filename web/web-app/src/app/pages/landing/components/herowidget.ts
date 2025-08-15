@@ -12,18 +12,20 @@ import { Subscription } from 'rxjs';
     template: `
     <div id="hero" class="relative min-h-[600px] flex items-center justify-center">
       <!-- Responsive background image -->
-      <picture class="absolute inset-0" *ngIf="imageUrls">
-        <!-- Small WebP -->
-        <source [srcset]="imageUrls.webp.small" media="(max-width: 768px)" type="image/webp" />
-        <!-- Medium WebP -->
-        <source [srcset]="imageUrls.webp.medium" media="(max-width: 1200px)" type="image/webp" />
-        <!-- Large WebP -->
-        <source [srcset]="imageUrls.webp.large" type="image/webp" />
-        <!-- Fallbacks -->
-        <source [srcset]="imageUrls.jpg.small" media="(max-width: 768px)" />
-        <source [srcset]="imageUrls.jpg.medium" media="(max-width: 1200px)" />
-        <img [src]="imageUrls.jpg.large" alt="Hero background" class="absolute inset-0 w-full h-full object-cover" />
-      </picture>
+      @if (imageUrls) {
+        <picture class="absolute inset-0">
+          <!-- Small WebP -->
+          <source [srcset]="imageUrls.webp.small" media="(max-width: 768px)" type="image/webp" />
+          <!-- Medium WebP -->
+          <source [srcset]="imageUrls.webp.medium" media="(max-width: 1200px)" type="image/webp" />
+          <!-- Large WebP -->
+          <source [srcset]="imageUrls.webp.large" type="image/webp" />
+          <!-- Fallbacks -->
+          <source [srcset]="imageUrls.jpg.small" media="(max-width: 768px)" />
+          <source [srcset]="imageUrls.jpg.medium" media="(max-width: 1200px)" />
+          <img [src]="imageUrls.jpg.large" alt="Hero background" class="absolute inset-0 w-full h-full object-cover" />
+        </picture>
+      }
       
       <div class="absolute inset-0 bg-black/50"></div>
       
@@ -39,7 +41,7 @@ import { Subscription } from 'rxjs';
             pButton 
             pRipple 
             label="Sign In" 
-            routerLink="/auth/email-input" 
+            routerLink="/auth" 
             [rounded]="false" 
             severity="primary" 
             class="p-button-lg 2xl font-bold">

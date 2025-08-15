@@ -32,12 +32,14 @@
         </button>
 
         <!-- Role switcher for users with multiple roles -->
-        <div *ngIf="hasMultipleRoles$ | async" class="border-t border-gray-200 mt-2 pt-2">
+        @if (hasMultipleRoles$ | async) {
+            <div class="border-t border-gray-200 mt-2 pt-2">
           <button type="button" class="layout-topbar-action text-blue-900 hover:bg-blue-50 text-base font-semibold !text-lg" (click)="switchToPlayer()">
             <i class="pi pi-arrow-right-arrow-left text-lg"></i>
             <span class="text-base font-semibold">Switch to Player</span>
           </button>
-        </div>
+            </div>
+        }
 
         <div class="border-t border-gray-200 mt-2 pt-2">
           <button type="button" class="layout-topbar-action text-blue-900 hover:bg-blue-50 !text-lg" (click)="onLogoutClick()">
@@ -62,9 +64,11 @@
         </button>
 
         <!-- Role switcher for users with multiple roles -->
-        <button *ngIf="hasMultipleRoles$ | async" type="button" class="layout-topbar-action flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200 text-white !text-lg" (click)="switchToPlayer()">
+        @if (hasMultipleRoles$ | async) {
+            <button type="button" class="layout-topbar-action flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200 text-white !text-lg" (click)="switchToPlayer()">
           <i class="pi pi-arrow-right-arrow-left text-white text-lg"></i>
-        </button>
+            </button>
+        }
         <button type="button" class="layout-topbar-action flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200 text-white !text-lg" (click)="onLogoutClick()">
           <i class="pi pi-sign-out text-white"></i>
         </button>

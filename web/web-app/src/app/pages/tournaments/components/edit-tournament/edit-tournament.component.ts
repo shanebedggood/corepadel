@@ -7,7 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { TournamentService, Tournament, TournamentGroup, TournamentTeam, TournamentMatch } from '../../../../services/tournament.service';
 import { TournamentConfigService } from '../../../../services/tournament-config.service';
 import { VenueService, Venue } from '../../../../services/venue.service';
-import { FirebaseAuthService, UserProfile } from '../../../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
@@ -193,21 +193,21 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
         }
 
         // Check authentication status
-        this.authService.user$.pipe(
+        this.authService.userProfile$.pipe(
             takeUntil(this.destroy$)
-        ).subscribe((user: any) => {
-            if (!user) {
+        ).subscribe((profile: any) => {
+            if (!profile) {
                 console.error('User not authenticated');
                 this.errorMessage = 'You must be logged in to edit tournaments';
                 return;
             }
             
             // Check if user is admin
-            this.authService.isAdmin().pipe(
+            this.authService.userProfile$.pipe(
                 takeUntil(this.destroy$)
-            ).subscribe(isAdmin => {
-                this.isAdmin = isAdmin;
-                if (!isAdmin) {
+            ).subscribe(profile => {
+                this.isAdmin = profile?.roles.includes('admin') || false;
+                if (!this.isAdmin) {
                     console.error('User is not an admin');
                     this.errorMessage = 'You must be an admin to edit tournaments';
                     return;

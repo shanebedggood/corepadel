@@ -1,0 +1,17 @@
+I0811 13:35:29.909427   88193 load.go:37] Reloading schema and connectors...
+I0811 13:35:29.930831   88193 control.go:84] [/emulator/corepadel 21b7] UpdateResources(): done
+Schema: sources: schema/schema.gql [2088B] 
+Connector "default": sources: connector/mutations.gql [1301B] connector/queries.gql [1947B] 
+I0811 13:35:29.950888   88193 codegen.go:82] [connector "default" javascriptSdk] Generating sources into "/Users/shanebedggood/Dev/core_padel/dataconnect-generated/js/default-connector"
+I0811 13:35:29.956084   88193 collector.go:107] schema extensions wrote into "/Users/shanebedggood/Dev/core_padel/dataconnect/.dataconnect/schema"
+Generated sources: prelude.gql [73172B] 
+I0811 13:35:29.958085   88193 collector.go:107] connector "default" javascriptSdk wrote into "/Users/shanebedggood/Dev/core_padel/dataconnect-generated/js/default-connector"
+Generated sources: package.json [872B] README.md [2902B] angular/package.json [661B] angular/README.md [5186B] esm/package.json [17B] index.cjs.js [147B] angular/index.d.ts [0B] angular/esm/package.json [17B] angular/index.cjs.js [1B] angular/esm/index.esm.js [0B] index.d.ts [248B] esm/index.esm.js [112B] 
+I0811 13:35:29.958394   88193 installsdk.go:86] Running command: /Users/shanebedggood/.cache/firebase/runtime/npm install file:dataconnect-generated/js/default-connector
+E0811 13:35:29.960018   88193 installsdk.go:88] Failed to install package: fork/exec /Users/shanebedggood/.cache/firebase/runtime/npm: exec format error
+I0811 13:35:29.960091   88193 load.go:115] Finished reloading
+I0811 13:35:29.960267   88193 dev.go:95] Listening on address (HTTP + gRPC): 127.0.0.1:9399
+I0811 13:35:29.960383   88193 dev.go:95] Listening on address (HTTP + gRPC): [::1]:9399
+I0811 13:35:32.407999   88193 control.go:84] [/emulator/corepadel abce] UpdateResources(): done
+Schema: sources: schema/schema.gql [2088B] 
+Connector "default": sources: connector/mutations.gql [1301B] connector/queries.gql [1947B] 

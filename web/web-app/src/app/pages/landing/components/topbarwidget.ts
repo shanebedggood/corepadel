@@ -18,22 +18,12 @@ export class TopbarWidget {
     ) { }
 
     directLogin(): void {
-        this.authService.login().subscribe({
-            next: () => {
-            },
-            error: (error: any) => {
-                console.error('Login failed:', error);
-            }
-        });
+        // For Firebase Auth, redirect to auth page
+        this.router.navigate(['/auth']);
     }
 
     directSignup(): void {
-        this.authService.login().subscribe({
-            next: () => {
-            },
-            error: (error: any) => {
-                console.error('Registration failed:', error);
-            }
-        });
+        // For Firebase Auth, redirect to signup page
+        this.router.navigate(['/auth/signup']);
     }
 }

@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
-import { FirebaseAuthService, UserRole } from '../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { LayoutService } from '../service/layout.service';
 import { Observable, map, Subscription } from 'rxjs';
 
@@ -45,28 +45,34 @@ import { Observable, map, Subscription } from 'rxjs';
                 </div>
             </div>
 
-            <div class="layout-topbar-user-menu" *ngIf="isAuthenticated$ | async">
-                <div class="user-info" *ngIf="userProfile$ | async as profile">
-                    <span class="user-name">{{ profile.firstName }} {{ profile.lastName }}</span>
-                    <span class="user-email">{{ profile.email }}</span>
-                </div>
-                
-                <div class="role-switcher" *ngIf="hasMultipleRoles$ | async">
+            @if (isAuthenticated$ | async) {
+                <div class="layout-topbar-user-menu">
+                    @if (userProfile$ | async; as profile) {
+                        <div class="user-info">
+                            <span class="user-name">{{ profile.firstName }} {{ profile.lastName }}</span>
+                            <span class="user-email">{{ profile.email }}</span>
+                        </div>
+                    }
+                    
+                    @if (hasMultipleRoles$ | async) {
+                        <div class="role-switcher">
+                            <button pButton type="button" 
+                                    label="Switch Role" 
+                                    icon="pi pi-refresh" 
+                                    class="p-button-text p-button-sm"
+                                    (click)="switchRole()">
+                            </button>
+                        </div>
+                    }
+
                     <button pButton type="button" 
-                            label="Switch Role" 
-                            icon="pi pi-refresh" 
-                            class="p-button-text p-button-sm"
-                            (click)="switchRole()">
+                            label="Logout" 
+                            icon="pi pi-sign-out" 
+                            class="p-button-text p-button-danger"
+                            (click)="logout()">
                     </button>
                 </div>
-
-                <button pButton type="button" 
-                        label="Logout" 
-                        icon="pi pi-sign-out" 
-                        class="p-button-text p-button-danger"
-                        (click)="logout()">
-                </button>
-            </div>
+            }
         </div>
     `
 })
@@ -83,12 +89,14 @@ export class AppTopbarComponent implements OnInit, OnDestroy {
         private router: Router,
         private authService: FirebaseAuthService
     ) {
-        this.isAuthenticated$ = this.authService.isAuthenticated();
-        this.userProfile$ = this.authService.getCurrentUserProfile();
-        this.hasMultipleRoles$ = this.authService.getUserRoles().pipe(
-            map(roles => roles.length > 1)
+        this.isAuthenticated$ = this.authService.isAuthenticated$;
+        this.userProfile$ = this.authService.userProfile$;
+        this.hasMultipleRoles$ = this.authService.userProfile$.pipe(
+            map(profile => (profile?.roles || []).length > 1)
         );
-        this.hasAdminRole$ = this.authService.hasRole('admin');
+        this.hasAdminRole$ = this.authService.userProfile$.pipe(
+            map(profile => profile?.roles.includes('admin') || false)
+        );
     }
 
     ngOnInit() {
@@ -96,7 +104,7 @@ export class AppTopbarComponent implements OnInit, OnDestroy {
         this.subscriptions.add(
             this.hasMultipleRoles$.subscribe(hasMultiple => {
                 if (!hasMultiple) {
-                    this.authService.hasRole('admin').subscribe((isAdmin: boolean) => {
+                    this.hasAdminRole$.subscribe((isAdmin: boolean) => {
                         if (isAdmin) {
                             this.router.navigate(['/admin']);
                         } else {
@@ -133,13 +141,10 @@ export class AppTopbarComponent implements OnInit, OnDestroy {
     }
 
     logout() {
-        this.authService.signOut().subscribe({
-            next: () => {
-                this.router.navigate(['/']);
-            },
-            error: (error: any) => {
-                console.error('Logout error:', error);
-            }
+        this.authService.signOut().then(() => {
+            this.router.navigate(['/']);
+        }).catch((error: any) => {
+            console.error('Logout error:', error);
         });
     }
 }

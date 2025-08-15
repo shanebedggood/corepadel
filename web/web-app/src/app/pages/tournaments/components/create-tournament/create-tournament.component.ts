@@ -132,10 +132,10 @@ export class CreateTournamentComponent implements OnInit {
     tournamentForm: FormGroup;
     errorMessage: string = '';
     successMessage: string = '';
-    
+
     // Add showIcon property for date fields
     showIcon: boolean = true;
-    
+
     // Currency for display
     currencySymbol: string = 'R'; // Default to South African Rand
 
@@ -157,6 +157,8 @@ export class CreateTournamentComponent implements OnInit {
     // Group advancement settings
     advancementModels: any[] = [];
     eliminationBracketSizes: any[] = [];
+    teamsToAdvance: any[] = [];
+    combinedEliminationBracketSizes: any[] = [];
 
     // Page header configuration
     breadcrumbs: BreadcrumbItem[] = [
@@ -189,14 +191,16 @@ export class CreateTournamentComponent implements OnInit {
             progressionOption: [null], // Will be conditionally required
             advancementModel: [null], // Will be conditionally required
             eliminationBracketSize: [null], // Will be conditionally required
+            teamsToAdvance: [null], // Will be conditionally required for combined elimination
             maxParticipants: [null, [Validators.required, Validators.min(2), this.evenNumberValidator()]],
             noOfGroups: [null, [Validators.required, Validators.min(1)]],
             entryFee: [null, [Validators.required, Validators.min(0)]]
         });
 
         // Watch for venue type changes to update venue field validation
-        this.tournamentForm.get('venueType')?.valueChanges.subscribe(venueType => {
+        this.tournamentForm.get('venueType')?.valueChanges.subscribe(venueTypeId => {
             const venueControl = this.tournamentForm.get('venue');
+            const venueType = this.venueTypes.find(vt => vt.id === venueTypeId);
             if (venueType?.name === 'Single Venue') {
                 venueControl?.setValidators(Validators.required);
             } else {
@@ -248,6 +252,9 @@ export class CreateTournamentComponent implements OnInit {
                     this.registrationTypes = configData.registrationTypes.filter((r: TournamentRegistrationType) => r.isActive).sort((a: TournamentRegistrationType, b: TournamentRegistrationType) => a.name.localeCompare(b.name));
                     this.progressionTypes = []; // Initialize as empty - will be loaded conditionally
                     this.venues = venues.sort((a: Venue, b: Venue) => a.name.localeCompare(b.name));
+                    
+
+                    
                     this.loading = false;
                     return true;
                 }),
@@ -269,115 +276,126 @@ export class CreateTournamentComponent implements OnInit {
 
             const formValue = this.tournamentForm.value;
             // Ensure numeric values are properly converted
+            // Convert dates to ISO strings for backend compatibility
             const processedFormValue = {
                 ...formValue,
                 maxParticipants: formValue.maxParticipants ? Number(formValue.maxParticipants) : null,
                 noOfGroups: formValue.noOfGroups ? Number(formValue.noOfGroups) : null,
-                entryFee: formValue.entryFee ? Number(formValue.entryFee) : null
+                entryFee: formValue.entryFee ? Number(formValue.entryFee) : null,
+                startDate: formValue.startDate ? formValue.startDate.toISOString() : null,
+                endDate: formValue.endDate ? formValue.endDate.toISOString() : null,
+                registrationStartDate: formValue.registrationStartDate ? formValue.registrationStartDate.toISOString() : null,
+                registrationEndDate: formValue.registrationEndDate ? formValue.registrationEndDate.toISOString() : null
             };
 
             // Use Firebase function to validate tournament and calculate status
             (this.tournamentService as any).validateTournamentConfig(processedFormValue).subscribe({
                 next: (validationResult: any) => {
                     if (validationResult.isValid) {
-                        // Get current user's club
-                        this.authService.getCurrentUserClub().subscribe({
-                            next: (club: any) => {
-                                if (!club) {
-                                    this.saving = false;
-                                    this.errorMessage = 'No club found for current user';
-                                    return;
-                                }
+                        // Get current user
+                        const currentUser = this.authService.getCurrentUser();
+                        if (!currentUser) {
+                            this.saving = false;
+                            this.errorMessage = 'No user found';
+                            return;
+                        }
 
-                                // Get current user
-                                this.authService.user$.pipe(take(1)).subscribe({
-                                    next: (user: any) => {
-                                        if (!user) {
-                                            this.saving = false;
-                                            this.errorMessage = 'No user found';
-                                            return;
-                                        }
+                        // Find the selected venue object
+                        const selectedVenue = this.venues.find(v => v.id === processedFormValue.venue);
 
-                                        const tournamentData = {
-                                            ...processedFormValue,
-                                            clubId: club.id!,
-                                            userId: user.uid,
-                                            status: validationResult.calculatedStatus || this.statuses.find(s => s.id === 'draft'),
-                            
-                                            
-                                        };
+                        // Get the status object or default to draft
+                        const status = validationResult.calculatedStatus || this.statuses.find(s => s.id === 'draft');
 
-                                        (this.tournamentService as any).createTournament(tournamentData).subscribe({
-                                            next: (tournamentId: any) => {
-                                                // Create groups for the tournament
-                                                const maxParticipants = processedFormValue.maxParticipants;
-                                                const noOfGroups = processedFormValue.noOfGroups;
-                                                const tournamentVenue = processedFormValue.venue;
 
-                                                (this.tournamentService as any).createTournamentGroups(tournamentId, maxParticipants, noOfGroups, tournamentVenue).subscribe({
-                                                    next: (groups: any) => {
-                                                        this.saving = false;
-                                                        const groupCount = groups && Array.isArray(groups) ? groups.length : 0;
-                                                        this.successMessage = `Tournament created successfully with ${groupCount} groups!`;
-                                                        this.errorMessage = '';
-                                                        this.messageService.add({
-                                                            life: 3000, // Show toast for 3 seconds
-                                                            severity: 'success',
-                                                            summary: 'Success',
-                                                            detail: `Tournament created successfully with ${groupCount} groups!`
-                                                        });
-                                                        // Navigate back to tournament list after successful creation
-                                                        setTimeout(() => {
-                                                            this.router.navigate(['/admin/tournaments']).then(() => {
-                                                            }).catch((error) => {
-                                                                console.error('Navigation failed:', error);
-                                                            });
-                                                        }, 1000); // Small delay to ensure toast is shown
-                                                    },
-                                                    error: (groupError: any) => {
-                                                        console.error('Error creating groups:', groupError);
-                                                        this.saving = false;
-                                                        this.errorMessage = `Tournament created but failed to create groups: ${groupError.message}`;
-                                                        this.messageService.add({
-                                                            life: 3000, // Show toast for 3 seconds
-                                                            severity: 'warn',
-                                                            summary: 'Partial Success',
-                                                            detail: 'Tournament created but groups creation failed. You can create groups manually.'
-                                                        });
-                                                        // Navigate back to tournament list even if groups creation failed
-                                                        setTimeout(() => {
-                                                            this.router.navigate(['/admin/tournaments']).then(() => {                                                                
-                                                            }).catch((error) => {
-                                                                console.error('Navigation failed (partial success):', error);
-                                                            });
-                                                        }, 1000); // Small delay to ensure toast is shown
-                                                    }
-                                                });
-                                            },
-                                            error: (error: any) => {
-                                                console.error('Error creating tournament:', error);
-                                                this.saving = false;
-                                                this.errorMessage = error.message || 'Failed to create tournament';
-                                                this.messageService.add({
-                                                    life: 0, // Make toast sticky
-                                                    severity: 'error',
-                                                    summary: 'Error',
-                                                    detail: error.message || 'Failed to create tournament'
-                                                });
-                                            }
-                                        });
-                                    },
-                                    error: (error: any) => {
-                                        console.error('Error getting current user:', error);
+
+
+
+                        // Find the selected objects by ID
+                        const format = this.formats.find(f => f.id === processedFormValue.format);
+                        const category = this.categories.find(c => c.id === processedFormValue.category);
+                        const registrationType = this.registrationTypes.find(r => r.id === processedFormValue.registrationType);
+                        const venueType = this.venueTypes.find(vt => vt.id === processedFormValue.venueType);
+                        const progressionOption = processedFormValue.progressionOption ? this.progressionTypes.find(p => p.id === processedFormValue.progressionOption) : null;
+
+
+
+                        const tournamentData = {
+                            ...processedFormValue,
+                            format: format,
+                            category: category,
+                            registrationType: registrationType,
+                            venueType: venueType,
+                            progressionOption: progressionOption,
+                            clubId: 'default-club-id', // For now, use a default club ID
+                            userId: currentUser.uid,
+                            status: status,
+                        };
+
+
+                        
+                        // Only add venue data if a venue is selected
+                        if (processedFormValue.venue && selectedVenue) {
+                            tournamentData.venueId = processedFormValue.venue;
+                            tournamentData.venue = selectedVenue;
+                        }
+
+                        (this.tournamentService as any).createTournament(tournamentData).subscribe({
+                            next: (tournamentId: any) => {
+                                // Create groups for the tournament
+                                const maxParticipants = processedFormValue.maxParticipants;
+                                const noOfGroups = processedFormValue.noOfGroups;
+                                const tournamentVenue = processedFormValue.venue;
+
+                                (this.tournamentService as any).createTournamentGroups(tournamentId, maxParticipants, noOfGroups, tournamentVenue).subscribe({
+                                    next: (groups: any) => {
                                         this.saving = false;
-                                        this.errorMessage = 'Failed to get current user';
+                                        const groupCount = groups && Array.isArray(groups) ? groups.length : 0;
+                                        this.successMessage = `Tournament created successfully with ${groupCount} groups!`;
+                                        this.errorMessage = '';
+                                        this.messageService.add({
+                                            life: 3000, // Show toast for 3 seconds
+                                            severity: 'success',
+                                            summary: 'Success',
+                                            detail: `Tournament created successfully with ${groupCount} groups!`
+                                        });
+                                        // Navigate back to tournament list after successful creation
+                                        setTimeout(() => {
+                                            this.router.navigate(['/admin/tournaments']).then(() => {
+                                            }).catch((error) => {
+                                                console.error('Navigation failed:', error);
+                                            });
+                                        }, 1000); // Small delay to ensure toast is shown
+                                    },
+                                    error: (groupError: any) => {
+                                        console.error('Error creating groups:', groupError);
+                                        this.saving = false;
+                                        this.errorMessage = `Tournament created but failed to create groups: ${groupError.message}`;
+                                        this.messageService.add({
+                                            life: 3000, // Show toast for 3 seconds
+                                            severity: 'warn',
+                                            summary: 'Partial Success',
+                                            detail: 'Tournament created but groups creation failed. You can create groups manually.'
+                                        });
+                                        // Navigate back to tournament list even if groups creation failed
+                                        setTimeout(() => {
+                                            this.router.navigate(['/admin/tournaments']).then(() => {
+                                            }).catch((error) => {
+                                                console.error('Navigation failed (partial success):', error);
+                                            });
+                                        }, 1000); // Small delay to ensure toast is shown
                                     }
                                 });
                             },
                             error: (error: any) => {
-                                console.error('Error getting current user club:', error);
+                                console.error('Error creating tournament:', error);
                                 this.saving = false;
-                                this.errorMessage = 'Failed to get current user club';
+                                this.errorMessage = error.message || 'Failed to create tournament';
+                                this.messageService.add({
+                                    life: 0, // Make toast sticky
+                                    severity: 'error',
+                                    summary: 'Error',
+                                    detail: error.message || 'Failed to create tournament'
+                                });
                             }
                         });
                     } else {
@@ -423,10 +441,13 @@ export class CreateTournamentComponent implements OnInit {
     /**
      * Load round-robin configuration if the format is round-robin
      */
-    loadRoundRobinConfigIfNeeded(format: TournamentFormat | null): void {
+    loadRoundRobinConfigIfNeeded(formatId: string | null): void {
         const progressionControl = this.tournamentForm.get('progressionOption');
 
-        if (format && format.id === 'round_robin') {
+        if (!formatId) return;
+        
+        const selectedFormat = this.formats.find(f => f.id === formatId);
+        if (selectedFormat?.name === 'Round Robin') {
             this.tournamentConfigService.getRoundRobinConfig().subscribe({
                 next: (roundRobinConfig: any) => {
                     this.roundRobinConfig = roundRobinConfig;
@@ -437,6 +458,12 @@ export class CreateTournamentComponent implements OnInit {
                     this.advancementModels = roundRobinConfig.groupAdvancementSettings?.advancementModels?.filter((m: any) => m.isActive)
                         .sort((a: any, b: any) => a.name.localeCompare(b.name)) || [];
                     this.eliminationBracketSizes = roundRobinConfig.groupAdvancementSettings?.eliminationBracketSize?.filter((e: any) => e.isActive)
+                        .sort((a: any, b: any) => a.name.localeCompare(b.name)) || [];
+
+                    // Load combined advancement settings
+                    this.teamsToAdvance = roundRobinConfig.combinedAdvancementSettings?.numOfTeamsToAdvanceOverall?.filter((t: any) => t.isActive)
+                        .sort((a: any, b: any) => a.name.localeCompare(b.name)) || [];
+                    this.combinedEliminationBracketSizes = roundRobinConfig.combinedAdvancementSettings?.eliminationBracketSize?.filter((e: any) => e.isActive)
                         .sort((a: any, b: any) => a.name.localeCompare(b.name)) || [];
 
                     // Make progression option required for round-robin formats
@@ -465,8 +492,11 @@ export class CreateTournamentComponent implements OnInit {
      * Check if the selected format is a round-robin format
      */
     isRoundRobinFormat(): boolean {
-        const selectedFormat = this.tournamentForm.get('format')?.value;
-        return selectedFormat && selectedFormat.id === 'round_robin';
+        const selectedFormatId = this.tournamentForm.get('format')?.value;
+        if (!selectedFormatId) return false;
+        
+        const selectedFormat = this.formats.find(f => f.id === selectedFormatId);
+        return selectedFormat?.name === 'Round Robin';
     }
 
     /**
@@ -474,7 +504,15 @@ export class CreateTournamentComponent implements OnInit {
      */
     isGroupBasedElimination(): boolean {
         const selectedProgression = this.tournamentForm.get('progressionOption')?.value;
-        return selectedProgression && selectedProgression.id === 'group_based_elimination';
+        return selectedProgression === 'group-based';
+    }
+
+    /**
+     * Check if the selected progression option is combined elimination
+     */
+    isCombinedElimination(): boolean {
+        const selectedProgression = this.tournamentForm.get('progressionOption')?.value;
+        return selectedProgression === 'combined';
     }
 
     /**
@@ -483,23 +521,28 @@ export class CreateTournamentComponent implements OnInit {
     updateGroupAdvancementValidation(progressionOption: any): void {
         const advancementModelControl = this.tournamentForm.get('advancementModel');
         const eliminationBracketSizeControl = this.tournamentForm.get('eliminationBracketSize');
+        const teamsToAdvanceControl = this.tournamentForm.get('teamsToAdvance');
 
-        if (progressionOption && progressionOption.id === 'group_based_elimination') {
+        if (progressionOption === 'group-based') {
             // Make fields required for group-based elimination
             advancementModelControl?.setValidators(Validators.required);
             eliminationBracketSizeControl?.setValidators(Validators.required);
+            teamsToAdvanceControl?.clearValidators();
+        } else if (progressionOption === 'combined') {
+            // Make fields required for combined elimination
+            teamsToAdvanceControl?.setValidators(Validators.required);
+            eliminationBracketSizeControl?.setValidators(Validators.required);
+            advancementModelControl?.clearValidators();
         } else {
             // Clear validation for other progression types but don't clear the values
             advancementModelControl?.clearValidators();
             eliminationBracketSizeControl?.clearValidators();
-            // Don't clear the values:
-            // advancementModelControl?.setValue(null);
-            // Don't clear the values:
-            // eliminationBracketSizeControl?.setValue(null);
+            teamsToAdvanceControl?.clearValidators();
         }
 
         advancementModelControl?.updateValueAndValidity();
         eliminationBracketSizeControl?.updateValueAndValidity();
+        teamsToAdvanceControl?.updateValueAndValidity();
     }
 
     /**
@@ -561,7 +604,7 @@ export class CreateTournamentComponent implements OnInit {
 
         // Find the bracket size configuration from the round-robin config
         const bracketConfig = this.roundRobinConfig.groupAdvancementSettings.eliminationBracketSize.find(
-            (bracket: any) => bracket.id === eliminationBracketSize.id
+            (bracket: any) => bracket.id === eliminationBracketSize
         );
 
         if (!bracketConfig) {
@@ -569,6 +612,27 @@ export class CreateTournamentComponent implements OnInit {
         }
 
         return bracketConfig.teams;
+    }
+
+    getTeamsAdvancingPerGroup(): number {
+        const teamsToAdvance = this.tournamentForm.get('teamsToAdvance')?.value;
+        if (!teamsToAdvance) {
+            return 0;
+        }
+        
+        const teamsToAdvanceConfig = this.teamsToAdvance.find(t => t.id === teamsToAdvance);
+        return teamsToAdvanceConfig?.teams || 0;
+    }
+
+    getTotalTeamsAdvancingToElimination(): number {
+        const noOfGroups = this.tournamentForm.get('noOfGroups')?.value;
+        const teamsAdvancingPerGroup = this.getTeamsAdvancingPerGroup();
+
+        if (!noOfGroups || !teamsAdvancingPerGroup) {
+            return 0;
+        }
+
+        return noOfGroups * teamsAdvancingPerGroup;
     }
 
     getTeamsAdvancingToPlate(): number {
@@ -585,7 +649,7 @@ export class CreateTournamentComponent implements OnInit {
 
         // Find the bracket size configuration from the round-robin config
         const bracketConfig = this.roundRobinConfig.groupAdvancementSettings.eliminationBracketSize.find(
-            (bracket: any) => bracket.id === eliminationBracketSize.id
+            (bracket: any) => bracket.id === eliminationBracketSize
         );
 
         if (!bracketConfig) {
@@ -603,12 +667,15 @@ export class CreateTournamentComponent implements OnInit {
 
     getAdvancementModel(): string {
         const advancementModel = this.tournamentForm.get('advancementModel')?.value;
-        return advancementModel?.name || '';
+        if (!advancementModel) return '';
+        
+        const model = this.advancementModels.find(m => m.id === advancementModel);
+        return model?.name || '';
     }
 
     isTrophyPlateModel(): boolean {
         const advancementModel = this.tournamentForm.get('advancementModel')?.value;
-        return advancementModel?.id === 'trophy_plate';
+        return advancementModel === 'trophy-plate';
     }
 
     /**
@@ -639,5 +706,14 @@ export class CreateTournamentComponent implements OnInit {
         // Find venue by ID
         const matchingVenue = this.venues.find(venue => venue.id === tournamentVenue.id);
         return matchingVenue || null;
+    }
+
+    shouldShowVenueSelection(): boolean {
+        const venueTypeId = this.tournamentForm.get('venueType')?.value;
+        if (!venueTypeId) return false;
+        
+        // Find the venue type object by ID
+        const venueType = this.venueTypes.find(vt => vt.id === venueTypeId);
+        return venueType?.name === 'Single Venue';
     }
 }

@@ -15,10 +15,14 @@ import { AppMenu } from './app.menu';
         <div class="layout-sidebar" [ngClass]="containerClass">
             <div class="layout-menu-container">
                 <ul class="layout-menu">
-                    <ng-container *ngFor="let item of menuItems$ | async; let i = index">
-                        <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
-                        <li *ngIf="item.separator" class="menu-separator"></li>
-                    </ng-container>
+                    @for (item of menuItems$ | async; track item; let i = $index) {
+                        @if (!item.separator) {
+                            <li app-menuitem [item]="item" [index]="i" [root]="true"></li>
+                        }
+                        @if (item.separator) {
+                            <li class="menu-separator"></li>
+                        }
+                    }
                 </ul>
             </div>
         </div>

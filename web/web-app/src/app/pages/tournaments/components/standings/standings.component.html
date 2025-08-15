@@ -1,17 +1,22 @@
 <div class="card">
     <!-- Error Message -->
-    <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" [closable]="true"
-        (onClose)="errorMessage = ''">
-    </p-message>
-    <div *ngIf="loading" class="flex justify-center items-center p-8">
+    @if (errorMessage) {
+        <p-message severity="error" [text]="errorMessage" [closable]="true"
+            (onClose)="errorMessage = ''">
+        </p-message>
+    }
+    @if (loading) {
+        <div class="flex justify-center items-center p-8">
         <p-message severity="info" text="Loading standings..." styleClass="w-full">
             <ng-template pTemplate="messageicon">
                 <i class="pi pi-spin pi-spinner text-2xl">
                 </i>
             </ng-template>
         </p-message>
-    </div>
-    <div *ngIf="!loading && tournament" class="w-full">
+        </div>
+    }
+    @if (!loading && tournament) {
+        <div class="w-full">
         <!-- Page Header -->
         <app-page-header [title]="tournament.name + ' - Standings'"
             subtitle="Tournament group standings and points table" [breadcrumbs]="breadcrumbs">
@@ -42,7 +47,8 @@
             </p-card>
         </div>
         <!-- Standings Tables -->
-        <div *ngIf="groupStandings.length > 0" class="space-y-6">
+        @if (groupStandings.length > 0) {
+            <div class="space-y-6">
             <div *ngFor="let groupStanding of groupStandings" class="bg-white rounded-lg shadow-sm border">
                 <!-- Group Header -->
                 <div class="bg-gray-50 px-6 py-4 border-b rounded-t-lg">
@@ -53,9 +59,10 @@
                                 </i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900"> {{ groupStanding.group.name }} <span
-                                        class="text-lg text-gray-600 font-normal" *ngIf="groupStanding.group.venue"> -
-                                        {{ groupStanding.group.venue.name }} </span>
+                                <h3 class="text-lg font-semibold text-gray-900"> {{ groupStanding.group.name }} 
+                                    @if (groupStanding.group.venue) {
+                                        <span class="text-lg text-gray-600 font-normal"> - {{ groupStanding.group.venue.name }} </span>
+                                    }
                                 </h3>
                             </div>
                         </div>
@@ -125,22 +132,28 @@
                     </p-table>
                 </div>
             </div>
-        </div>
+            </div>
+        }
         <!-- No Groups Message -->
-        <div *ngIf="!loading && groupStandings.length === 0" class="text-center py-12">
+        @if (!loading && groupStandings.length === 0) {
+            <div class="text-center py-12">
             <p-message severity="info" text="No Groups Found. This tournament doesn't have any groups set up yet."
                 styleClass="w-full mb-6">
             </p-message>
             <button pButton type="button" label="View Tournament" icon="pi pi-eye" class="p-button-primary"
                 (click)="viewTournament()">
             </button>
+            </div>
+        }
         </div>
-    </div>
+    }
     <!-- Tournament Not Found -->
-    <div *ngIf="!loading && !tournament" class="text-center py-12">
+    @if (!loading && !tournament) {
+        <div class="text-center py-12">
         <p-message severity="warn"
             text="Tournament Not Found. The tournament you're looking for doesn't exist or has been removed."
             styleClass="w-full">
         </p-message>
-    </div>
+        </div>
+    }
 </div>

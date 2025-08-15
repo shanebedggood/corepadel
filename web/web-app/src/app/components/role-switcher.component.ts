@@ -3,9 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { FirebaseAuthService } from '../services/firebase-auth.service';
-import { UserService } from '../services/user.service';
 import { LocalImageService, ResponsiveImageUrls } from '../services/local-image.service';
-import { Subscription, Observable, map, switchMap } from 'rxjs';
+import { Subscription, Observable, map, switchMap, take } from 'rxjs';
 
 @Component({
   selector: 'app-role-switcher',
@@ -14,35 +13,37 @@ import { Subscription, Observable, map, switchMap } from 'rxjs';
   templateUrl: './role-switcher.component.html'
 })
 export class RoleSwitcherComponent implements OnInit, OnDestroy {
-  currentUser: any = null;
-  currentRole: string = '';
   imageUrls: ResponsiveImageUrls | null = null;
-  backgroundImageUrl: string = 'assets/images/large/hero.jpg';
+  backgroundImageUrl: string = 'assets/images/large/hero.webp';
   hasPlayerRole$: Observable<boolean>;
   hasAdminRole$: Observable<boolean>;
+  showFallbackRoles: boolean = false;
   private subscription = new Subscription();
 
   constructor(
     private authService: FirebaseAuthService,
-    private userService: UserService,
     private localImageService: LocalImageService,
     private router: Router
   ) {
-    this.hasPlayerRole$ = this.authService.hasRole('player');
-    this.hasAdminRole$ = this.authService.hasRole('admin');
+    // Create observables that check roles from the user profile
+    this.hasPlayerRole$ = this.authService.userProfile$.pipe(
+      map(profile => profile?.roles.includes('player') || false)
+    );
+    this.hasAdminRole$ = this.authService.userProfile$.pipe(
+      map(profile => profile?.roles.includes('admin') || false)
+    );
   }
 
   ngOnInit(): void {
-    this.loadCurrentUser();
     this.loadHeroImage();
+    this.debugRoles();
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
 
-  private loadCurrentUser(): void {
-  }
+
 
   private loadHeroImage(): void {
     this.subscription = this.localImageService.getResponsiveImageUrls('hero').subscribe({
@@ -57,71 +58,78 @@ export class RoleSwitcherComponent implements OnInit, OnDestroy {
     });
   }
 
-  switchToRole(role: string): void {
-    this.currentRole = role;
+  private debugRoles(): void {    
+    // Debug current user
+    const currentUser = this.authService.getCurrentUser();
     
-    // First ensure user is synced to PostgreSQL, then assign role
-    this.authService.getUserProfileAndSync().pipe(
-      switchMap(profile => {
-        if (!profile) {
-          throw new Error('No user profile found');
-        }
-        // Use the new method that handles Firebase UID to PostgreSQL user ID conversion
-        return this.userService.addRoleToUserByFirebaseUid(profile.firebase_uid, role);
-      })
-    ).subscribe({
-      next: (userRole) => {
-        // Navigate to the appropriate route
-        if (role === 'player') {
-          this.router.navigate(['/player']);
-        } else if (role === 'admin') {
-          this.router.navigate(['/admin']);
-        }
-      },
-      error: (error) => {
-        console.error(`Failed to assign role ${role}:`, error);
-        // Even if role assignment fails, try to navigate
-        if (role === 'player') {
-          this.router.navigate(['/player']);
-        } else if (role === 'admin') {
-          this.router.navigate(['/admin']);
-        }
-      }
-    });
-  }
-
-  navigateToPlayer(): void {
-    this.currentRole = 'player';
-    this.router.navigate(['/player']);
-  }
-
-  navigateToAdmin(): void {
-    this.currentRole = 'admin';
-    this.router.navigate(['/admin']);
-  }
-
-  signOut(): void {
-    this.authService.signOut().subscribe({
-      next: () => {
-        this.router.navigate(['/']);
+    // Debug user profile
+    this.authService.userProfile$.subscribe({
+      next: (profile) => {
       },
       error: (error: any) => {
-        console.error('Sign out error:', error);
-        // Fallback: redirect to home page
-        this.router.navigate(['/']);
+        console.error('Error getting user profile:', error);
       }
+    });
+
+    // Debug individual role checks
+    this.hasPlayerRole$.subscribe({
+      next: (hasPlayer) => {
+      },
+      error: (error: any) => {
+        console.error('Error checking player role:', error);
+      }
+    });
+
+    this.hasAdminRole$.subscribe({
+      next: (hasAdmin) => {
+      },
+      error: (error: any) => {
+        console.error('Error checking admin role:', error);
+      }
+    });
+
+    // Show fallback roles after 3 seconds if no roles are loaded
+    setTimeout(() => {
+      this.hasPlayerRole$.pipe(take(1)).subscribe(hasPlayer => {
+        this.hasAdminRole$.pipe(take(1)).subscribe(hasAdmin => {
+          if (!hasPlayer && !hasAdmin) {
+            this.showFallbackRoles = true;
+          }
+        });
+      });
+    }, 3000);
+  }
+
+  switchToRole(role: string) {
+    // Simply navigate based on role - no need to assign roles since user already has them
+    if (role === 'admin') {
+      this.router.navigate(['/admin']);
+    } else if (role === 'player') {
+      this.router.navigate(['/player']);
+    } else {
+      console.error('Unknown role:', role);
+    }
+  }
+
+
+
+  signOut(): void {
+    this.authService.signOut().then(() => {
+      this.router.navigate(['/']);
+    }).catch((error: any) => {
+      console.error('Sign out error:', error);
+      // Fallback: redirect to home page
+      this.router.navigate(['/']);
     });
   }
 
   logout(): void {
-    this.authService.logout().subscribe({
-      next: () => {
-      },
-      error: (error: any) => {
-        console.error('Logout error:', error);
-        // Fallback: redirect to home page
-        this.router.navigate(['/']);
-      }
+    this.authService.signOut().then(() => {
+      this.router.navigate(['/']);
+    }).catch((error: any) => {
+      console.error('Logout error:', error);
+      // Fallback: redirect to home page
+      this.router.navigate(['/']);
     });
   }
 }

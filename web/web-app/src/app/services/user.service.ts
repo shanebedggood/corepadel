@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment';
 
 export interface User {
     user_id?: string;
-    firebase_uid: string;
+    firebase_uid: string; // Firebase user identifier
     email: string;
     username: string;
     first_name?: string;
@@ -72,6 +72,9 @@ export class UserService {
         );
     }
 
+    /**
+     * Get a user by Cognito sub (legacy method name for compatibility)
+     */
     /**
      * Get a user by Firebase UID
      */
@@ -139,15 +142,10 @@ export class UserService {
     /**
      * Get all roles for a user by Firebase UID (keycloak UID)
      */
-    getUserRolesByFirebaseUid(firebaseUid: string): Observable<UserRole[]> {
-        return this.getUserByFirebaseUid(firebaseUid).pipe(
-            switchMap(user => {
-                if (!user || !user.user_id) {
-                    return of([]); // Return empty array if user not found
-                }
-                return this.getUserRoles(user.user_id);
-            }),
-            catchError(this.handleError<UserRole[]>('getUserRolesByFirebaseUid', []))
+    getUserRolesByCognitoSub(cognitoSub: string): Observable<UserRole[]> {
+        // Call backend endpoint that resolves roles directly by Cognito sub
+        return this.http.get<UserRole[]>(`${this.apiUrl}/cognito/${cognitoSub}/roles`).pipe(
+            catchError(this.handleError<UserRole[]>('getUserRolesByCognitoSub', []))
         );
     }
 
@@ -157,6 +155,16 @@ export class UserService {
     addRoleToUser(userId: string, roleName: string): Observable<UserRole | null> {
         return this.http.post<UserRole>(`${this.apiUrl}/${userId}/roles?role=${roleName}`, {}).pipe(
             catchError(this.handleError<UserRole | null>('addRoleToUser', null))
+        );
+    }
+
+    /**
+     * Add a role to a user by Cognito sub
+     */
+    addRoleToUserByCognitoSub(cognitoSub: string, roleName: string): Observable<UserRole | null> {
+        // Use backend endpoint that adds role using Cognito sub directly
+        return this.http.post<UserRole>(`${this.apiUrl}/cognito/${cognitoSub}/roles?role=${encodeURIComponent(roleName)}`, {}).pipe(
+            catchError(this.handleError<UserRole | null>('addRoleToUserByCognitoSub', null))
         );
     }
 
@@ -207,9 +215,9 @@ export class UserService {
     /**
      * Get all clubs for a user by Firebase UID
      */
-    getUserClubsByFirebaseUid(firebaseUid: string): Observable<UserClub[]> {
-        return this.http.get<UserClub[]>(`${this.apiUrl}/firebase/${firebaseUid}/clubs`).pipe(
-            catchError(this.handleError<UserClub[]>('getUserClubsByFirebaseUid', []))
+    getUserClubsByCognitoSub(cognitoSub: string): Observable<UserClub[]> {
+        return this.http.get<UserClub[]>(`${this.apiUrl}/cognito/${cognitoSub}/clubs`).pipe(
+            catchError(this.handleError<UserClub[]>('getUserClubsByCognitoSub', []))
         );
     }
 
@@ -227,7 +235,7 @@ export class UserService {
      */
     addUserToClubByFirebaseUid(firebaseUid: string, clubId: string, role: string = 'member'): Observable<UserClub | null> {
         return this.getUserByFirebaseUid(firebaseUid).pipe(
-            switchMap(user => {
+            switchMap((user: User | null) => {
                 if (!user || !user.user_id) {
                     return of(null);
                 }
@@ -252,7 +260,7 @@ export class UserService {
      */
     removeUserFromClubByFirebaseUid(firebaseUid: string, clubId: string): Observable<boolean> {
         return this.getUserByFirebaseUid(firebaseUid).pipe(
-            switchMap(user => {
+            switchMap((user: User | null) => {
                 if (!user || !user.user_id) {
                     return of(false);
                 }
@@ -263,39 +271,15 @@ export class UserService {
     }
 
     /**
-     * Create or update user from Firebase profile
-     */
-    syncUserFromFirebase(firebaseProfile: any): Observable<User | null> {
-        const user: User = {
-            firebase_uid: firebaseProfile.firebase_uid || firebaseProfile.user_id,
-            email: firebaseProfile.email,
-            username: firebaseProfile.displayName || firebaseProfile.email?.split('@')[0],
-            first_name: firebaseProfile.firstName || firebaseProfile.displayName?.split(' ')[0],
-            last_name: firebaseProfile.lastName || firebaseProfile.displayName?.split(' ').slice(1).join(' '),
-            display_name: firebaseProfile.displayName || `${firebaseProfile.firstName || ''} ${firebaseProfile.lastName || ''}`.trim(),
-            email_verified: firebaseProfile.emailVerified || false
-        };
-
-        // First try to find existing user
-        return this.getUserByFirebaseUid(user.firebase_uid).pipe(
-            switchMap(existingUser => {
-                if (existingUser) {
-                    // Update existing user
-                    return this.updateUser(existingUser.user_id!, user);
-                } else {
-                    // Create new user
-                    return this.createUser(user);
-                }
-            }),
-            catchError(this.handleError<User | null>('syncUserFromFirebase', null))
-        );
-    }
-
-    /**
      * Get or create user from Firebase profile
      */
     getOrCreateUserFromFirebase(firebaseProfile: any): Observable<User | null> {
-        const firebaseUid = firebaseProfile.firebase_uid || firebaseProfile.user_id;
+        const firebaseUid = firebaseProfile.firebase_uid;
+        
+        if (!firebaseUid) {
+            console.error('No firebase_uid provided in firebaseProfile:', firebaseProfile);
+            return of(null);
+        }
         
         return this.getUserByFirebaseUid(firebaseUid).pipe(
             switchMap(existingUser => {
@@ -316,6 +300,39 @@ export class UserService {
                 }
             }),
             catchError(this.handleError<User | null>('getOrCreateUserFromFirebase', null))
+        );
+    }
+
+    /**
+     * Get or create user from Firebase profile (legacy method name for compatibility)
+     */
+    getOrCreateUserFromCognito(firebaseProfile: any): Observable<User | null> {
+        const firebaseUid = firebaseProfile.firebase_uid || firebaseProfile.cognito_sub;
+        
+        if (!firebaseUid) {
+            console.error('No firebase_uid or cognito_sub provided in firebaseProfile:', firebaseProfile);
+            return of(null);
+        }
+        
+        return this.getUserByFirebaseUid(firebaseUid).pipe(
+            switchMap(existingUser => {
+                if (existingUser) {
+                    return of(existingUser);
+                } else {
+                    // Create new user
+                    const user: User = {
+                        firebase_uid: firebaseUid,
+                        email: firebaseProfile.email,
+                        username: firebaseProfile.username,
+                        first_name: firebaseProfile.first_name,
+                        last_name: firebaseProfile.last_name,
+                        display_name: firebaseProfile.display_name,
+                        email_verified: firebaseProfile.email_verified
+                    };
+                    return this.createUser(user);
+                }
+            }),
+            catchError(this.handleError<User | null>('getOrCreateUserFromCognito', null))
         );
     }
 

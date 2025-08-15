@@ -32,19 +32,23 @@
 </div>
 
 <!-- Modal Dialog for Rule Details -->
-<div *ngIf="selectedRuleIndex !== null" class="modal-overlay modern-modal-overlay" (click)="closeRuleModal()">
+@if (selectedRuleIndex !== null) {
+    <div class="modal-overlay modern-modal-overlay" (click)="closeRuleModal()">
     <div class="modal-content modern-modal-content" (click)="$event.stopPropagation()">
         <button class="modal-close modern-modal-close" (click)="closeRuleModal()">
             <i class="pi pi-times"></i>
         </button>
-        <div *ngIf="padelRules[selectedRuleIndex]">
-            <div class="text-2xl font-extrabold mb-4 text-center">{{ padelRules[selectedRuleIndex].title }}</div>
-            <div class="prose max-w-none text-lg text-gray-700 dark:text-gray-200">
-                <p *ngFor="let point of padelRules[selectedRuleIndex].rule_description">{{ point }}</p>
+        @if (padelRules[selectedRuleIndex]) {
+            <div>
+                <div class="text-2xl font-extrabold mb-4 text-center">{{ padelRules[selectedRuleIndex].title }}</div>
+                <div class="prose max-w-none text-lg text-gray-700 dark:text-gray-200">
+                    <p *ngFor="let point of padelRules[selectedRuleIndex].rule_description">{{ point }}</p>
+                </div>
             </div>
-        </div>
+        }
     </div>
-</div>
+    </div>
+}
 
 <style>
 .rules-bg {

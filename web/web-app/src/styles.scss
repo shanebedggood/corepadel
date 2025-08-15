@@ -1,11 +1,17 @@
 /* You can add global styles to this file, and also import other style files */
 
 /* Import SCSS layout files FIRST to establish base styles */
-@import "assets/layout/_main.scss";
-@import "assets/layout/_topbar.scss";
-@import "assets/layout/_menu.scss";
-@import "assets/layout/_footer.scss";
-@import "assets/layout/_responsive.scss";
+@use "assets/layout/_main.scss";
+@use "assets/layout/_topbar.scss";
+@use "assets/layout/_menu.scss";
+@use "assets/layout/_footer.scss";
+@use "assets/layout/_responsive.scss";
+
+/* Import Tailwind CSS and its PrimeUI plugin */
+@use "tailwindcss" as *;
+
+/* Import PrimeIcons CSS */
+@use "primeicons/primeicons.css" as *;
 
 /* Direct CSS rules to ensure topbar layout works */
 
@@ -34,12 +40,7 @@
     order: 2 !important;
 }
 
-/* Import Tailwind CSS and its PrimeUI plugin */
-@import "tailwindcss";
-@plugin "tailwindcss-primeui"; /* This is how you integrate tailwindcss-primeui with Tailwind v4 */
 
-/* Import PrimeIcons CSS */
-@import "primeicons/primeicons.css";
 
 /* Ensure proper background colors */
 body {

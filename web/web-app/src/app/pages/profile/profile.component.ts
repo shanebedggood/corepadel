@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { FirebaseAuthService, UserProfile } from '../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
+import { UserProfile } from '../../services/firebase-auth.service';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -15,34 +16,38 @@ import { Observable } from 'rxjs';
                 <h1>User Profile</h1>
             </div>
             
-            <div class="profile-content" *ngIf="userProfile$ | async as profile">
-                <p-card header="Profile Information" styleClass="profile-card">
-                    <div class="profile-info">
-                        <div class="info-row">
-                            <label>Name:</label>
-                            <span>{{ profile.first_name }} {{ profile.last_name }}</span>
-                        </div>
-                        <div class="info-row">
-                            <label>Email:</label>
-                            <span>{{ profile.email }}</span>
-                        </div>
-                        <div class="info-row">
-                            <label>Username:</label>
-                            <span>{{ profile.username }}</span>
-                        </div>
-                        <div class="info-row">
-                            <label>Email Verified:</label>
-                            <span>{{ profile.email_verified ? 'Yes' : 'No' }}</span>
-                        </div>
-                        <div class="info-row">
-                            <label>Roles:</label>
-                            <div class="roles-list">
-                                <span *ngFor="let role of profile.roles" class="role-badge">{{ role }}</span>
+            @if (userProfile$ | async; as profile) {
+                <div class="profile-content">
+                    <p-card header="Profile Information" styleClass="profile-card">
+                        <div class="profile-info">
+                            <div class="info-row">
+                                <label>Name:</label>
+                                <span>{{ profile.firstName || profile.first_name || profile.displayName || profile.username || 'Not provided' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>Email:</label>
+                                <span>{{ profile.email }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>Username:</label>
+                                <span>{{ profile.username }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>Email Verified:</label>
+                                <span>{{ (profile.emailVerified || profile.email_verified) ? 'Yes' : 'No' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>Roles:</label>
+                                <div class="roles-list">
+                                    @for (role of profile.roles; track role) {
+                                        <span class="role-badge">{{ role }}</span>
+                                    }
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </p-card>
-            </div>
+                    </p-card>
+                </div>
+            }
         </div>
     `,
     styles: [`
@@ -100,10 +105,8 @@ import { Observable } from 'rxjs';
 export class ProfileComponent implements OnInit {
     userProfile$: Observable<UserProfile | null>;
 
-    constructor(
-        private authService: FirebaseAuthService
-    ) {
-        this.userProfile$ = this.authService.getCurrentUserProfile();
+    constructor(private authService: FirebaseAuthService) {
+        this.userProfile$ = this.authService.userProfile$;
     }
 
     ngOnInit() {

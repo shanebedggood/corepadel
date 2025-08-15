@@ -13,7 +13,7 @@ import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
 import { RippleModule } from 'primeng/ripple';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { Observable, of, forkJoin } from 'rxjs';
+import { Observable, of, forkJoin, take } from 'rxjs';
 import { map, switchMap, catchError, finalize } from 'rxjs/operators';
 import { DialogModule } from 'primeng/dialog';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
@@ -21,7 +21,8 @@ import { HttpClient } from '@angular/common/http';
 
 import { TournamentService, Tournament, TournamentParticipant, TournamentGroup, TournamentTeam, TournamentPlayer } from '../../../../services/tournament.service';
 import { VenueService, Venue } from '../../../../services/venue.service';
-import { FirebaseAuthService, UserProfile } from '../../../../services/firebase-auth.service';
+import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
+import { UserProfile } from '../../../../models/user-profile';
 import { TeamEditorComponent, TeamEditorData } from '../team-editor/team-editor.component';
 
 
@@ -113,7 +114,8 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
 
         this.loadGroups().subscribe();
         // NEW: check admin status
-        this.authService.isAdmin().subscribe(isAdmin => {
+        this.authService.userProfile$.pipe(take(1)).subscribe(profile => {
+            const isAdmin = profile?.roles.includes('admin') || false;
             this.isAdmin = isAdmin;
         });
     }
@@ -585,7 +587,7 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
         const groupIds = this.groups.map(g => g.id).filter((id): id is string => !!id);
         const teamCreations = teams.map((team, idx) => {
             const groupId = groupIds[idx % groupIds.length];
-            const teamName = this.tournamentService.generateRandomTeamName();
+            const teamName = `Team ${idx + 1}`;
             if (!this.tournament?.id) return of(null);
             return this.tournamentService.createTournamentTeam(
                 this.tournament.id,
@@ -678,8 +680,22 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
                 });
             },
             reject: () => {
-                // User clicked No - dialog will close automatically
+                // User clicked No - ensure dialog closes
+                this.confirmationService.close();
             }
         });
+    }
+
+    // TrackBy methods for better performance
+    trackByGroup(index: number, group: TournamentGroup): string {
+        return group.id || `group-${index}`;
+    }
+
+    trackByTeam(index: number, team: TournamentTeam): string {
+        return team.id || `team-${index}`;
+    }
+
+    trackByPlayer(index: number, player: any): string {
+        return player.uid || player.firebase_uid || `player-${index}`;
     }
 } 

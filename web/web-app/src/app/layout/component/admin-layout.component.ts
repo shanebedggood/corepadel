@@ -24,7 +24,9 @@ import { LayoutService } from '../service/layout.service';
                     <router-outlet></router-outlet>
                 </div>
             </div>
-            <div class="layout-mask animate-fadein" *ngIf="layoutService.isSidebarActive()"></div>
+            @if (layoutService.isSidebarActive()) {
+                <div class="layout-mask animate-fadein"></div>
+            }
         </div>
     `,
     styles: []

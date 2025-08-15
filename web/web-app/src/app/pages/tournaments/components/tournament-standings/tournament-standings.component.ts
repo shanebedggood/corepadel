@@ -60,7 +60,6 @@ export class TournamentStandingsComponent implements OnInit, OnChanges {
                         this.standings[groupId] = standingsArrays[index] || [];
                     });
                     this.loading = false;
-                    console.log('Standings loaded:', this.standings);
                 },
                 error: (error) => {
                     console.error('Error loading standings:', error);
@@ -92,6 +91,16 @@ export class TournamentStandingsComponent implements OnInit, OnChanges {
         return 'Unknown Team';
     }
 
+    getTeamPlayerNames(teamId: string): string {
+        for (const groupTeams of Object.values(this.teams)) {
+            const team = groupTeams.find(t => t.id === teamId);
+            if (team && team.players && team.players.length > 0) {
+                return team.players.map(player => player.displayName || player.email || 'Unknown Player').join(', ');
+            }
+        }
+        return '';
+    }
+
     getPositionClass(position: number): string {
         if (position === 1) return 'position-first';
         if (position === 2) return 'position-second';
@@ -108,5 +117,10 @@ export class TournamentStandingsComponent implements OnInit, OnChanges {
 
     getGoalDifferenceClass(goalDifference: number): string {
         return goalDifference > 0 ? 'positive' : goalDifference < 0 ? 'negative' : 'neutral';
+    }
+
+    // TrackBy method for better performance
+    trackByGroup(index: number, group: TournamentGroup): string {
+        return group.id || `group-${index}`;
     }
 } 
