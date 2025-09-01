@@ -82,6 +82,14 @@ jobs:
       - name: Configure Docker for GCP
         run: gcloud auth configure-docker
 
+      - name: Create GCR repository (if it doesn't exist)
+        run: |
+          gcloud artifacts repositories create corepadel-quarkus \
+            --repository-format=docker \
+            --location=us-central1 \
+            --description="Core Padel Quarkus Backend" \
+            || echo "Repository already exists"
+
       - name: Build and push Docker image
         run: |
           cd services
