@@ -39,7 +39,7 @@ export const appRoutes: Routes = [
     {
         path: 'player',
         component: PlayerLayoutComponent,
-        // canActivate: [AuthGuard],
+        canActivate: [AuthGuard],
         children: [
             { path: '', component: Dashboard, canActivate: [ProfileCompletionGuard] },
             { path: 'standings/:tournamentId', component: StandingsComponent, data: { title: 'Tournament Standings' }, canActivate: [ProfileCompletionGuard] },
