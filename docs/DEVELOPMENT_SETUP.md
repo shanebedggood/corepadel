@@ -1,6 +1,6 @@
 # Development Setup Guide
 
-This guide will help you set up the Core Padel development environment.
+This guide will help you set up the STRIDE & SERVE development environment.
 
 ## 🏗️ Architecture
 

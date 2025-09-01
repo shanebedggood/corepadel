@@ -156,7 +156,24 @@ public class TournamentService {
     private TournamentDto convertToDto(Tournament tournament) {
         try {
             System.out.println("Converting tournament to DTO: " + tournament.getTournamentId());
-            TournamentDto dto = new TournamentDto();
+            
+            // Create the appropriate DTO based on tournament type
+            TournamentDto dto;
+            if (tournament instanceof RoundRobinTournament) {
+                dto = convertRoundRobinToDto((RoundRobinTournament) tournament);
+            } else if (tournament instanceof AmericanoTournament) {
+                dto = convertAmericanoToDto((AmericanoTournament) tournament);
+            } else {
+                // Fallback to base tournament DTO
+                dto = new TournamentDto() {
+                    @Override
+                    public String getTournamentType() {
+                        return "UNKNOWN";
+                    }
+                };
+            }
+            
+            // Set common fields
             dto.setId(tournament.getTournamentId().toString());
             dto.setName(tournament.getName());
             dto.setDescription(tournament.getDescription());
@@ -167,10 +184,8 @@ public class TournamentService {
             dto.setMaxParticipants(tournament.getMaxParticipants());
             dto.setCurrentParticipants(tournament.getCurrentParticipants());
             dto.setEntryFee(tournament.getEntryFee());
-            dto.setNoOfGroups(tournament.getNoOfGroups());
             dto.setClubId(tournament.getClubId());
-            dto.setUserId(tournament.getUserId());
-
+            dto.setFirebaseUid(tournament.getFirebaseUid());
             dto.setVenueId(tournament.getVenueId());
             
             // Add venue information if venueId is provided
@@ -226,15 +241,6 @@ public class TournamentService {
             if (tournament.getVenueType() != null) {
                 dto.setVenueType(tournamentConfigService.convertVenueTypeToDto(tournament.getVenueType()));
             }
-            if (tournament.getProgressionType() != null) {
-                dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
-            }
-            if (tournament.getAdvancementModel() != null) {
-                dto.setAdvancementModel(tournamentConfigService.convertAdvancementModelToDto(tournament.getAdvancementModel()));
-            }
-            if (tournament.getEliminationBracketSize() != null) {
-                dto.setEliminationBracketSize(tournamentConfigService.convertEliminationBracketSizeToDto(tournament.getEliminationBracketSize()));
-            }
             
             System.out.println("Successfully converted tournament to DTO: " + tournament.getTournamentId());
             return dto;
@@ -243,6 +249,37 @@ public class TournamentService {
             e.printStackTrace();
             throw e;
         }
+    }
+    
+    /**
+     * Convert RoundRobinTournament entity to DTO.
+     */
+    private RoundRobinTournamentDto convertRoundRobinToDto(RoundRobinTournament tournament) {
+        RoundRobinTournamentDto dto = new RoundRobinTournamentDto();
+        dto.setNoOfGroups(tournament.getNoOfGroups());
+        
+        // Convert Round Robin specific entities to DTOs
+        if (tournament.getProgressionType() != null) {
+            dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
+        }
+        if (tournament.getTeamsToAdvance() != null) {
+            dto.setTeamsToAdvance(tournament.getTeamsToAdvance());
+        }
+        
+        return dto;
+    }
+    
+    /**
+     * Convert AmericanoTournament entity to DTO.
+     */
+    private AmericanoTournamentDto convertAmericanoToDto(AmericanoTournament tournament) {
+        AmericanoTournamentDto dto = new AmericanoTournamentDto();
+        dto.setMaxPlayersPerTeam(tournament.getMaxPlayersPerTeam());
+        dto.setRotationInterval(tournament.getRotationInterval());
+        dto.setPointsToWin(tournament.getPointsToWin());
+        dto.setGamesPerRotation(tournament.getGamesPerRotation());
+        
+        return dto;
     }
     
     /**
@@ -256,7 +293,18 @@ public class TournamentService {
             System.out.println("DTO registrationType: " + dto.getRegistrationType());
             System.out.println("DTO venueType: " + dto.getVenueType());
             System.out.println("DTO status: " + dto.getStatus());
-            Tournament tournament = new Tournament();
+            
+            // Create the appropriate tournament entity based on type
+            Tournament tournament;
+            if (dto instanceof RoundRobinTournamentDto) {
+                tournament = convertToRoundRobinEntity((RoundRobinTournamentDto) dto);
+            } else if (dto instanceof AmericanoTournamentDto) {
+                tournament = convertToAmericanoEntity((AmericanoTournamentDto) dto);
+            } else {
+                // Default to Round Robin for backward compatibility
+                tournament = convertToRoundRobinEntity(new RoundRobinTournamentDto());
+            }
+            
             if (dto.getId() != null) {
                 tournament.setTournamentId(UUID.fromString(dto.getId()));
             }
@@ -269,11 +317,9 @@ public class TournamentService {
             tournament.setMaxParticipants(dto.getMaxParticipants());
             tournament.setCurrentParticipants(dto.getCurrentParticipants());
             tournament.setEntryFee(dto.getEntryFee());
-            tournament.setNoOfGroups(dto.getNoOfGroups());
             tournament.setClubId(dto.getClubId());
-            System.out.println("Setting userId: " + dto.getUserId());
-            tournament.setUserId(dto.getUserId());
-
+            System.out.println("Setting firebaseUid: " + dto.getFirebaseUid());
+            tournament.setFirebaseUid(dto.getFirebaseUid());
             tournament.setVenueId(dto.getVenueId());
             
             // Set related entities if IDs are provided
@@ -327,38 +373,115 @@ public class TournamentService {
                 System.out.println("Found venue type: " + venueType.getName());
                 tournament.setVenueType(venueType);
             }
-            if (dto.getProgressionOption() != null && dto.getProgressionOption().getId() != null) {
-                System.out.println("Looking up progression option with ID: " + dto.getProgressionOption().getId());
-                ProgressionType progressionType = ProgressionType.findById(UUID.fromString(dto.getProgressionOption().getId()));
-                if (progressionType == null) {
-                    throw new RuntimeException("ProgressionType not found with ID: " + dto.getProgressionOption().getId());
+            // Set related entities if IDs are provided
+            if (dto.getFormat() != null && dto.getFormat().getId() != null) {
+                System.out.println("Looking up format with ID: " + dto.getFormat().getId());
+                Format format = Format.findById(UUID.fromString(dto.getFormat().getId()));
+                if (format == null) {
+                    throw new RuntimeException("Format not found with ID: " + dto.getFormat().getId());
                 }
-                tournament.setProgressionType(progressionType);
+                System.out.println("Found format: " + format.getName());
+                tournament.setFormat(format);
+            } else {
+                System.out.println("Format is null or has no ID: " + dto.getFormat());
             }
-            if (dto.getAdvancementModel() != null && dto.getAdvancementModel().getId() != null) {
-                System.out.println("Looking up advancement model with ID: " + dto.getAdvancementModel().getId());
-                AdvancementModel advancementModel = AdvancementModel.findById(UUID.fromString(dto.getAdvancementModel().getId()));
-                if (advancementModel == null) {
-                    throw new RuntimeException("AdvancementModel not found with ID: " + dto.getAdvancementModel().getId());
+            if (dto.getCategory() != null && dto.getCategory().getId() != null) {
+                System.out.println("Looking up category with ID: " + dto.getCategory().getId());
+                Category category = Category.findById(UUID.fromString(dto.getCategory().getId()));
+                if (category == null) {
+                    throw new RuntimeException("Category not found with ID: " + dto.getCategory().getId());
                 }
-                tournament.setAdvancementModel(advancementModel);
+                System.out.println("Found category: " + category.getName());
+                tournament.setCategory(category);
+            } else {
+                System.out.println("Category is null or has no ID: " + dto.getCategory());
             }
-            if (dto.getEliminationBracketSize() != null && dto.getEliminationBracketSize().getId() != null) {
-                System.out.println("Looking up elimination bracket size with ID: " + dto.getEliminationBracketSize().getId());
-                EliminationBracketSize eliminationBracketSize = EliminationBracketSize.findById(UUID.fromString(dto.getEliminationBracketSize().getId()));
-                if (eliminationBracketSize == null) {
-                    throw new RuntimeException("EliminationBracketSize not found with ID: " + dto.getEliminationBracketSize().getId());
+            if (dto.getRegistrationType() != null && dto.getRegistrationType().getId() != null) {
+                System.out.println("Looking up registration type with ID: " + dto.getRegistrationType().getId());
+                RegistrationType registrationType = RegistrationType.findById(UUID.fromString(dto.getRegistrationType().getId()));
+                if (registrationType == null) {
+                    throw new RuntimeException("RegistrationType not found with ID: " + dto.getRegistrationType().getId());
                 }
-                tournament.setEliminationBracketSize(eliminationBracketSize);
+                System.out.println("Found registration type: " + registrationType.getName());
+                tournament.setRegistrationType(registrationType);
+            } else {
+                System.out.println("Registration type is null or has no ID: " + dto.getRegistrationType());
+            }
+            if (dto.getStatus() != null && dto.getStatus().getId() != null) {
+                System.out.println("Looking up status with ID: " + dto.getStatus().getId());
+                TournamentStatus status = TournamentStatus.findById(UUID.fromString(dto.getStatus().getId()));
+                if (status == null) {
+                    throw new RuntimeException("TournamentStatus not found with ID: " + dto.getStatus().getId());
+                }
+                tournament.setStatus(status);
+            }
+            if (dto.getVenueType() != null && dto.getVenueType().getId() != null) {
+                System.out.println("Looking up venue type with ID: " + dto.getVenueType().getId());
+                VenueType venueType = VenueType.findById(UUID.fromString(dto.getVenueType().getId()));
+                if (venueType == null) {
+                    throw new RuntimeException("VenueType not found with ID: " + dto.getVenueType().getId());
+                }
+                System.out.println("Found venue type: " + venueType.getName());
+                tournament.setVenueType(venueType);
             }
             
-            System.out.println("Successfully converted DTO to entity");
             return tournament;
         } catch (Exception e) {
             System.err.println("Error converting DTO to entity: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
+    }
+    
+    /**
+     * Convert RoundRobinTournamentDto to RoundRobinTournament entity.
+     */
+    private RoundRobinTournament convertToRoundRobinEntity(RoundRobinTournamentDto dto) {
+        RoundRobinTournament tournament = new RoundRobinTournament();
+        
+        // Set Round Robin specific fields
+        if (dto.getNoOfGroups() != null) {
+            tournament.setNoOfGroups(dto.getNoOfGroups());
+        }
+        
+        // Set Round Robin specific entities
+        if (dto.getProgressionOption() != null && dto.getProgressionOption().getId() != null) {
+            ProgressionType progressionType = ProgressionType.findById(UUID.fromString(dto.getProgressionOption().getId()));
+            if (progressionType == null) {
+                throw new RuntimeException("ProgressionType not found with ID: " + dto.getProgressionOption().getId());
+            }
+            tournament.setProgressionType(progressionType);
+        }
+        
+        // Set teams to advance
+        if (dto.getTeamsToAdvance() != null) {
+            tournament.setTeamsToAdvance(dto.getTeamsToAdvance());
+        }
+        
+        return tournament;
+    }
+    
+    /**
+     * Convert AmericanoTournamentDto to AmericanoTournament entity.
+     */
+    private AmericanoTournament convertToAmericanoEntity(AmericanoTournamentDto dto) {
+        AmericanoTournament tournament = new AmericanoTournament();
+        
+        // Set Americano specific fields
+        if (dto.getMaxPlayersPerTeam() != null) {
+            tournament.setMaxPlayersPerTeam(dto.getMaxPlayersPerTeam());
+        }
+        if (dto.getRotationInterval() != null) {
+            tournament.setRotationInterval(dto.getRotationInterval());
+        }
+        if (dto.getPointsToWin() != null) {
+            tournament.setPointsToWin(dto.getPointsToWin());
+        }
+        if (dto.getGamesPerRotation() != null) {
+            tournament.setGamesPerRotation(dto.getGamesPerRotation());
+        }
+        
+        return tournament;
     }
     
     /**
@@ -374,7 +497,6 @@ public class TournamentService {
         if (dto.getMaxParticipants() != null) tournament.setMaxParticipants(dto.getMaxParticipants());
         if (dto.getCurrentParticipants() != null) tournament.setCurrentParticipants(dto.getCurrentParticipants());
         if (dto.getEntryFee() != null) tournament.setEntryFee(dto.getEntryFee());
-        if (dto.getNoOfGroups() != null) tournament.setNoOfGroups(dto.getNoOfGroups());
         if (dto.getVenueId() != null) tournament.setVenueId(dto.getVenueId());
         
         // Update related entities if provided
@@ -398,17 +520,47 @@ public class TournamentService {
             VenueType venueType = VenueType.findById(UUID.fromString(dto.getVenueType().getId()));
             tournament.setVenueType(venueType);
         }
+        
+        // Update tournament-specific fields based on type
+        if (tournament instanceof RoundRobinTournament && dto instanceof RoundRobinTournamentDto) {
+            updateRoundRobinFromDto((RoundRobinTournament) tournament, (RoundRobinTournamentDto) dto);
+        } else if (tournament instanceof AmericanoTournament && dto instanceof AmericanoTournamentDto) {
+            updateAmericanoFromDto((AmericanoTournament) tournament, (AmericanoTournamentDto) dto);
+        }
+    }
+    
+    /**
+     * Update RoundRobinTournament from RoundRobinTournamentDto.
+     */
+    private void updateRoundRobinFromDto(RoundRobinTournament tournament, RoundRobinTournamentDto dto) {
+        if (dto.getNoOfGroups() != null) {
+            tournament.setNoOfGroups(dto.getNoOfGroups());
+        }
         if (dto.getProgressionOption() != null && dto.getProgressionOption().getId() != null) {
             ProgressionType progressionType = ProgressionType.findById(UUID.fromString(dto.getProgressionOption().getId()));
             tournament.setProgressionType(progressionType);
         }
-        if (dto.getAdvancementModel() != null && dto.getAdvancementModel().getId() != null) {
-            AdvancementModel advancementModel = AdvancementModel.findById(UUID.fromString(dto.getAdvancementModel().getId()));
-            tournament.setAdvancementModel(advancementModel);
+
+        if (dto.getTeamsToAdvance() != null) {
+            tournament.setTeamsToAdvance(dto.getTeamsToAdvance());
         }
-        if (dto.getEliminationBracketSize() != null && dto.getEliminationBracketSize().getId() != null) {
-            EliminationBracketSize eliminationBracketSize = EliminationBracketSize.findById(UUID.fromString(dto.getEliminationBracketSize().getId()));
-            tournament.setEliminationBracketSize(eliminationBracketSize);
+    }
+    
+    /**
+     * Update AmericanoTournament from AmericanoTournamentDto.
+     */
+    private void updateAmericanoFromDto(AmericanoTournament tournament, AmericanoTournamentDto dto) {
+        if (dto.getMaxPlayersPerTeam() != null) {
+            tournament.setMaxPlayersPerTeam(dto.getMaxPlayersPerTeam());
+        }
+        if (dto.getRotationInterval() != null) {
+            tournament.setRotationInterval(dto.getRotationInterval());
+        }
+        if (dto.getPointsToWin() != null) {
+            tournament.setPointsToWin(dto.getPointsToWin());
+        }
+        if (dto.getGamesPerRotation() != null) {
+            tournament.setGamesPerRotation(dto.getGamesPerRotation());
         }
     }
 
@@ -444,11 +596,11 @@ public class TournamentService {
             // Use a native query to join with the user table
             // Use LEFT JOIN to handle cases where user might not exist
             String query = """
-                SELECT tp.participant_id, tp.tournament_id, tp.user_id, tp.added_by,
+                SELECT tp.participant_id, tp.tournament_id, tp.firebase_uid, tp.added_by,
                        u.firebase_uid, u.email, u.display_name, u.first_name, u.last_name, 
                        u.mobile, u.rating
                 FROM core.tournament_participant tp
-                LEFT JOIN core.user u ON tp.user_id = u.firebase_uid
+                LEFT JOIN core.user u ON tp.firebase_uid = u.firebase_uid
                 WHERE tp.tournament_id = ?
                 """;
             
@@ -468,12 +620,12 @@ public class TournamentService {
             
             System.out.println("Found " + results.size() + " participants for tournament " + tournamentId);
             
-            return results.stream().map(row -> {
+                            return results.stream().map(row -> {
                 try {
                     Map<String, Object> participantDto = new HashMap<>();
                     participantDto.put("id", row[0] != null ? row[0].toString() : null); // participant_id
                     participantDto.put("tournamentId", tournamentId);
-                    participantDto.put("uid", row[4] != null ? row[4] : row[2]); // firebase_uid or user_id as fallback
+                    participantDto.put("uid", row[2]); // firebase_uid (from tp.firebase_uid)
                     participantDto.put("email", row[5]); // email
                     participantDto.put("displayName", row[6] != null ? row[6] : "Unknown User"); // display_name
                     participantDto.put("firstName", row[7]); // first_name
@@ -482,7 +634,7 @@ public class TournamentService {
                     participantDto.put("rating", row[10] != null ? row[10] : 0); // rating
                     participantDto.put("addedBy", row[3]); // added_by
 
-                    System.out.println("Participant " + (row[6] != null ? row[6] : "Unknown") + " (UID: " + (row[4] != null ? row[4] : row[2]) + ") has rating: " + (row[10] != null ? row[10] : 0));
+                    System.out.println("Participant " + (row[6] != null ? row[6] : "Unknown") + " (UID: " + (row[2] != null ? row[2] : "Unknown") + ") has rating: " + (row[10] != null ? row[10] : 0));
 
                     return participantDto;
                 } catch (Exception e) {
@@ -514,7 +666,7 @@ public class TournamentService {
             
             // Check if participant already exists
             String uid = jsonNode.get("uid").asText();
-            long existingCount = TournamentParticipant.count("tournament.tournamentId = ?1 and userId = ?2", UUID.fromString(tournamentId), uid);
+            long existingCount = TournamentParticipant.count("tournament.tournamentId = ?1 and firebaseUid = ?2", UUID.fromString(tournamentId), uid);
             if (existingCount > 0) {
                 throw new RuntimeException("Participant already exists in tournament");
             }
@@ -522,7 +674,7 @@ public class TournamentService {
             // Create new participant
             TournamentParticipant participant = new TournamentParticipant();
             participant.tournament = tournament;
-            participant.userId = uid;
+            participant.firebaseUid = uid;
             participant.addedBy = jsonNode.get("addedBy").asText();
 
             participant.persist();
@@ -578,14 +730,14 @@ public class TournamentService {
             String updateUserQuery = "UPDATE core.user SET rating = ? WHERE firebase_uid = ?";
             int updatedRows = entityManager.createNativeQuery(updateUserQuery)
                     .setParameter(1, rating)
-                    .setParameter(2, participant.userId)
+                    .setParameter(2, participant.firebaseUid)
                     .executeUpdate();
             
             if (updatedRows == 0) {
                 throw new RuntimeException("User not found for participant: " + participantId);
             }
             
-            System.out.println("Updated participant " + participant.userId + " rating to: " + rating);
+            System.out.println("Updated participant " + participant.firebaseUid + " rating to: " + rating);
         } catch (Exception e) {
             throw new RuntimeException("Error updating participant rating: " + e.getMessage(), e);
         }
@@ -809,12 +961,12 @@ public class TournamentService {
                     for (String uid : team.getPlayerUids()) {
                         // Find participant with this UID and join with user table
                         String query = """
-                            SELECT tp.participant_id, tp.user_id, tp.added_by,
+                            SELECT tp.participant_id, tp.firebase_uid, tp.added_by,
                                    u.firebase_uid, u.email, u.display_name, u.first_name, u.last_name, 
                                    u.mobile, u.rating
                             FROM core.tournament_participant tp
-                            JOIN core.user u ON tp.user_id = u.firebase_uid
-                            WHERE tp.tournament_id = ? AND tp.user_id = ?
+                            JOIN core.user u ON tp.firebase_uid = u.firebase_uid
+                            WHERE tp.tournament_id = ? AND tp.firebase_uid = ?
                             """;
                         
                         List<Object[]> results = entityManager.createNativeQuery(query)
@@ -825,7 +977,7 @@ public class TournamentService {
                         if (!results.isEmpty()) {
                             Object[] row = results.get(0);
                             Map<String, Object> player = new HashMap<>();
-                            player.put("uid", row[3]); // firebase_uid
+                            player.put("uid", row[1]); // firebase_uid (from tp.firebase_uid)
                             player.put("email", row[4]); // email
                             player.put("displayName", row[5]); // display_name
                             player.put("firstName", row[6]); // first_name
@@ -834,7 +986,7 @@ public class TournamentService {
                             player.put("rating", row[9]); // rating
                             players.add(player);
                             
-                            System.out.println("Team player " + row[5] + " (UID: " + row[3] + ") has rating: " + row[9]);
+                            System.out.println("Team player " + row[5] + " (UID: " + row[1] + ") has rating: " + row[9]);
                         } else {
                             // Fallback if participant not found
                             Map<String, Object> player = new HashMap<>();
@@ -903,8 +1055,8 @@ public class TournamentService {
                 String query = """
                     SELECT u.rating
                     FROM core.tournament_participant tp
-                    JOIN core.user u ON tp.user_id = u.firebase_uid
-                    WHERE tp.tournament_id = ? AND tp.user_id = ?
+                    JOIN core.user u ON tp.firebase_uid = u.firebase_uid
+                    WHERE tp.tournament_id = ? AND tp.firebase_uid = ?
                     """;
                 
                 List<Object> results = entityManager.createNativeQuery(query)
@@ -993,8 +1145,8 @@ public class TournamentService {
                     String query = """
                         SELECT u.rating
                         FROM core.tournament_participant tp
-                        JOIN core.user u ON tp.user_id = u.firebase_uid
-                        WHERE tp.tournament_id = ? AND tp.user_id = ?
+                        JOIN core.user u ON tp.firebase_uid = u.firebase_uid
+                        WHERE tp.tournament_id = ? AND tp.firebase_uid = ?
                         """;
                     
                     List<Object> results = entityManager.createNativeQuery(query)
@@ -1509,6 +1661,9 @@ public class TournamentService {
                 standingDto.put("goalDifference", standing.goalDifference);
                 standingDto.put("points", standing.points);
                 standingDto.put("position", standing.position);
+                
+                // Add unique identifier to prevent duplicate key warnings in Angular
+                standingDto.put("uniqueId", standing.standingId + "-" + standing.teamId + "-" + standing.position);
                 
                 // Get team name
                 TournamentTeam team = TournamentTeam.findById(UUID.fromString(standing.teamId));

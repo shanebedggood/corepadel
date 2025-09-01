@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
     <div class="layout-footer">
       <div class="footer-content">
         <div class="footer-section">
-          <h3>Core Padel</h3>
+          <h3>STRIDE & SERVE</h3>
           <p>Your premier destination for padel tournaments and community.</p>
         </div>
         <div class="footer-section">

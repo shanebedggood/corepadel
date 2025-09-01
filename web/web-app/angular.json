@@ -3,7 +3,7 @@
     "version": 1,
     "newProjectRoot": "projects",
     "projects": {
-        "corepadel": {
+        "sakai-ng": {
             "projectType": "application",
             "schematics": {
                 "@schematics/angular:component": {
@@ -15,9 +15,9 @@
             "prefix": "app",
             "architect": {
                 "build": {
-                    "builder": "@angular/build:application",
+                    "builder": "@angular-devkit/build-angular:application",
                     "options": {
-                        "outputPath": "dist/corepadel",
+                        "outputPath": "dist/sakai-ng",
                         "index": "src/index.html",
                         "browser": "src/main.ts",
                         "polyfills": [
@@ -26,42 +26,21 @@
                         "tsConfig": "tsconfig.app.json",
                         "inlineStyleLanguage": "scss",
                         "assets": [
-                            {
-                                "glob": "**/*",
-                                "input": "public"
-                            },
+              
                             {
                                 "glob": "**/*",
                                 "input": "src/assets",
-                                "output": "/assets/"
+                                "output": "assets"
                             }
                         ],
                         "styles": [
-                            "src/styles.scss"
+                            "src/assets/styles.scss"
                         ],
                         "scripts": []
                     },
                     "configurations": {
                         "production": {
-                            "budgets": [
-                                {
-                                    "type": "initial",
-                                    "maximumWarning": "2.5mb",
-                                    "maximumError": "5mb"
-                                },
-                                {
-                                    "type": "anyComponentStyle",
-                                    "maximumWarning": "15kb",
-                                    "maximumError": "20kb"
-                                }
-                            ],
-                            "outputHashing": "all",
-                            "fileReplacements": [
-                                {
-                                    "replace": "src/environments/environment.ts",
-                                    "with": "src/environments/environment.prod.ts"
-                                }
-                            ]
+                            "outputHashing": "all"
                         },
                         "development": {
                             "optimization": false,
@@ -72,25 +51,22 @@
                     "defaultConfiguration": "production"
                 },
                 "serve": {
-                    "builder": "@angular/build:dev-server",
-                    "options": {
-                        "proxyConfig": "proxy.conf.json"
-                    },
+                    "builder": "@angular-devkit/build-angular:dev-server",
                     "configurations": {
                         "production": {
-                            "buildTarget": "corepadel:build:production"
+                            "buildTarget": "sakai-ng:build:production"
                         },
                         "development": {
-                            "buildTarget": "corepadel:build:development"
+                            "buildTarget": "sakai-ng:build:development"
                         }
                     },
                     "defaultConfiguration": "development"
                 },
                 "extract-i18n": {
-                    "builder": "@angular/build:extract-i18n"
+                    "builder": "@angular-devkit/build-angular:extract-i18n"
                 },
                 "test": {
-                    "builder": "@angular/build:karma",
+                    "builder": "@angular-devkit/build-angular:karma",
                     "options": {
                         "polyfills": [
                             "zone.js",
@@ -101,11 +77,12 @@
                         "assets": [
                             {
                                 "glob": "**/*",
-                                "input": "public"
+                                "input": "src/assets",
+                                "output": "assets"
                             }
                         ],
                         "styles": [
-                            "src/styles.scss"
+                            "src/assets/styles.scss"
                         ],
                         "scripts": []
                     }
@@ -115,31 +92,5 @@
     },
     "cli": {
       "analytics": false
-    },
-    "schematics": {
-      "@schematics/angular:component": {
-        "type": "component"
-      },
-      "@schematics/angular:directive": {
-        "type": "directive"
-      },
-      "@schematics/angular:service": {
-        "type": "service"
-      },
-      "@schematics/angular:guard": {
-        "typeSeparator": "."
-      },
-      "@schematics/angular:interceptor": {
-        "typeSeparator": "."
-      },
-      "@schematics/angular:module": {
-        "typeSeparator": "."
-      },
-      "@schematics/angular:pipe": {
-        "typeSeparator": "."
-      },
-      "@schematics/angular:resolver": {
-        "typeSeparator": "."
-      }
     }
 }

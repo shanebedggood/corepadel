@@ -79,7 +79,7 @@ export class LayoutService {
 
       if (this.layoutState().overlayMenuActive) {
         this.overlayOpen.next(null);
-      }      
+      }
     } else {
       if (this.isDesktop()) {
         this.layoutState.update((prev) => ({

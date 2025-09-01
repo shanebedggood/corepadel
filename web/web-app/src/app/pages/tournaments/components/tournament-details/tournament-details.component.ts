@@ -14,7 +14,7 @@ import { RippleModule } from 'primeng/ripple';
 import { Subject, takeUntil } from 'rxjs';
 
 // Import interfaces from tournament service
-import { TournamentService, Tournament } from '../../../../services/tournament.service';
+import { TournamentService, Tournament, RoundType } from '../../../../services/tournament.service';
 import { VenueService, Venue } from '../../../../services/venue.service';
 
 // Define interfaces locally (same as in edit-tournament)
@@ -151,6 +151,10 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
     progressionTypes: TournamentProgressionOption[] = [];
     advancementModels: any[] = [];
     eliminationBracketSizes: any[] = [];
+    
+    // Group options for Round Robin format
+    groupOptions: number[] = [2, 3, 4, 5, 6, 7, 8];
+    teamsToAdvanceOptions: number[] = [1, 2, 4, 8];
 
     private destroy$ = new Subject<void>();
 
@@ -172,10 +176,12 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             venueType: [null, Validators.required],
             venue: [null],
             progressionOption: [null],
+            roundType: [null],
             advancementModel: [null],
             eliminationBracketSize: [null],
             maxParticipants: [null, [Validators.required, Validators.min(2)]],
             noOfGroups: [null, [Validators.required, Validators.min(1)]],
+            teamsToAdvancePerGroup: [null, [Validators.required]],
             entryFee: [null, [Validators.required, Validators.min(0)]]
         });
     }
@@ -233,6 +239,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             takeUntil(this.destroy$)
         ).subscribe(format => {
             this.formatChanged.emit(format);
+            this.updateRoundRobinValidation(format);
         });
 
         // Watch for progression option changes to show/hide group advancement settings
@@ -256,12 +263,21 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             takeUntil(this.destroy$)
         ).subscribe(() => {
             this.validateGroupConfiguration();
+            this.validateTeamsToAdvance();
         });
 
         this.tournamentForm.get('noOfGroups')?.valueChanges.pipe(
             takeUntil(this.destroy$)
         ).subscribe(() => {
             this.validateGroupConfiguration();
+            this.validateTeamsToAdvance();
+        });
+
+        // Watch for teamsToAdvancePerGroup changes to validate teams to advance
+        this.tournamentForm.get('teamsToAdvancePerGroup')?.valueChanges.pipe(
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.validateTeamsToAdvance();
         });
     }
 
@@ -275,9 +291,9 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
         }
 
         if (this.roundRobinConfig) {
-            this.progressionTypes = this.roundRobinConfig.progressionTypes.filter(p => p.isActive);
-            this.advancementModels = this.roundRobinConfig.groupAdvancementSettings.advancementModels;
-            this.eliminationBracketSizes = this.roundRobinConfig.groupAdvancementSettings.eliminationBracketSize.filter(b => b.isActive);
+            this.progressionTypes = this.roundRobinConfig.progressionTypes?.filter(p => p.isActive) || [];
+            this.advancementModels = this.roundRobinConfig.groupAdvancementSettings?.advancementModels || [];
+            this.eliminationBracketSizes = this.roundRobinConfig.groupAdvancementSettings?.eliminationBracketSize?.filter(b => b.isActive) || [];
         }
     }
 
@@ -298,12 +314,17 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             registrationType: this.tournament.registrationType?.id,
             venueType: this.tournament.venueType?.id,
             venue: matchingVenue?.id,
-            progressionOption: this.tournament.progressionOption?.id,
-            advancementModel: this.tournament.advancementModel?.id,
-            eliminationBracketSize: this.tournament.eliminationBracketSize?.id,
             maxParticipants: this.tournament.maxParticipants,
-            noOfGroups: this.tournament.noOfGroups,
-            entryFee: this.tournament.entryFee
+            entryFee: this.tournament.entryFee,
+            // Round Robin specific fields
+            ...(this.isRoundRobinTournament() && {
+                progressionOption: (this.tournament as any).progressionOption?.id,
+                advancementModel: (this.tournament as any).advancementModel?.id,
+                eliminationBracketSize: (this.tournament as any).eliminationBracketSize?.id,
+                noOfGroups: (this.tournament as any).noOfGroups,
+                teamsToAdvancePerGroup: (this.tournament as any).teamsToAdvancePerGroup,
+                roundType: (this.tournament as any).roundType?.id,
+            })
         });
         
         // Force update the venue field specifically
@@ -347,7 +368,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
                 return;
             }
 
-            const tournamentData: Tournament = {
+            const baseTournamentData = {
                 ...this.tournament!,
                 name: formValue.name,
                 description: formValue.description,
@@ -360,13 +381,22 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
                 registrationType: registrationType,
                 venueType: venueType,
                 venue: venue,
-                progressionOption: progressionOption || undefined,
-                advancementModel: advancementModel || undefined,
-                eliminationBracketSize: eliminationBracketSize || undefined,
                 maxParticipants: Number(formValue.maxParticipants),
-                noOfGroups: Number(formValue.noOfGroups),
-                entryFee: Number(formValue.entryFee)
+                entryFee: Number(formValue.entryFee),
+                tournamentType: this.isRoundRobinTournament() ? 'ROUND_ROBIN' : 'AMERICANO'
             };
+
+            // Add Round Robin specific fields if applicable
+            const tournamentData = this.isRoundRobinTournament() 
+                ? {
+                    ...baseTournamentData,
+                    progressionOption: progressionOption || undefined,
+                    advancementModel: advancementModel || undefined,
+                    eliminationBracketSize: eliminationBracketSize || undefined,
+                    noOfGroups: Number(formValue.noOfGroups),
+                    teamsToAdvancePerGroup: Number(formValue.teamsToAdvancePerGroup),
+                } as any
+                : baseTournamentData;
             
             this.saveTournament.emit(tournamentData);
         }
@@ -390,11 +420,16 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
         this.resetForm.emit();
     }
 
+    isRoundRobinTournament(): boolean {
+        return this.tournament?.tournamentType === 'ROUND_ROBIN' || 
+               (this.tournament?.format?.name?.toLowerCase() || '').includes('round robin');
+    }
+
     private validateGroupConfiguration(): void {
         const maxParticipants = this.tournamentForm.get('maxParticipants')?.value;
         const noOfGroups = this.tournamentForm.get('noOfGroups')?.value;
 
-        if (maxParticipants && noOfGroups) {
+        if (maxParticipants && noOfGroups && this.isRoundRobinTournament()) {
             const teamsPerGroup = Math.floor(maxParticipants / 2 / noOfGroups);
             if (teamsPerGroup < 1) {
                 this.tournamentForm.get('noOfGroups')?.setErrors({
@@ -406,6 +441,43 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
                 this.tournamentForm.get('noOfGroups')?.setErrors(null);
             }
         }
+    }
+
+    private validateTeamsToAdvance(): void {
+        const maxParticipants = this.tournamentForm.get('maxParticipants')?.value;
+        const noOfGroups = this.tournamentForm.get('noOfGroups')?.value;
+        const teamsToAdvancePerGroup = this.tournamentForm.get('teamsToAdvancePerGroup')?.value;
+
+        if (maxParticipants && noOfGroups && teamsToAdvancePerGroup && this.isRoundRobinTournament()) {
+            const teamsPerGroup = Math.floor(maxParticipants / 2 / noOfGroups);
+            if (teamsToAdvancePerGroup > teamsPerGroup) {
+                this.tournamentForm.get('teamsToAdvancePerGroup')?.setErrors({
+                    'invalidTeamsToAdvance': {
+                        message: `Cannot advance ${teamsToAdvancePerGroup} teams when each group only has ${teamsPerGroup} teams`
+                    }
+                });
+            } else {
+                this.tournamentForm.get('teamsToAdvancePerGroup')?.setErrors(null);
+            }
+        }
+    }
+
+    private updateRoundRobinValidation(format: string): void {
+        const noOfGroupsControl = this.tournamentForm.get('noOfGroups');
+        const teamsToAdvancePerGroupControl = this.tournamentForm.get('teamsToAdvancePerGroup');
+        
+        if (this.isRoundRobinFormat()) {
+            noOfGroupsControl?.setValidators([Validators.required]);
+            teamsToAdvancePerGroupControl?.setValidators([Validators.required]);
+        } else {
+            noOfGroupsControl?.clearValidators();
+            teamsToAdvancePerGroupControl?.clearValidators();
+            noOfGroupsControl?.setValue(null);
+            teamsToAdvancePerGroupControl?.setValue(null);
+        }
+        
+        noOfGroupsControl?.updateValueAndValidity();
+        teamsToAdvancePerGroupControl?.updateValueAndValidity();
     }
 
     private updateGroupAdvancementValidation(progressionOption: any): void {
@@ -456,7 +528,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
         if (!selectedFormatId) return false;
         
         const selectedFormat = this.formats.find(f => f.id === selectedFormatId);
-        return selectedFormat?.name === 'Round Robin';
+        return selectedFormat?.name === 'Round Robin' || false;
     }
 
     isGroupBasedElimination(): boolean {
@@ -500,7 +572,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             return 0;
         }
 
-        const bracketConfig = this.roundRobinConfig.groupAdvancementSettings.eliminationBracketSize.find(
+        const bracketConfig = this.roundRobinConfig.groupAdvancementSettings?.eliminationBracketSize?.find(
             (bracket: any) => bracket.id === eliminationBracketSize
         );
 
@@ -517,7 +589,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
         }
 
         const totalTeams = Math.floor(maxParticipants / 2);
-        const bracketConfig = this.roundRobinConfig.groupAdvancementSettings.eliminationBracketSize.find(
+        const bracketConfig = this.roundRobinConfig.groupAdvancementSettings?.eliminationBracketSize?.find(
             (bracket: any) => bracket.id === eliminationBracketSize
         );
 
@@ -557,4 +629,5 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             return null;
         };
     }
+
 } 

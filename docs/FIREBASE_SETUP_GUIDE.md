@@ -1,4 +1,4 @@
-# Firebase Setup Guide for Core Padel
+# Firebase Setup Guide for Pace and Court
 
 This guide will help you set up Firebase authentication with passwordless sign-in and user sync to PostgreSQL.
 
@@ -33,8 +33,8 @@ This guide will help you set up Firebase authentication with passwordless sign-i
 #### Configure Email Templates
 1. In **Authentication** > **Templates**
 2. Customize the **Email link** template:
-   - Subject: "Sign in to Core Padel"
-   - Message: "Click the link below to sign in to Core Padel"
+   - Subject: "Sign in to STRIDE & SERVE"
+   - Message: "Click the link below to sign in to STRIDE & SERVE"
 
 ### 2. Update Firebase Configuration
 

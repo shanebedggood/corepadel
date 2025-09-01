@@ -59,8 +59,8 @@ public class UserResource {
     @Path("/{userId}")
     public Response getUserById(@PathParam("userId") String userIdStr) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
-            Optional<User> user = userService.findById(userId);
+            // Since User uses firebaseUid as primary key, treat userId as firebaseUid
+            Optional<User> user = userService.findByFirebaseUid(userIdStr);
             
             if (user.isPresent()) {
                 return Response.ok(user.get()).build();
@@ -69,10 +69,6 @@ public class UserResource {
                         .entity("User not found with ID: " + userIdStr)
                         .build();
             }
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid user ID format: " + userIdStr)
-                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving user: " + e.getMessage())
@@ -99,6 +95,42 @@ public class UserResource {
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving user: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    /**
+     * Update user profile by Firebase UID
+     */
+    @PUT
+    @Path("/firebase/{firebaseUid}/profile")
+    public Response updateUserProfileByFirebaseUid(@PathParam("firebaseUid") String firebaseUid, User profileData) {
+        try {
+            Optional<User> existingUser = userService.findByFirebaseUid(firebaseUid);
+            if (!existingUser.isPresent()) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("User not found with Firebase UID: " + firebaseUid)
+                        .build();
+            }
+
+            User user = existingUser.get();
+            
+            // Update profile fields
+            if (profileData.firstName != null) user.firstName = profileData.firstName;
+            if (profileData.lastName != null) user.lastName = profileData.lastName;
+            if (profileData.displayName != null) user.displayName = profileData.displayName;
+            if (profileData.mobile != null) user.mobile = profileData.mobile;
+            if (profileData.rating != null) user.rating = profileData.rating;
+            if (profileData.profilePicture != null) user.profilePicture = profileData.profilePicture;
+            if (profileData.emailVerified != null) user.emailVerified = profileData.emailVerified;
+            if (profileData.interests != null) user.interests = profileData.interests;
+            if (profileData.profileCompleted != null) user.profileCompleted = profileData.profileCompleted;
+            
+            User updatedUser = userService.updateUser(user);
+            return Response.ok(updatedUser).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error updating user profile: " + e.getMessage())
                     .build();
         }
     }
@@ -172,15 +204,11 @@ public class UserResource {
     @Path("/{userId}")
     public Response updateUser(@PathParam("userId") String userIdStr, User user) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
-            user.userId = userId; // Ensure the ID is set
+            // Since User uses firebaseUid as primary key, treat userId as firebaseUid
+            user.firebaseUid = userIdStr; // Ensure the firebaseUid is set
             
             User updatedUser = userService.updateUser(user);
             return Response.ok(updatedUser).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid user ID format: " + userIdStr)
-                    .build();
         } catch (RuntimeException e) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(e.getMessage())
@@ -199,8 +227,8 @@ public class UserResource {
     @Path("/{userId}")
     public Response deleteUser(@PathParam("userId") String userIdStr) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
-            boolean deleted = userService.deleteUser(userId);
+            // Since User uses firebaseUid as primary key, treat userId as firebaseUid
+            boolean deleted = userService.deleteUser(userIdStr);
             
             if (deleted) {
                 return Response.ok("User deleted successfully").build();
@@ -209,10 +237,6 @@ public class UserResource {
                         .entity("User not found with ID: " + userIdStr)
                         .build();
             }
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid user ID format: " + userIdStr)
-                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error deleting user: " + e.getMessage())
@@ -227,13 +251,9 @@ public class UserResource {
     @Path("/{userId}/roles")
     public Response getUserRoles(@PathParam("userId") String userIdStr) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
-            List<za.cf.cp.user.UserRole> roles = userService.getUserRoles(userId);
+            // Since User uses firebaseUid as primary key, treat userId as firebaseUid
+            List<za.cf.cp.user.UserRole> roles = userService.getUserRoles(userIdStr);
             return Response.ok(roles).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid user ID format: " + userIdStr)
-                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving user roles: " + e.getMessage())
@@ -264,8 +284,8 @@ public class UserResource {
     @Path("/{userId}/roles")
     public Response addRoleToUser(@PathParam("userId") String userIdStr, @QueryParam("role") String roleName) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
-            Optional<User> user = userService.findById(userId);
+            // Since User uses firebaseUid as primary key, treat userId as firebaseUid
+            Optional<User> user = userService.findById(userIdStr);
             
             if (user.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -273,12 +293,8 @@ public class UserResource {
                         .build();
             }
             
-            za.cf.cp.user.UserRole userRole = userService.addRoleToUser(user.get(), roleName);
+            za.cf.cp.user.UserRole userRole = userService.addRoleToUser(userIdStr, roleName);
             return Response.status(Response.Status.CREATED).entity(userRole).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid user ID format: " + userIdStr)
-                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error adding role to user: " + e.getMessage())
@@ -313,8 +329,8 @@ public class UserResource {
     @Path("/{userId}/roles/{roleName}")
     public Response removeRoleFromUser(@PathParam("userId") String userIdStr, @PathParam("roleName") String roleName) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
-            boolean removed = userService.removeRoleFromUser(userId, roleName);
+            // Since User uses firebaseUid as primary key, treat userId as firebaseUid
+            boolean removed = userService.removeRoleFromUser(userIdStr, roleName);
             
             if (removed) {
                 return Response.ok("Role removed successfully").build();
@@ -323,10 +339,6 @@ public class UserResource {
                         .entity("Role not found for user: " + roleName)
                         .build();
             }
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid user ID format: " + userIdStr)
-                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error removing role from user: " + e.getMessage())
@@ -341,13 +353,9 @@ public class UserResource {
     @Path("/{userId}/clubs")
     public Response getUserClubs(@PathParam("userId") String userIdStr) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
-            List<za.cf.cp.user.UserClub> userClubs = userService.getUserClubs(userId);
+            // Since User uses firebaseUid as primary key, treat userId as firebaseUid
+            List<za.cf.cp.user.UserClub> userClubs = userService.getUserClubs(userIdStr);
             return Response.ok(userClubs).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid user ID format: " + userIdStr)
-                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving user clubs: " + e.getMessage())
@@ -369,7 +377,7 @@ public class UserResource {
                         .build();
             }
             
-            List<za.cf.cp.user.UserClub> userClubs = userService.getUserClubs(user.get().userId);
+            List<za.cf.cp.user.UserClub> userClubs = userService.getUserClubs(user.get().firebaseUid);
             return Response.ok(userClubs).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -387,10 +395,9 @@ public class UserResource {
                                  @PathParam("clubId") String clubIdStr,
                                  @QueryParam("role") String role) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
             UUID clubId = UUID.fromString(clubIdStr);
             
-            Optional<User> user = userService.findById(userId);
+            Optional<User> user = userService.findById(userIdStr);
             if (user.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("User not found with ID: " + userIdStr)
@@ -404,7 +411,7 @@ public class UserResource {
                         .build();
             }
             
-            za.cf.cp.user.UserClub userClub = userService.addUserToClub(user.get(), club.get(), role);
+            za.cf.cp.user.UserClub userClub = userService.addUserToClub(userIdStr, clubId, role);
             return Response.status(Response.Status.CREATED).entity(userClub).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -424,9 +431,8 @@ public class UserResource {
     @Path("/{userId}/clubs/{clubId}")
     public Response removeUserFromClub(@PathParam("userId") String userIdStr, @PathParam("clubId") String clubIdStr) {
         try {
-            UUID userId = UUID.fromString(userIdStr);
             UUID clubId = UUID.fromString(clubIdStr);
-            boolean removed = userService.removeUserFromClub(userId, clubId);
+            boolean removed = userService.removeUserFromClub(userIdStr, clubId);
             
             if (removed) {
                 return Response.ok("User removed from club successfully").build();

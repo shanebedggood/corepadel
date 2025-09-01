@@ -73,7 +73,13 @@ export class TournamentStandingsComponent implements OnInit, OnChanges {
     getStandingsForGroup(groupId: string): TournamentStanding[] {
         const standings = this.standings[groupId] || [];
         // Sort by position to ensure correct order (1st, 2nd, 3rd, etc.)
-        return standings.sort((a, b) => (a.position || 0) - (b.position || 0));
+        const sortedStandings = standings.sort((a, b) => (a.position || 0) - (b.position || 0));
+        
+        // Ensure each standing has a unique position
+        return sortedStandings.map((standing, index) => ({
+            ...standing,
+            position: index + 1
+        }));
     }
 
     getGroupName(groupId: string): string {
@@ -119,8 +125,4 @@ export class TournamentStandingsComponent implements OnInit, OnChanges {
         return goalDifference > 0 ? 'positive' : goalDifference < 0 ? 'negative' : 'neutral';
     }
 
-    // TrackBy method for better performance
-    trackByGroup(index: number, group: TournamentGroup): string {
-        return group.id || `group-${index}`;
-    }
 } 

@@ -48,7 +48,7 @@
     @if (!loading) {
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <form id="tournamentForm" [formGroup]="tournamentForm" (ngSubmit)="saveTournament()"
-                class="w-full max-w-4xl mx-auto">
+                class="w-full">
                 <!-- Form Sections -->
                 <div class="space-y-8">
                     <!-- Basic Information Section -->
@@ -69,11 +69,52 @@
                                     placeholder="Enter tournament name" autocomplete="off" />
                             </div>
                             <div class="field">
+                                <label for="maxParticipants"
+                                    class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Max Players<span
+                                        class="text-red-500">*</span>
+                                </label>
+                                <input pInputText id="maxParticipants" type="number" formControlName="maxParticipants"
+                                    class="w-full" placeholder="Enter max players" />
+                                @if (tournamentForm.get('maxParticipants')?.errors?.['oddNumber']) {
+                                    <p-message severity="error"
+                                        [text]="tournamentForm.get('maxParticipants')?.errors?.['oddNumber']?.message"
+                                        styleClass="w-full mt-1">
+                                    </p-message>
+                                }
+                            </div>
+                            <div class="field">
                                 <label id="format" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Format
                                     <span class="text-red-500">*</span>
                                 </label>
                                 <p-select ariaLabelledBy="format" [options]="formats" formControlName="format"
                                     optionLabel="name" optionValue="id" placeholder="Select a tournament format" class="w-full" />
+                            </div>
+                            <div class="field">
+                                <label id="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                    Category <span class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="category" [options]="categories" formControlName="category"
+                                    optionLabel="name" optionValue="id" placeholder="Select a tournament category" class="w-full" />
+                            </div>
+                            <div class="field">
+                                <label id="registrationType"
+                                    class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Registration Type <span
+                                        class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="registrationType" [options]="registrationTypes"
+                                    formControlName="registrationType" optionLabel="name" optionValue="id"
+                                    placeholder="Select a registration type" class="w-full" />
+                            </div>
+                            <div class="field">
+                                <label for="entryFee" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Entry
+                                    Fee <span class="text-red-500">*</span>
+                                </label>
+                                <p-inputgroup>
+                                    <p-inputgroup-addon>{{ currencySymbol }}</p-inputgroup-addon>
+                                    <p-inputnumber inputId="entryFee" formControlName="entryFee" class="w-full"
+                                        placeholder="0.00" />
+                                    <p-inputgroup-addon>.00</p-inputgroup-addon>
+                                </p-inputgroup>
                             </div>
                         </div>
                         <div class="field mt-6">
@@ -141,34 +182,7 @@
                         </div>
                     </div>
                     
-                    <!-- Tournament Details Section -->
-                    <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
-                        <div class="flex items-center mb-4">
-                            <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg mr-3">
-                                <i class="pi pi-cog text-purple-600 dark:text-purple-400">
-                                </i>
-                            </div>
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Details</h2>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="field">
-                                <label id="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                                    Category <span class="text-red-500">*</span>
-                                </label>
-                                <p-select ariaLabelledBy="category" [options]="categories" formControlName="category"
-                                    optionLabel="name" optionValue="id" placeholder="Select a tournament category" class="w-full" />
-                            </div>
-                            <div class="field">
-                                <label id="registrationType"
-                                    class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Registration Type <span
-                                        class="text-red-500">*</span>
-                                </label>
-                                <p-select ariaLabelledBy="registrationType" [options]="registrationTypes"
-                                    formControlName="registrationType" optionLabel="name" optionValue="id"
-                                    placeholder="Select a registration type" class="w-full" />
-                            </div>
-                        </div>
-                    </div>
+
                     
                     <!-- Venue Section -->
                     <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
@@ -210,36 +224,33 @@
                             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Configuration</h2>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="field">
-                                <label for="maxParticipants"
-                                    class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Max Players<span
-                                        class="text-red-500">*</span>
-                                </label>
-                                <input pInputText id="maxParticipants" type="number" formControlName="maxParticipants"
-                                    class="w-full" placeholder="Enter max players" />
-                                @if (tournamentForm.get('maxParticipants')?.errors?.['oddNumber']) {
-                                    <p-message severity="error"
-                                        [text]="tournamentForm.get('maxParticipants')?.errors?.['oddNumber']?.message"
-                                        styleClass="w-full mt-1">
-                                    </p-message>
-                                }
-                            </div>
-                            <div class="field">
-                                <label for="noOfGroups" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                                    Number of Groups <span class="text-red-500">*</span>
-                                </label>
-                                <input pInputText id="noOfGroups" type="number" formControlName="noOfGroups" class="w-full"
-                                    placeholder="Enter number of groups" />
-                                @if (tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']) {
-                                    <p-message severity="error"
-                                        [text]="tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']?.message"
-                                        styleClass="w-full mt-1">
-                                    </p-message>
-                                }
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                             @if (isRoundRobinFormat()) {
+                                <div class="field">
+                                    <label for="noOfGroups" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                        Number of Groups <span class="text-red-500">*</span>
+                                    </label>
+                                    <p-select id="noOfGroups" formControlName="noOfGroups" [options]="groupOptions" 
+                                        placeholder="Select number of groups" class="w-full"></p-select>
+                                    @if (tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']) {
+                                        <p-message severity="error"
+                                            [text]="tournamentForm.get('noOfGroups')?.errors?.['invalidGroupConfig']?.message"
+                                            styleClass="w-full mt-1">
+                                        </p-message>
+                                    }
+                                </div>
+                                <div class="field">
+                                    <label for="teamsToAdvancePerGroup" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                        Number of Teams to Advance per Group <span class="text-red-500">*</span>
+                                    </label>
+                                    <p-select id="teamsToAdvancePerGroup" formControlName="teamsToAdvancePerGroup" [options]="teamsToAdvanceOptions" 
+                                        placeholder="Select teams to advance" class="w-full"></p-select>
+                                    @if (tournamentForm.get('teamsToAdvancePerGroup')?.errors?.['invalidTeamsToAdvance']) {
+                                        <p-message severity="error"
+                                            [text]="tournamentForm.get('teamsToAdvancePerGroup')?.errors?.['invalidTeamsToAdvance']?.message"
+                                            styleClass="w-full mt-1">
+                                        </p-message>
+                                    }
+                                </div>
                                 <div class="field">
                                     <label id="progressionOption"
                                         class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Progression Type <span
@@ -250,17 +261,6 @@
                                         placeholder="Select a progression type" class="w-full" />
                                 </div>
                             }
-                            <div class="field" [class.md:col-span-2]="!isRoundRobinFormat()">
-                                <label for="entryFee" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Entry
-                                    Fee <span class="text-red-500">*</span>
-                                </label>
-                                <p-inputgroup>
-                                    <p-inputgroup-addon>{{ currencySymbol }}</p-inputgroup-addon>
-                                    <p-inputnumber inputId="entryFee" formControlName="entryFee" class="w-full"
-                                        placeholder="0.00" />
-                                    <p-inputgroup-addon>.00</p-inputgroup-addon>
-                                </p-inputgroup>
-                            </div>
                         </div>
                         
                         <!-- Group Advancement Settings Section (only for group-based elimination) -->
@@ -308,29 +308,12 @@
                                                 <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
                                                     getTeamsToAdvancePerGroup() }}</span>
                                             </div>
-                                            @if (isTrophyPlateModel()) {
-                                                <div class="space-y-2">
-                                                    <div class="flex justify-between items-center">
-                                                        <span class="text-blue-600 dark:text-blue-400 text-lg">→ Trophy
-                                                            (winners):</span>
-                                                        <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
-                                                            getTeamsAdvancingToElimination() }}</span>
-                                                    </div>
-                                                    <div class="flex justify-between items-center">
-                                                        <span class="text-blue-600 dark:text-blue-400 text-lg">→ Plate (losers):</span>
-                                                        <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
-                                                            getTeamsAdvancingToPlate() }}</span>
-                                                    </div>
-                                                </div>
-                                            }
-                                            @if (!isTrophyPlateModel()) {
-                                                <div class="flex justify-between items-center">
-                                                    <span class="text-blue-600 dark:text-blue-400 text-lg">Teams advancing to
-                                                        elimination:</span>
-                                                    <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
-                                                        getTeamsAdvancingToElimination() }}</span>
-                                                </div>
-                                            }
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-blue-600 dark:text-blue-400 text-lg">Teams advancing to
+                                                    elimination:</span>
+                                                <span class="font-bold text-blue-700 dark:text-blue-300 text-xl">{{
+                                                    getTeamsAdvancingToElimination() }}</span>
+                                            </div>
                                         </div>
                                         <p
                                             class="text-md text-blue-600 dark:text-blue-400 mt-3 pt-2 border-t border-blue-200 dark:border-blue-700">

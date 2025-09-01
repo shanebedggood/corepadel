@@ -5,19 +5,8 @@
       "handleCodeInApp": true
     }
   },
-  "emulators": {
-    "auth": {
-      "port": 9099
-    },
-    "functions": {
-      "port": 5001
-    },
-    "hosting": {
-      "port": 5000
-    }
-  },
-  "functions": {
-    "source": "functions"
+  "storage": {
+    "rules": "storage.rules"
   },
   "hosting": {
     "public": "web/web-app/dist",

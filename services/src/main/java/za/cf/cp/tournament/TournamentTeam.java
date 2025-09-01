@@ -12,6 +12,7 @@ import java.util.ArrayList;
 /**
  * TournamentTeam entity representing tournament teams stored in PostgreSQL.
  * Maps to the 'tournament_team' table in the database.
+ * Uses firebase_uid for player references.
  */
 @Entity
 @Table(name = "tournament_team", schema = "core")
@@ -34,13 +35,13 @@ public class TournamentTeam extends PanacheEntityBase {
     @Column(name = "name", nullable = false)
     public String name;
     
-    @Column(name = "player1_uid", nullable = false)
-    @JsonProperty("player1_uid")
-    public String player1Uid;
+    @Column(name = "player1_firebase_uid", nullable = false)
+    @JsonProperty("player1_firebase_uid")
+    public String player1FirebaseUid;
     
-    @Column(name = "player2_uid", nullable = true)
-    @JsonProperty("player2_uid")
-    public String player2Uid;
+    @Column(name = "player2_firebase_uid", nullable = true)
+    @JsonProperty("player2_firebase_uid")
+    public String player2FirebaseUid;
 
     @Column(name = "combined_rating")
     @JsonProperty("combined_rating")
@@ -50,37 +51,46 @@ public class TournamentTeam extends PanacheEntityBase {
     public TournamentTeam() {}
     
     // Constructor with essential fields
-    public TournamentTeam(Tournament tournament, String name, String player1Uid, String player2Uid, Integer combinedRating) {
+    public TournamentTeam(Tournament tournament, String name, String player1FirebaseUid, String player2FirebaseUid, Integer combinedRating) {
         this.tournament = tournament;
         this.name = name;
-        this.player1Uid = player1Uid;
-        this.player2Uid = player2Uid;
+        this.player1FirebaseUid = player1FirebaseUid;
+        this.player2FirebaseUid = player2FirebaseUid;
         this.combinedRating = combinedRating;
     }
     
     // Helper methods to convert between List<String> and individual fields
-    public List<String> getPlayerUids() {
+    public List<String> getPlayerFirebaseUids() {
         List<String> uids = new ArrayList<>();
-        if (player1Uid != null) {
-            uids.add(player1Uid);
+        if (player1FirebaseUid != null) {
+            uids.add(player1FirebaseUid);
         }
-        if (player2Uid != null) {
-            uids.add(player2Uid);
+        if (player2FirebaseUid != null) {
+            uids.add(player2FirebaseUid);
         }
         return uids;
     }
     
+    public void setPlayerFirebaseUids(List<String> playerFirebaseUids) {
+        if (playerFirebaseUids != null && playerFirebaseUids.size() >= 1) {
+            this.player1FirebaseUid = playerFirebaseUids.get(0);
+        } else {
+            this.player1FirebaseUid = null;
+        }
+        if (playerFirebaseUids != null && playerFirebaseUids.size() >= 2) {
+            this.player2FirebaseUid = playerFirebaseUids.get(1);
+        } else {
+            this.player2FirebaseUid = null;
+        }
+    }
+    
+    // Legacy methods for backward compatibility
+    public List<String> getPlayerUids() {
+        return getPlayerFirebaseUids();
+    }
+    
     public void setPlayerUids(List<String> playerUids) {
-        if (playerUids != null && playerUids.size() >= 1) {
-            this.player1Uid = playerUids.get(0);
-        } else {
-            this.player1Uid = null;
-        }
-        if (playerUids != null && playerUids.size() >= 2) {
-            this.player2Uid = playerUids.get(1);
-        } else {
-            this.player2Uid = null;
-        }
+        setPlayerFirebaseUids(playerUids);
     }
     
     // Getters and setters
@@ -116,20 +126,37 @@ public class TournamentTeam extends PanacheEntityBase {
         this.name = name;
     }
     
+    public String getPlayer1FirebaseUid() {
+        return player1FirebaseUid;
+    }
+    
+    public void setPlayer1FirebaseUid(String player1FirebaseUid) {
+        this.player1FirebaseUid = player1FirebaseUid;
+    }
+    
+    public String getPlayer2FirebaseUid() {
+        return player2FirebaseUid;
+    }
+    
+    public void setPlayer2FirebaseUid(String player2FirebaseUid) {
+        this.player2FirebaseUid = player2FirebaseUid;
+    }
+    
+    // Legacy getters for backward compatibility
     public String getPlayer1Uid() {
-        return player1Uid;
+        return player1FirebaseUid;
     }
     
     public void setPlayer1Uid(String player1Uid) {
-        this.player1Uid = player1Uid;
+        this.player1FirebaseUid = player1Uid;
     }
     
     public String getPlayer2Uid() {
-        return player2Uid;
+        return player2FirebaseUid;
     }
     
     public void setPlayer2Uid(String player2Uid) {
-        this.player2Uid = player2Uid;
+        this.player2FirebaseUid = player2Uid;
     }
 
     public Integer getCombinedRating() {
@@ -147,8 +174,8 @@ public class TournamentTeam extends PanacheEntityBase {
                 ", tournamentId=" + (tournament != null ? tournament.getTournamentId() : null) +
                 ", groupId=" + (group != null ? group.getGroupId() : null) +
                 ", name='" + name + '\'' +
-                ", player1Uid='" + player1Uid + '\'' +
-                ", player2Uid='" + player2Uid + '\'' +
+                ", player1FirebaseUid='" + player1FirebaseUid + '\'' +
+                ", player2FirebaseUid='" + player2FirebaseUid + '\'' +
                 '}';
     }
 } 

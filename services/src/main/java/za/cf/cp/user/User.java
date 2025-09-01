@@ -6,20 +6,16 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 /**
- * User entity representing Cognito users stored in PostgreSQL.
+ * User entity representing users stored in PostgreSQL.
  * Maps to the 'user' table in the database.
+ * Uses firebase_uid as the primary key.
  */
 @Entity
 @Table(name = "\"user\"", schema = "core")
 public class User extends PanacheEntityBase {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "user_id")
-    @JsonProperty("user_id")
-    public UUID userId;
-    
-    @Column(name = "firebase_uid", unique = true)
+    @Column(name = "firebase_uid")
     @JsonProperty("firebase_uid")
     public String firebaseUid;
     
@@ -55,6 +51,14 @@ public class User extends PanacheEntityBase {
     @JsonProperty("email_verified")
     public Boolean emailVerified = false;
     
+    @Column(name = "interests")
+    @JsonProperty("interests")
+    public String[] interests = new String[0];
+    
+    @Column(name = "profile_completed")
+    @JsonProperty("profile_completed")
+    public Boolean profileCompleted = false;
+    
     // Default constructor required by JPA
     public User() {}
     
@@ -82,14 +86,6 @@ public class User extends PanacheEntityBase {
     }
     
     // Getters and setters
-    public UUID getUserId() {
-        return userId;
-    }
-    
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-    
     public String getFirebaseUid() {
         return firebaseUid;
     }
@@ -170,11 +166,26 @@ public class User extends PanacheEntityBase {
         this.emailVerified = emailVerified;
     }
     
+    public String[] getInterests() {
+        return interests;
+    }
+    
+    public void setInterests(String[] interests) {
+        this.interests = interests != null ? interests : new String[0];
+    }
+    
+    public Boolean getProfileCompleted() {
+        return profileCompleted;
+    }
+    
+    public void setProfileCompleted(Boolean profileCompleted) {
+        this.profileCompleted = profileCompleted != null ? profileCompleted : false;
+    }
+    
     @Override
     public String toString() {
         return "User{" +
-                "userId=" + userId +
-                ", firebaseUid='" + firebaseUid + '\'' +
+                "firebaseUid='" + firebaseUid + '\'' +
                 ", email='" + email + '\'' +
                 ", username='" + username + '\'' +
                 ", firstName='" + firstName + '\'' +
@@ -184,6 +195,8 @@ public class User extends PanacheEntityBase {
                 ", rating=" + rating +
                 ", profilePicture='" + profilePicture + '\'' +
                 ", emailVerified=" + emailVerified +
+                ", interests=" + java.util.Arrays.toString(interests) +
+                ", profileCompleted=" + profileCompleted +
                 '}';
     }
 } 

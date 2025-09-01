@@ -32,7 +32,7 @@
     <div class="mb-6">
         <!-- Desktop Table -->
         <div class="hidden md:block">
-            <p-table [value]="tournaments" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+            <p-table [value]="tournaments" [dataKey]="'id'" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tournaments"
                 [rowsPerPageOptions]="[5, 10, 25, 50]"
                 [globalFilterFields]="['name', 'venue.name', 'venueType.name', 'status.name']" styleClass="p-datatable-sm">
@@ -124,7 +124,7 @@
 @if (tournaments.length > 0) {
     <div class="block md:hidden">
         <div class="grid gap-4">
-            @for (tournament of tournaments; track trackByTournamentId($index, tournament)) {
+            @for (tournament of tournaments; track tournament.id) {
                 <div class="bg-white rounded-lg shadow-md p-4 border hover:shadow-lg transition-shadow">
                     <div class="mb-3">
                         <div class="flex justify-between items-start mb-2">

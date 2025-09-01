@@ -22,7 +22,7 @@ VALUES ('Single Elimination', 'Teams are eliminated after one loss. The last tea
 -- Progression Type
 INSERT INTO core.progression_type (name, description)
 VALUES ('Group based elimination', 'The elimination will be based on groups.'),
-VALUES ('Combined elimination', 'The elimination will be based the combined groups.');
+       ('Combined elimination', 'The elimination will be based the combined groups.');
 
 -- Registration Type
 INSERT INTO core.registration_type (name, description)
@@ -43,22 +43,3 @@ VALUES ('Draft', 'Tournament is being planned and configured.', '#6b7280', '#fff
 INSERT INTO core.venue_type (name, description)
 VALUES ('Single Venue', 'Tournament will be at a single venue.'),
  ('Multiple Venues', 'Tournament will be at multiple venues.');
-
--- Advancement Model
-INSERT INTO core.advancement_model (name, description)
-VALUES ('Trophy / Plate', 'Top team progress to the trophy, bottom team progress to the plate.'),
- ('Elimination only', 'Only the top team progresses to the next round.');
-
--- Elimination Bracket Size
-INSERT INTO core.elimination_bracket_size (name, description, teams)
-VALUES ('Final', '2 teams advance to the final', 2),
- ('Semi-finals', '4 teams advance to the semi-finals', 4),
- ('Quarter-finals', '8 teams advance to the quarter-finals', 8),
- ('Round of 16', '16 teams advance to the round of 16', 16);
-
--- Teams to Advance (for combined elimination settings)
-INSERT INTO core.teams_to_advance (name, description, team_count)
-VALUES ('8', '8 teams per group.', 8),
- ('4', '4 teams per group.', 4);
- ('2', '2 teams per group.', 2);
- ('1', '1 team per group.', 1);

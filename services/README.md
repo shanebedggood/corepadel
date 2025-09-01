@@ -1,6 +1,6 @@
-# Core Padel Quarkus Service
+# STRIDE & SERVE Quarkus Service
 
-This is the backend service for the Core Padel application, built with Quarkus and providing REST APIs for PostgreSQL data access.
+This is the backend service for the STRIDE & SERVE application, built with Quarkus and providing REST APIs for PostgreSQL data access.
 
 ## Features
 
@@ -15,7 +15,7 @@ This is the backend service for the Core Padel application, built with Quarkus a
 - Java 21+
 - Maven 3.8+
 - PostgreSQL database running
-- Core Padel database schema applied
+- STRIDE & SERVE database schema applied
 
 ## Setup
 

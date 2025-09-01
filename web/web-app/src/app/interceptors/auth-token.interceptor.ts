@@ -32,7 +32,14 @@ export const authTokenInterceptorFn: HttpInterceptorFn = (
   }
 
   // For Firebase Auth, we need to get the ID token
-  return from(firebaseAuthService.getCurrentUser()?.getIdToken() || Promise.resolve(null)).pipe(
+  const currentUser = firebaseAuthService.getCurrentUser();
+  
+  if (!currentUser) {
+    return next(req);
+  }
+  
+  // Try to get token with force refresh if needed
+  return from(currentUser.getIdToken(true)).pipe(
     take(1),
     switchMap((token) => {
       if (token) {
@@ -41,6 +48,19 @@ export const authTokenInterceptorFn: HttpInterceptorFn = (
       }
       return next(req);
     }),
-    catchError(() => next(req))
+    catchError((error) => {
+      // Try to get token without force refresh as fallback
+      return from(currentUser.getIdToken(false)).pipe(
+        take(1),
+        switchMap((fallbackToken) => {
+          if (fallbackToken) {
+            const authReq = req.clone({ setHeaders: { Authorization: `Bearer ${fallbackToken}` } });
+            return next(authReq);
+          }
+          return next(req);
+        }),
+        catchError(() => next(req))
+      );
+    })
   );
 };

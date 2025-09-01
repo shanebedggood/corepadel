@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             For Clubs & Organizers
           </h2>
-          <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p class="text-xl text-gray-600">
             Streamline your tournament management and enhance member engagement
           </p>
         </div>

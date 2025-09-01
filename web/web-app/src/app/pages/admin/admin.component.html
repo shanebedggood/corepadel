@@ -10,7 +10,7 @@
                         <button pButton type="button" label="Refresh" icon="pi pi-refresh" class="p-button-outlined" (click)="loadUsers()" [loading]="loading" >
                             </button>
                         </div>
-                    <p-table [value]="users" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users" [rowsPerPageOptions]="[10, 25, 50]" styleClass="p-datatable-sm" >
+                    <p-table [value]="users" [dataKey]="'uid'" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users" [rowsPerPageOptions]="[10, 25, 50]" styleClass="p-datatable-sm" >
                         <ng-template pTemplate="header">
                             <tr>
                                 <th>Profile</th>

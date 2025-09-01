@@ -12,18 +12,32 @@ import { TournamentMatch } from '../../../../services/tournament.service';
         <div class="score-sets">
           <div class="score-set">
             <div class="set-score">
-              @for (score of getTeam1ScoresArray(); track score) {
+              @for (score of getTeam1ScoresArray(); track $index) {
                 <span class="score-number">{{ score }}</span>
               }
+              <span class="trophy-placeholder" [class.has-trophy]="getWinner() === 'team1'">
+                @if (getWinner() === 'team1') {
+                  <span class="bg-yellow-400 text-surface-600 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                    <i class="pi pi-trophy text-md"></i>
+                  </span>
+                }
+              </span>
             </div>
             @if (getCompletedSets().length > 1) {
               <div class="set-separator">—</div>
             }
             @if (getCompletedSets().length > 1) {
               <div class="set-score">
-                @for (score of getTeam2ScoresArray(); track score) {
+                @for (score of getTeam2ScoresArray(); track $index) {
                   <span class="score-number">{{ score }}</span>
                 }
+                <span class="trophy-placeholder" [class.has-trophy]="getWinner() === 'team2'">
+                  @if (getWinner() === 'team2') {
+                    <span class="bg-yellow-400 text-surface-600 rounded-full w-8 h-8 flex items-center justify-center shadow-md">
+                      <i class="pi pi-trophy text-md"></i>
+                    </span>
+                  }
+                </span>
               </div>
             }
           </div>
@@ -63,6 +77,7 @@ import { TournamentMatch } from '../../../../services/tournament.service';
       gap: 0.25rem;
       align-items: center;
       justify-content: center;
+      min-height: 2rem;
     }
 
     .score-number {
@@ -94,9 +109,20 @@ import { TournamentMatch } from '../../../../services/tournament.service';
 
     .no-score {
       color: #6b7280;
-      font-size: 0.75rem;
-      text-align: center;
+      font-size: 1.0 rem;
+      text-align: left;
     }
+
+    .trophy-placeholder {
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 0.25rem;
+    }
+
+
   `]
 })
 export class MatchScoreDisplayComponent {
@@ -146,5 +172,24 @@ export class MatchScoreDisplayComponent {
   getTeam2ScoresArray(): number[] {
     const sets = this.getCompletedSets();
     return sets.map(set => set.team2);
+  }
+
+  getWinner(): 'team1' | 'team2' | null {
+    const sets = this.getCompletedSets();
+    
+    if (sets.length === 0) {
+      return null;
+    }
+
+    const team1Wins = sets.filter(set => set.team1 > set.team2).length;
+    const team2Wins = sets.filter(set => set.team2 > set.team1).length;
+
+    if (team1Wins > team2Wins && team1Wins >= 2) {
+      return 'team1';
+    } else if (team2Wins > team1Wins && team2Wins >= 2) {
+      return 'team2';
+    }
+
+    return null;
   }
 } 

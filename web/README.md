@@ -1,4 +1,4 @@
-# Core Padel Web Application
+# STRIDE & SERVE Web Application
 
 A modern padel application built with Angular and PostgreSQL backend, featuring separate development and production environments.
 

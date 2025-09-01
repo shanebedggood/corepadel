@@ -37,11 +37,11 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
       <div class="flex flex-col items-center justify-center relative z-10 w-full px-4 sm:px-6 opacity-100">
         <div class="w-full max-w-md sm:max-w-lg lg:max-w-xl bg-surface-0/90 dark:bg-surface-900/90 py-12 sm:py-16 lg:py-20 px-6 sm:px-12 lg:px-20 relative" style="border-radius: 50px">
           <div class="text-center mb-8">
-            <img src="assets/logo.svg" alt="Core Padel Logo" class="mb-8 w-32 shrink-0 mx-auto" />
+            <img src="assets/logo.svg" alt="STRIDE & SERVE Logo" class="mb-8 w-32 shrink-0 mx-auto" />
             <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">
               {{ getTitleText() }}
             </div>
-            <span class="text-surface-600 dark:text-surface-400 text-sm">
+            <span class="text-surface-600 dark:text-surface-400 text-md">
               {{ getDescriptionText() }}
             </span>
           </div>
@@ -105,7 +105,7 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
           }
 
           <div class="mb-6">
-            <label for="email" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+            <label for="email" class="block text-md font-medium text-surface-700 dark:text-surface-300 mb-2">
               Email Address
             </label>
             <input
@@ -145,11 +145,11 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
         <!-- Toggle between Sign-in and Sign-up -->
         @if (!isSignInLinkValid && !emailSent) {
           <div class="text-center mt-6">
-            <p class="text-surface-500 dark:text-surface-400 text-sm">
-              {{ isSignUpMode ? 'Already have an account?' : 'New to Core Padel?' }}
+            <p class="text-surface-500 dark:text-surface-400 text-md">
+              {{ isSignUpMode ? 'Already have an account?' : 'New to STRIDE & SERVE?' }}
               <a 
                 [routerLink]="isSignUpMode ? '/auth' : '/auth/signup'"
-                class="text-primary-color hover:underline ml-1"
+                class="text-primary-color !underline hover:!no-underline ml-1"
               >
                 {{ isSignUpMode ? 'Sign in' : 'Create account' }}
               </a>
@@ -166,7 +166,7 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
             We've sent a secure {{ isSignUpMode ? 'sign-up' : 'sign-in' }} link to <strong>{{ email }}</strong>
           </p>
           <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">
-            Click the link in your email to {{ isSignUpMode ? 'complete your registration' : 'sign in' }} to Core Padel. No password required!
+            Click the link in your email to {{ isSignUpMode ? 'complete your registration' : 'sign in' }} to STRIDE & SERVE. No password required!
           </p>
           
           <p-divider></p-divider>
@@ -239,7 +239,7 @@ export class FirebaseAuthComponent implements OnInit {
   }
 
   getTitleText(): string {
-    return this.isSignUpMode ? 'Join Core Padel!' : 'Core Padel';
+    return this.isSignUpMode ? 'Join STRIDE & SERVE!' : 'STRIDE & SERVE';
   }
 
   getDescriptionText(): string {

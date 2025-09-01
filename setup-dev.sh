@@ -1,69 +1,74 @@
 #!/bin/bash
 
-set -e
+# Development setup script for STRIDE & SERVE
+# This script sets up the development environment
 
-echo "🔧 Setting up and starting development environment..."
+set -e  # Exit on any error
 
-# Check if Docker is running
-if ! docker info &> /dev/null; then
-    echo "❌ Docker is not running. Please start Docker first."
-    exit 1
-fi
+echo "🚀 Setting up development environment for STRIDE & SERVE..."
 
-# Check if required tools are installed
-if ! command -v firebase &> /dev/null; then
-    echo "❌ Firebase CLI is not installed. Please install it first."
-    exit 1
-fi
-
+# Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install it first."
+    echo "❌ Node.js is not installed. Please install Node.js first."
     exit 1
 fi
 
+# Check if npm is installed
+if ! command -v npm &> /dev/null; then
+    echo "❌ npm is not installed. Please install npm first."
+    exit 1
+fi
+
+# Check if Java is installed
 if ! command -v java &> /dev/null; then
-    echo "❌ Java is not installed. Please install it first."
+    echo "❌ Java is not installed. Please install Java 17+ first."
+    exit 1
+fi
+
+# Check if Maven is installed
+if ! command -v mvn &> /dev/null; then
+    echo "❌ Maven is not installed. Please install Maven first."
+    exit 1
+fi
+
+# Check if Docker is installed
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker is not installed. Please install Docker first."
     exit 1
 fi
 
 echo "✅ Prerequisites verified"
 
-# Install dependencies
-echo "📦 Installing dependencies..."
+# Install root dependencies
+echo "📦 Installing root dependencies..."
 npm install
-cd web/web-app && npm install && cd ../..
-cd functions && npm install && cd ..
 
-# Start PostgreSQL in Docker
-echo "🐳 Starting PostgreSQL..."
+# Install Angular app dependencies
+echo "📦 Installing Angular app dependencies..."
+cd web/web-app
+npm install
+cd ../..
+
+# Install Quarkus dependencies
+echo "📦 Installing Quarkus dependencies..."
+cd services
+./mvnw dependency:resolve
+cd ..
+
+# Start PostgreSQL database
+echo "🐘 Starting PostgreSQL database..."
 docker-compose up -d postgres
 
-# Wait for PostgreSQL to be ready
-echo "⏳ Waiting for PostgreSQL to be ready..."
-until docker exec corepadel-postgres-dev pg_isready -U corepadel -d corepadel; do
-    echo "Waiting for PostgreSQL..."
-    sleep 2
-done
-
-echo "✅ PostgreSQL is ready!"
-
-# Run database migrations
-echo "🗄️ Running database migrations..."
-docker exec corepadel-postgres-dev psql -U corepadel -d corepadel -f /docker-entrypoint-initdb.d/006_update_user_table_for_firebase.sql || true
+# Wait for database to be ready
+echo "⏳ Waiting for database to be ready..."
+sleep 10
 
 echo "✅ Development environment setup completed!"
-
-# Start all services using concurrently
-echo "🚀 Starting all development services..."
 echo ""
-echo "Starting:"
-echo "   - Angular app on http://localhost:4201"
-echo "   - Firebase emulators on http://localhost:9099 (auth) and http://localhost:5001 (functions)"
+echo "🚀 To start development:"
+echo "   npm run dev"
+echo ""
+echo "📊 Available services:"
+echo "   - Angular app on http://localhost:4200"
 echo "   - Quarkus backend on http://localhost:8081"
-echo "   - PostgreSQL on localhost:5432"
-echo ""
-echo "Press Ctrl+C to stop all services"
-echo ""
-
-# Start all services concurrently
-npm run dev
+echo "   - PostgreSQL database on localhost:5432"

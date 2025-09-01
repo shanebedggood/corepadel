@@ -11,7 +11,8 @@ import { Subscription } from 'rxjs';
     imports: [CommonModule, MessageModule, ButtonModule],
     template: `
         <div class="persistent-messages-container">
-            <div *ngFor="let message of messages" class="persistent-message mb-3" [@messageAnimation]>
+            @for (message of messages; track message.id) {
+                <div class="persistent-message mb-3" [@messageAnimation]>
                 <p-message 
                     [severity]="message.severity" 
                     [text]="message.detail" 
@@ -37,6 +38,7 @@ import { Subscription } from 'rxjs';
                     </ng-template>
                 </p-message>
             </div>
+        }
         </div>
     `,
     styles: [`

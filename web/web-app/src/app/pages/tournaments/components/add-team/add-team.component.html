@@ -56,7 +56,7 @@
                     </p-message>
                 }
 
-                @for (player of searchResults; track trackByPlayerUid($index, player)) {
+                @for (player of searchResults; track player.firebase_uid) {
                     <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
                         (click)="selectPlayer(player)">
                         <div class="flex-1">
@@ -122,7 +122,7 @@
                 <!-- Selected players list -->
                 @if (selectedPlayers.length > 0) {
                     <div class="space-y-3">
-                    @for (player of selectedPlayers; track trackByPlayerUid($index, player); let i = $index) {
+                    @for (player of selectedPlayers; track player.firebase_uid; let i = $index) {
                         <div class="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm border-green-200">
                             <div class="flex items-center gap-3">
                                 <div

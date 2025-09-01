@@ -5,7 +5,18 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import za.cf.cp.tournament.dto.TournamentDto;
+import za.cf.cp.tournament.dto.RoundRobinTournamentDto;
+import za.cf.cp.tournament.dto.AmericanoTournamentDto;
+import za.cf.cp.tournament.dto.TournamentFormatDto;
+import za.cf.cp.tournament.dto.TournamentCategoryDto;
+import za.cf.cp.tournament.dto.TournamentRegistrationTypeDto;
+import za.cf.cp.tournament.dto.TournamentVenueTypeDto;
+import za.cf.cp.tournament.dto.TournamentStatusDto;
+import za.cf.cp.tournament.dto.TournamentProgressionOptionDto;
 import za.cf.cp.tournament.service.TournamentService;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.List;
 import java.util.Optional;
@@ -68,16 +79,46 @@ public class TournamentResource {
      * Create a new tournament.
      */
     @POST
-    public Response createTournament(TournamentDto tournamentDto) {
+    public Response createTournament(jakarta.json.JsonObject jsonData) {
         try {
-            System.out.println("Received tournament data: " + tournamentDto);
-            System.out.println("userId from DTO: " + (tournamentDto != null ? tournamentDto.getUserId() : "DTO is null"));
-            System.out.println("userId field value: " + (tournamentDto != null ? tournamentDto.userId : "DTO is null"));
+            System.out.println("=== TOURNAMENT CREATION STARTED ===");
+            System.out.println("Received tournament JSON data: " + jsonData);
+            
+            // Extract tournament type
+            String tournamentType = jsonData.getString("tournamentType", "ROUND_ROBIN");
+            System.out.println("Tournament type: " + tournamentType);
+            
+            // Create the appropriate DTO based on tournament type
+            TournamentDto tournamentDto;
+            if ("ROUND_ROBIN".equals(tournamentType)) {
+                System.out.println("Creating RoundRobinTournamentDto");
+                tournamentDto = new RoundRobinTournamentDto();
+            } else if ("AMERICANO".equals(tournamentType)) {
+                System.out.println("Creating AmericanoTournamentDto");
+                tournamentDto = new AmericanoTournamentDto();
+            } else {
+                // Default to Round Robin
+                System.out.println("Creating default RoundRobinTournamentDto");
+                tournamentDto = new RoundRobinTournamentDto();
+            }
+            
+            System.out.println("DTO created successfully: " + tournamentDto.getClass().getSimpleName());
+            
+            // Populate the DTO with JSON data
+            System.out.println("Starting to populate DTO from JSON...");
+            populateDtoFromJson(tournamentDto, jsonData);
+            System.out.println("DTO populated successfully");
+            
+            System.out.println("Created DTO: " + tournamentDto);
+            System.out.println("Calling tournamentService.createTournament...");
             String tournamentId = tournamentService.createTournament(tournamentDto);
+            System.out.println("Tournament created with ID: " + tournamentId);
+            
             return Response.status(Response.Status.CREATED)
                     .entity("{\"id\": \"" + tournamentId + "\"}")
                     .build();
         } catch (Exception e) {
+            System.err.println("=== TOURNAMENT CREATION ERROR ===");
             System.err.println("Error creating tournament: " + e.getMessage());
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -512,6 +553,167 @@ public class TournamentResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error calculating standings: " + e.getMessage())
                     .build();
+        }
+    }
+    
+    /**
+     * Populate DTO from JSON data
+     */
+    private void populateDtoFromJson(TournamentDto dto, jakarta.json.JsonObject jsonData) {
+        try {
+            System.out.println("=== POPULATING DTO FROM JSON ===");
+            System.out.println("DTO type: " + dto.getClass().getSimpleName());
+            
+            // Set basic fields
+            System.out.println("Setting basic fields...");
+            if (jsonData.containsKey("name")) {
+                dto.setName(jsonData.getString("name"));
+                System.out.println("Set name: " + jsonData.getString("name"));
+            }
+            if (jsonData.containsKey("description")) {
+                dto.setDescription(jsonData.getString("description"));
+            }
+            if (jsonData.containsKey("startDate")) {
+                String startDateStr = jsonData.getString("startDate");
+                dto.setStartDate(LocalDateTime.parse(startDateStr.replace("Z", "")));
+            }
+            if (jsonData.containsKey("endDate")) {
+                String endDateStr = jsonData.getString("endDate");
+                dto.setEndDate(LocalDateTime.parse(endDateStr.replace("Z", "")));
+            }
+            if (jsonData.containsKey("registrationStartDate")) {
+                String regStartDateStr = jsonData.getString("registrationStartDate");
+                dto.setRegistrationStartDate(LocalDateTime.parse(regStartDateStr.replace("Z", "")));
+            }
+            if (jsonData.containsKey("registrationEndDate")) {
+                String regEndDateStr = jsonData.getString("registrationEndDate");
+                dto.setRegistrationEndDate(LocalDateTime.parse(regEndDateStr.replace("Z", "")));
+            }
+            if (jsonData.containsKey("maxParticipants")) {
+                if (jsonData.get("maxParticipants").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
+                    dto.setMaxParticipants(jsonData.getInt("maxParticipants"));
+                } else {
+                    dto.setMaxParticipants(Integer.parseInt(jsonData.getString("maxParticipants")));
+                }
+            }
+            if (jsonData.containsKey("currentParticipants")) {
+                if (jsonData.get("currentParticipants").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
+                    dto.setCurrentParticipants(jsonData.getInt("currentParticipants"));
+                } else {
+                    dto.setCurrentParticipants(Integer.parseInt(jsonData.getString("currentParticipants")));
+                }
+            }
+            if (jsonData.containsKey("entryFee")) {
+                if (jsonData.get("entryFee").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
+                    dto.setEntryFee(new BigDecimal(jsonData.getJsonNumber("entryFee").toString()));
+                } else {
+                    dto.setEntryFee(new BigDecimal(jsonData.getString("entryFee")));
+                }
+            }
+            if (jsonData.containsKey("clubId")) {
+                dto.setClubId(jsonData.getString("clubId"));
+            }
+            if (jsonData.containsKey("userId")) {
+                dto.setUserId(jsonData.getString("userId"));
+            }
+            if (jsonData.containsKey("venueId")) {
+                dto.setVenueId(jsonData.getString("venueId"));
+            }
+            
+            // Set nested objects (simplified - just ID and name)
+            if (jsonData.containsKey("format") && !jsonData.isNull("format")) {
+                jakarta.json.JsonObject formatObj = jsonData.getJsonObject("format");
+                TournamentFormatDto formatDto = new TournamentFormatDto();
+                if (formatObj.containsKey("id")) {
+                    formatDto.id = formatObj.getString("id");
+                }
+                if (formatObj.containsKey("name")) {
+                    formatDto.name = formatObj.getString("name");
+                }
+                dto.setFormat(formatDto);
+            }
+            
+            if (jsonData.containsKey("category") && !jsonData.isNull("category")) {
+                jakarta.json.JsonObject categoryObj = jsonData.getJsonObject("category");
+                TournamentCategoryDto categoryDto = new TournamentCategoryDto();
+                if (categoryObj.containsKey("id")) {
+                    categoryDto.id = categoryObj.getString("id");
+                }
+                if (categoryObj.containsKey("name")) {
+                    categoryDto.name = categoryObj.getString("name");
+                }
+                dto.setCategory(categoryDto);
+            }
+            
+            if (jsonData.containsKey("registrationType") && !jsonData.isNull("registrationType")) {
+                jakarta.json.JsonObject regTypeObj = jsonData.getJsonObject("registrationType");
+                TournamentRegistrationTypeDto regTypeDto = new TournamentRegistrationTypeDto();
+                if (regTypeObj.containsKey("id")) {
+                    regTypeDto.id = regTypeObj.getString("id");
+                }
+                if (regTypeObj.containsKey("name")) {
+                    regTypeDto.name = regTypeObj.getString("name");
+                }
+                dto.setRegistrationType(regTypeDto);
+            }
+            
+            if (jsonData.containsKey("venueType") && !jsonData.isNull("venueType")) {
+                jakarta.json.JsonObject venueTypeObj = jsonData.getJsonObject("venueType");
+                TournamentVenueTypeDto venueTypeDto = new TournamentVenueTypeDto();
+                if (venueTypeObj.containsKey("id")) {
+                    venueTypeDto.id = venueTypeObj.getString("id");
+                }
+                if (venueTypeObj.containsKey("name")) {
+                    venueTypeDto.name = venueTypeObj.getString("name");
+                }
+                dto.setVenueType(venueTypeDto);
+            }
+            
+            if (jsonData.containsKey("status") && !jsonData.isNull("status")) {
+                jakarta.json.JsonObject statusObj = jsonData.getJsonObject("status");
+                TournamentStatusDto statusDto = new TournamentStatusDto();
+                if (statusObj.containsKey("id")) {
+                    statusDto.id = statusObj.getString("id");
+                }
+                if (statusObj.containsKey("name")) {
+                    statusDto.name = statusObj.getString("name");
+                }
+                dto.setStatus(statusDto);
+            }
+            
+            // Set Round Robin specific fields if applicable
+            if (dto instanceof RoundRobinTournamentDto) {
+                RoundRobinTournamentDto roundRobinDto = (RoundRobinTournamentDto) dto;
+                if (jsonData.containsKey("noOfGroups")) {
+                    if (jsonData.get("noOfGroups").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
+                        roundRobinDto.setNoOfGroups(jsonData.getInt("noOfGroups"));
+                    } else {
+                        roundRobinDto.setNoOfGroups(Integer.parseInt(jsonData.getString("noOfGroups")));
+                    }
+                }
+                if (jsonData.containsKey("teamsToAdvancePerGroup")) {
+                    if (jsonData.get("teamsToAdvancePerGroup").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
+                        roundRobinDto.setTeamsToAdvance(jsonData.getInt("teamsToAdvancePerGroup"));
+                    } else {
+                        roundRobinDto.setTeamsToAdvance(Integer.parseInt(jsonData.getString("teamsToAdvancePerGroup")));
+                    }
+                }
+                if (jsonData.containsKey("progressionOption") && !jsonData.isNull("progressionOption")) {
+                    jakarta.json.JsonObject progressionObj = jsonData.getJsonObject("progressionOption");
+                    TournamentProgressionOptionDto progressionDto = new TournamentProgressionOptionDto();
+                    if (progressionObj.containsKey("id")) {
+                        progressionDto.id = progressionObj.getString("id");
+                    }
+                    if (progressionObj.containsKey("name")) {
+                        progressionDto.name = progressionObj.getString("name");
+                    }
+                    roundRobinDto.setProgressionOption(progressionDto);
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error populating DTO from JSON: " + e.getMessage());
+            throw new RuntimeException("Error populating DTO from JSON", e);
         }
     }
 } 

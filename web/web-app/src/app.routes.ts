@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { AppLayout } from './app/layout/component/app.layout';
 import { PlayerLayoutComponent } from './app/layout/component/player-layout.component';
 import { AdminLayoutComponent } from './app/layout/component/admin-layout.component';
-import { RoleSwitcherComponent } from './app/components/role-switcher.component';
+import { RoleSwitcherComponent } from './app/pages/auth/role-switcher.component';
 
 
 import { Dashboard } from './app/pages/dashboard/dashboard';
@@ -22,6 +22,8 @@ import { MatchScheduleComponent } from './app/pages/tournaments/components/match
 import { AdminComponent } from './app/pages/admin/admin.component';
 import { AdminSetupComponent } from './app/pages/admin/admin-setup.component';
 import { ProfileComponent } from './app/pages/profile/profile.component';
+import { ProfileUpdateComponent } from './app/pages/profile/profile-update.component';
+import { ProfileCompletionGuard } from './app/guards/profile-completion.guard';
 import authRoutes from './app/pages/auth/auth.routes';
 
 export const appRoutes: Routes = [
@@ -37,20 +39,21 @@ export const appRoutes: Routes = [
     {
         path: 'player',
         component: PlayerLayoutComponent,
-        canActivate: [AuthGuard],
+        // canActivate: [AuthGuard],
         children: [
-            { path: '', component: Dashboard },
-            { path: 'standings/:tournamentId', component: StandingsComponent, data: { title: 'Tournament Standings' } },
-            { path: 'rules', component: Rules },
-            { path: 'tournaments', component: TournamentsComponent },
-            { path: 'matches', component: Dashboard }, // Placeholder for player matches
-            { path: 'teams', component: Dashboard }, // Placeholder for player teams
-            { path: 'profile', component: ProfileComponent },
-            { path: 'destinations', component: ZaDestComponent },
-            { path: 'destinations/clubs', component: ZaDestComponent },
-            { path: 'destinations/events/kids', component: ZaDestComponent },
-            { path: 'destinations/events/social', component: ZaDestComponent },
-            { path: 'destinations/events/corporate', component: ZaDestComponent }
+            { path: '', component: Dashboard, canActivate: [ProfileCompletionGuard] },
+            { path: 'standings/:tournamentId', component: StandingsComponent, data: { title: 'Tournament Standings' }, canActivate: [ProfileCompletionGuard] },
+            { path: 'rules', component: Rules, canActivate: [ProfileCompletionGuard] },
+            { path: 'tournaments', component: TournamentsComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'matches', component: Dashboard, canActivate: [ProfileCompletionGuard] }, // Placeholder for player matches
+            { path: 'teams', component: Dashboard, canActivate: [ProfileCompletionGuard] }, // Placeholder for player teams
+            { path: 'profile', component: ProfileComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'profile/update', component: ProfileUpdateComponent },
+            { path: 'destinations', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'destinations/clubs', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'destinations/events/kids', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'destinations/events/social', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'destinations/events/corporate', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] }
         ]
     },
     {

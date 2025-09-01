@@ -30,11 +30,6 @@ public class FirebaseAuthFilter {
     // List of paths that don't require authentication
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
         "/api/health",
-        "/api/users/health",
-        "/api/users/firebase/",
-        "/api/users",
-        "/api/tournaments",
-        "/api/tournament-config",
         "/swagger-ui",
         "/swagger-ui/",
         "/q/swagger-ui",

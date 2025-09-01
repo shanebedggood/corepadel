@@ -8,32 +8,27 @@ import {
   onAuthStateChanged,
   User
 } from '@angular/fire/auth';
-import { 
-  Functions, 
-  httpsCallable 
-} from '@angular/fire/functions';
-import { BehaviorSubject, Observable, from } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { actionCodeSettings } from '../../environments/firebase.config';
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 export interface UserProfile {
-  userId?: string;
-  firebaseUid: string;
+  firebaseUid: string; // Firebase user identifier - single source of truth
   email: string;
   username: string;
-  displayName?: string;
-  firstName?: string;
-  lastName?: string;
-  emailVerified?: boolean;
+  first_name?: string;
+  last_name?: string;
+  display_name?: string;
+  email_verified?: boolean;
   roles: string[];
   mobile?: string;
   rating?: number;
-  profilePicture?: string;
-  // Legacy snake_case properties for backward compatibility
-  first_name?: string;
-  last_name?: string;
-  email_verified?: boolean;
   profile_picture?: string;
+  interests?: string[];
+  profile_completed?: boolean;
 }
 
 @Injectable({
@@ -49,9 +44,12 @@ export class FirebaseAuthService {
 
   constructor(
     private auth: Auth,
-    private functions: Functions,
-    private injector: Injector
+    private injector: Injector,
+    private http: HttpClient
   ) {
+    // Set Firebase auth persistence to local (survives browser restarts)
+    this.setAuthPersistence();
+    
     // Listen to authentication state changes
     runInInjectionContext(this.injector, () => {
       onAuthStateChanged(this.auth, async (user) => {
@@ -153,13 +151,27 @@ export class FirebaseAuthService {
           throw new Error('User not authenticated');
         }
         
-        // Pass user information directly to the function
-        const syncUserFunction = httpsCallable(this.functions, 'syncUserToDatabase');
-        const result = await syncUserFunction({
-          uid: currentUser.uid,
+        // Create user data for the backend
+        const userData = {
+          firebaseUid: currentUser.uid,
           email: currentUser.email,
-          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
-        });
+          username: currentUser.email?.split('@')[0] || 'user',
+          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+          emailVerified: currentUser.emailVerified
+        };
+        
+        // Get the Firebase ID token for authentication
+        const idToken = await currentUser.getIdToken();
+        
+        // Call the Quarkus backend to create/update user
+        const headers = {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        };
+        
+        const response: any = await this.http.post(`${environment.quarkusApiUrl}/users`, userData, { headers }).toPromise();
+        
+        console.log('✅ User synced to database successfully');
         
         // Reload user profile after a short delay
         setTimeout(async () => {
@@ -188,17 +200,21 @@ export class FirebaseAuthService {
           return;
         }
         
-        const getUserProfileFunction = httpsCallable(this.functions, 'getUserProfile');
-        const result: any = await getUserProfileFunction({
-          uid: currentUser.uid,
-          email: currentUser.email,
-          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User'
-        });
+        // Get the Firebase ID token for authentication
+        const idToken = await currentUser.getIdToken();
         
-        if (result.data.success) {
-          this.userProfileSubject.next(result.data.user);
+        // Call the Quarkus backend to get user profile
+        const headers = {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        };
+        
+        const response: any = await this.http.get(`${environment.quarkusApiUrl}/users/firebase/${currentUser.uid}`, { headers }).toPromise();
+        
+        if (response) {
+          this.userProfileSubject.next(response);
         } else {
-          console.error('Failed to load user profile:', result.data);
+          console.error('Failed to load user profile: User not found');
         }
         
       } catch (error) {
@@ -214,8 +230,24 @@ export class FirebaseAuthService {
   async assignUserRole(targetUserId: string, role: 'admin' | 'player'): Promise<void> {
     return runInInjectionContext(this.injector, async () => {
       try {
-        const assignRoleFunction = httpsCallable(this.functions, 'assignUserRole');
-        const result = await assignRoleFunction({ targetUserId, role });
+        const currentUser = this.auth.currentUser;
+        if (!currentUser) {
+          throw new Error('User not authenticated');
+        }
+        
+        // Get the Firebase ID token for authentication
+        const idToken = await currentUser.getIdToken();
+        
+        // Call the Quarkus backend to assign role
+        const headers = {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        };
+        
+        const roleData = { roleName: role };
+        const response: any = await this.http.post(`${environment.quarkusApiUrl}/users/firebase/${targetUserId}/roles`, roleData, { headers }).toPromise();
+        
+        console.log('✅ Role assigned successfully');
         
       } catch (error) {
         console.error('Error assigning role:', error);
@@ -289,5 +321,40 @@ export class FirebaseAuthService {
         return urlParams.has('apiKey') && urlParams.has('oobCode');
       }
     });
+  }
+
+  /**
+   * Configure Firebase auth persistence to survive browser restarts and deployments
+   */
+  private async setAuthPersistence(): Promise<void> {
+    try {
+      // Get the underlying Firebase Auth instance
+      const firebaseAuth = this.auth;
+      await setPersistence(firebaseAuth, browserLocalPersistence);
+      console.log('✅ Firebase auth persistence set to local');
+    } catch (error) {
+      console.warn('⚠️ Failed to set Firebase auth persistence:', error);
+    }
+  }
+
+  /**
+   * Attempt to recover authentication state after deployment or browser issues
+   */
+  async recoverAuthentication(): Promise<boolean> {
+    try {
+      const currentUser = this.auth.currentUser;
+      
+      if (currentUser) {
+        // Force token refresh to ensure validity
+        await currentUser.getIdToken(true);
+        console.log('✅ Authentication recovered successfully');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('⚠️ Authentication recovery failed:', error);
+      return false;
+    }
   }
 }

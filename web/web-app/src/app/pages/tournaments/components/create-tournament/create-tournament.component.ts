@@ -127,6 +127,8 @@ export interface TournamentProgressionOption {
 })
 export class CreateTournamentComponent implements OnInit {
     activeStep: number = 0;
+    groupOptions: number[] = [2, 3, 4, 5, 6, 7, 8];
+    teamsToAdvanceOptions: number[] = [1, 2, 4, 8];
     saving: boolean = false;
     loading: boolean = false;
     tournamentForm: FormGroup;
@@ -189,11 +191,11 @@ export class CreateTournamentComponent implements OnInit {
             venueType: [null, Validators.required],
             venue: [null, Validators.required],
             progressionOption: [null], // Will be conditionally required
-            advancementModel: [null], // Will be conditionally required
-            eliminationBracketSize: [null], // Will be conditionally required
             teamsToAdvance: [null], // Will be conditionally required for combined elimination
+            eliminationBracketSize: [null], // Will be conditionally required
             maxParticipants: [null, [Validators.required, Validators.min(2), this.evenNumberValidator()]],
-            noOfGroups: [null, [Validators.required, Validators.min(1)]],
+            noOfGroups: [null, [Validators.required]],
+            teamsToAdvancePerGroup: [null, [Validators.required]],
             entryFee: [null, [Validators.required, Validators.min(0)]]
         });
 
@@ -224,6 +226,7 @@ export class CreateTournamentComponent implements OnInit {
         // Watch for format changes to load round-robin config when needed
         this.tournamentForm.get('format')?.valueChanges.subscribe(format => {
             this.loadRoundRobinConfigIfNeeded(format);
+            this.updateRoundRobinValidation(format);
         });
 
         // Watch for progression option changes to show/hide group advancement settings
@@ -252,8 +255,6 @@ export class CreateTournamentComponent implements OnInit {
                     this.registrationTypes = configData.registrationTypes.filter((r: TournamentRegistrationType) => r.isActive).sort((a: TournamentRegistrationType, b: TournamentRegistrationType) => a.name.localeCompare(b.name));
                     this.progressionTypes = []; // Initialize as empty - will be loaded conditionally
                     this.venues = venues.sort((a: Venue, b: Venue) => a.name.localeCompare(b.name));
-                    
-
                     
                     this.loading = false;
                     return true;
@@ -321,14 +322,15 @@ export class CreateTournamentComponent implements OnInit {
 
                         const tournamentData = {
                             ...processedFormValue,
-                            format: format,
-                            category: category,
-                            registrationType: registrationType,
-                            venueType: venueType,
-                            progressionOption: progressionOption,
+                            tournamentType: 'ROUND_ROBIN', // Specify the tournament type
+                            format: format ? { id: format.id, name: format.name } : null,
+                            category: category ? { id: category.id, name: category.name } : null,
+                            registrationType: registrationType ? { id: registrationType.id, name: registrationType.name } : null,
+                            venueType: venueType ? { id: venueType.id, name: venueType.name } : null,
+                            progressionOption: progressionOption ? { id: progressionOption.id, name: progressionOption.name } : null,
                             clubId: 'default-club-id', // For now, use a default club ID
                             userId: currentUser.uid,
-                            status: status,
+                            status: status ? { id: status.id, name: status.name } : null,
                         };
 
 
@@ -519,28 +521,23 @@ export class CreateTournamentComponent implements OnInit {
      * Update validation for group advancement settings based on progression option
      */
     updateGroupAdvancementValidation(progressionOption: any): void {
-        const advancementModelControl = this.tournamentForm.get('advancementModel');
         const eliminationBracketSizeControl = this.tournamentForm.get('eliminationBracketSize');
         const teamsToAdvanceControl = this.tournamentForm.get('teamsToAdvance');
 
         if (progressionOption === 'group-based') {
             // Make fields required for group-based elimination
-            advancementModelControl?.setValidators(Validators.required);
             eliminationBracketSizeControl?.setValidators(Validators.required);
             teamsToAdvanceControl?.clearValidators();
         } else if (progressionOption === 'combined') {
             // Make fields required for combined elimination
             teamsToAdvanceControl?.setValidators(Validators.required);
             eliminationBracketSizeControl?.setValidators(Validators.required);
-            advancementModelControl?.clearValidators();
         } else {
             // Clear validation for other progression types but don't clear the values
-            advancementModelControl?.clearValidators();
             eliminationBracketSizeControl?.clearValidators();
             teamsToAdvanceControl?.clearValidators();
         }
 
-        advancementModelControl?.updateValueAndValidity();
         eliminationBracketSizeControl?.updateValueAndValidity();
         teamsToAdvanceControl?.updateValueAndValidity();
     }
@@ -665,18 +662,7 @@ export class CreateTournamentComponent implements OnInit {
         return teamsAdvancingToPlate;
     }
 
-    getAdvancementModel(): string {
-        const advancementModel = this.tournamentForm.get('advancementModel')?.value;
-        if (!advancementModel) return '';
-        
-        const model = this.advancementModels.find(m => m.id === advancementModel);
-        return model?.name || '';
-    }
 
-    isTrophyPlateModel(): boolean {
-        const advancementModel = this.tournamentForm.get('advancementModel')?.value;
-        return advancementModel === 'trophy-plate';
-    }
 
     /**
      * Custom validator to ensure maxParticipants is even (for teams of 2)
@@ -715,5 +701,23 @@ export class CreateTournamentComponent implements OnInit {
         // Find the venue type object by ID
         const venueType = this.venueTypes.find(vt => vt.id === venueTypeId);
         return venueType?.name === 'Single Venue';
+    }
+
+    private updateRoundRobinValidation(format: string): void {
+        const noOfGroupsControl = this.tournamentForm.get('noOfGroups');
+        const teamsToAdvancePerGroupControl = this.tournamentForm.get('teamsToAdvancePerGroup');
+        
+        if (this.isRoundRobinFormat()) {
+            noOfGroupsControl?.setValidators([Validators.required]);
+            teamsToAdvancePerGroupControl?.setValidators([Validators.required]);
+        } else {
+            noOfGroupsControl?.clearValidators();
+            teamsToAdvancePerGroupControl?.clearValidators();
+            noOfGroupsControl?.setValue(null);
+            teamsToAdvancePerGroupControl?.setValue(null);
+        }
+        
+        noOfGroupsControl?.updateValueAndValidity();
+        teamsToAdvancePerGroupControl?.updateValueAndValidity();
     }
 }

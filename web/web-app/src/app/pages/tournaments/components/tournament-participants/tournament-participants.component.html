@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center mb-6">
         <div>
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Players</h2>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">
+            <p class="text-gray-600 dark:text-gray-400 mt-1 text-md">
                 Manage individual players in this tournament
             </p>
         </div>
@@ -19,10 +19,10 @@
     <!-- Progress Bar -->
     <div class="mb-6">
         <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span class="text-md font-medium text-gray-700 dark:text-gray-300">
                 Players: {{ currentCount }}/{{ tournament?.maxParticipants }}
             </span>
-            <span class="text-sm text-gray-500">
+            <span class="text-md text-gray-500">
                 {{ getRemainingSlots() }} slots remaining
             </span>
         </div>
@@ -61,6 +61,7 @@
             @if (!loading && participants.length > 0) {
                 <div>
                     <p-table [value]="participants" 
+                             [dataKey]="'firebase_uid'"
                              [paginator]="true" 
                              [rows]="10"
                              [showCurrentPageReport]="true"
@@ -71,7 +72,8 @@
                         
                         <ng-template pTemplate="header">
                             <tr>
-                                <th pSortableColumn="displayName">Player <p-sortIcon field="displayName"></p-sortIcon></th>
+                                <th pSortableColumn="fullName">Full Name <p-sortIcon field="fullName"></p-sortIcon></th>
+                                <th pSortableColumn="displayName">Display Name <p-sortIcon field="displayName"></p-sortIcon></th>
                                 <th pSortableColumn="rating">Rating <p-sortIcon field="rating"></p-sortIcon></th>
                                 <th>Actions</th>
                             </tr>
@@ -81,14 +83,19 @@
                             <tr>
                                 <td>
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                            <span class="text-blue-600 font-semibold text-sm">
-                                                {{ participant.displayName?.charAt(0)?.toUpperCase() || 'U' }}
+                                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                            <span class="text-blue-600 font-semibold text-md">
+                                                {{ getInitials(participant) }}
                                             </span>
                                         </div>
                                         <div class="font-medium text-gray-900 dark:text-white">
-                                            {{ participant.displayName }}
+                                            {{ getFullName(participant) }}
                                         </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="font-medium text-gray-900 dark:text-white">
+                                        {{ participant.displayName }}
                                     </div>
                                 </td>
                                 <td>
@@ -97,7 +104,7 @@
                                 <td>
                                     <button pButton type="button" 
                                             icon="pi pi-trash" 
-                                            class="p-button-sm p-button-outlined p-button-danger"
+                                            class="p-button-md p-button-outlined p-button-danger"
                                             (click)="removeParticipant(participant)"
                                             pTooltip="Remove Participant">
                                     </button>
@@ -107,7 +114,7 @@
                         
                         <ng-template pTemplate="emptymessage">
                             <tr>
-                                <td colspan="3" class="text-center py-8">
+                                <td colspan="4" class="text-center py-8">
                                     <i class="pi pi-users text-2xl text-gray-400 mb-2"></i>
                                     <p class="text-gray-600">No participants found</p>
                                 </td>
@@ -153,7 +160,7 @@
                             </p-message>
                         }
                         
-                        @for (player of searchResults; track trackByPlayerUid($index, player)) {
+                        @for (player of searchResults; track player.firebase_uid) {
                             <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
                                  (click)="addParticipant(player)">
                                 <div class="flex-1">

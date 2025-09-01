@@ -95,20 +95,6 @@
         display: flex;
         gap: 1rem;
     }
-
-    // Mobile menu styles
-    .mobile-menu {
-        display: none;
-        
-        &.show {
-            display: block;
-        }
-    }
-
-    // Desktop menu styles
-    .desktop-menu {
-        display: flex;
-    }
 }
 
 @media (max-width: 991px) {
@@ -128,7 +114,7 @@
             display: inline-flex;
         }
 
-        .layout-topbar-menu {
+        .layout-topbar-menu.mobile-menu {
             position: absolute;
             background-color: var(--surface-overlay);
             transform-origin: top;
@@ -142,6 +128,16 @@
             top: 4rem;
             min-width: 15rem;
             border: 1px solid var(--surface-border);
+            display: none;
+            opacity: 0;
+            transform: scaleY(0);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+
+            &.show {
+                display: block;
+                opacity: 1;
+                transform: scaleY(1);
+            }
 
             .layout-topbar-menu-content {
                 gap: 0.5rem;
@@ -172,27 +168,31 @@
         }
 
         // Hide desktop menu on mobile
-        .desktop-menu {
+        .layout-topbar-menu.desktop-menu {
             display: none !important;
-        }
-
-        // Show mobile menu when visible
-        .mobile-menu.show {
-            display: block !important;
         }
     }
 }
 
+// Desktop menu styles (for large screens)
 @media (min-width: 992px) {
     .layout-topbar {
-        // Hide mobile menu on desktop
-        .mobile-menu {
-            display: none !important;
+        .layout-topbar-menu.desktop-menu {
+            display: flex !important;
+            position: static;
+            background: none;
+            box-shadow: none;
+            border: none;
+            padding: 0;
+            right: auto;
+            top: auto;
+            min-width: auto;
+            opacity: 1;
+            transform: none;
         }
 
-        // Show desktop menu on desktop
-        .desktop-menu {
-            display: flex !important;
+        .layout-topbar-menu.mobile-menu {
+            display: none !important;
         }
     }
 }

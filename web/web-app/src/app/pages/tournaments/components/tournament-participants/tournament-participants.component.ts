@@ -157,7 +157,6 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
             next: (users: User[]) => {
                 // Convert User objects to UserProfile format
                 this.searchResults = users.map(user => ({
-                    user_id: user.user_id, // Use the actual database UUID if available
                     firebase_uid: user.firebase_uid,
                     email: user.email,
                     display_name: user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
@@ -212,7 +211,7 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
         const tournamentId = this.tournament!.id; // Store to avoid undefined issues
 
         // Get the user's actual rating from the database
-                    this.userService.getUserByFirebaseUid(player.firebase_uid).pipe(
+        this.userService.getUserByFirebaseUid(player.firebase_uid).pipe(
             takeUntil(this.destroy$)
         ).subscribe({
             next: (userFromDb: any) => {
@@ -383,8 +382,35 @@ export class TournamentParticipantsComponent implements OnInit, OnDestroy, After
         this.checkCanAddMore();
     }
 
-    // TrackBy method for better performance
-    trackByPlayerUid(index: number, player: UserProfile): string {
-        return player.firebase_uid || `player-${index}`;
+
+
+    getFullName(participant: TournamentParticipant): string {
+        const firstName = participant.firstName || '';
+        const lastName = participant.lastName || '';
+        
+        if (firstName && lastName) {
+            return `${firstName} ${lastName}`;
+        } else if (firstName) {
+            return firstName;
+        } else if (lastName) {
+            return lastName;
+        } else {
+            return 'N/A';
+        }
+    }
+
+    getInitials(participant: TournamentParticipant): string {
+        const firstName = participant.firstName || '';
+        const lastName = participant.lastName || '';
+        
+        if (firstName && lastName) {
+            return `${firstName.charAt(0).toUpperCase()}${lastName.charAt(0).toUpperCase()}`;
+        } else if (firstName) {
+            return firstName.charAt(0).toUpperCase();
+        } else if (lastName) {
+            return lastName.charAt(0).toUpperCase();
+        } else {
+            return 'U';
+        }
     }
 } 

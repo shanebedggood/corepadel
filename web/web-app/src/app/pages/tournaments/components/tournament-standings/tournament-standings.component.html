@@ -62,14 +62,15 @@
             </div>
         </div>
 
-        @for (group of groups; track trackByGroup($index, group)) {
+        @for (group of groups; track group.id + '-standings') {
             <div class="group-standings">
             <h3>{{ getGroupName(group.id!) }}</h3>
             
             <p-table 
                 [value]="getStandingsForGroup(group.id!)" 
+                [dataKey]="'teamId'"
                 [tableStyle]="{ 'min-width': '50rem' }"
-                styleClass="p-datatable-sm">
+                class="p-datatable-sm">
                 
                 <ng-template pTemplate="header">
                     <tr>

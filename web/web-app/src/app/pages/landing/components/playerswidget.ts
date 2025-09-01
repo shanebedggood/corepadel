@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
           <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Join the Padel Community
           </h2>
-          <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p class="text-xl text-gray-600">
             Connect with players, join tournaments, and improve your game with our community
           </p>
         </div>

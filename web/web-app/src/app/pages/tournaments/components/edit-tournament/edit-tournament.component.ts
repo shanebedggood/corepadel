@@ -381,11 +381,33 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
     // Tournament details event handlers
     onTournamentSaved(tournament: Tournament): void {
         if (!this.tournamentId) return;
+        
+        // Check authentication first
+        const currentUser = this.authService.getCurrentUser();
+        if (!currentUser) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Authentication Error',
+                detail: 'You must be logged in to update tournaments. Please log in and try again.'
+            });
+            return;
+        }
+        
+        // Check if user has admin role
+        if (!this.authService.isAdmin()) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Authorization Error',
+                detail: 'You must be an admin to update tournaments.'
+            });
+            return;
+        }
+        
         // Check if maxParticipants or noOfGroups has changed
         const oldMax = this.tournament?.maxParticipants;
-        const oldGroups = this.tournament?.noOfGroups;
+        const oldGroups = this.getNoOfGroups();
         const newMax = tournament.maxParticipants;
-        const newGroups = tournament.noOfGroups;
+        const newGroups = this.getNoOfGroupsFromTournament(tournament);
         const shouldRegenerateGroups = oldMax !== newMax || oldGroups !== newGroups;
 
         this.tournamentService.updateTournament(this.tournamentId, tournament).subscribe({
@@ -401,7 +423,7 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
                         this.tournamentService.createTournamentGroups(
                             this.tournamentId,
                             Number(tournament.maxParticipants) || 0,
-                            Number(tournament.noOfGroups) || 0,
+                            Number(this.getNoOfGroupsFromTournament(tournament)) || 0,
                             tournament.venue
                         ).subscribe(() => {
                             this.loadGroups();
@@ -413,10 +435,21 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
                 }, 1000);
             },
             error: (error) => {
+                console.error('Tournament update error:', error);
+                
+                let errorMessage = 'Failed to update tournament';
+                if (error?.status === 401) {
+                    errorMessage = 'Authentication failed. Please log in again and try updating the tournament.';
+                } else if (error?.status === 500) {
+                    errorMessage = 'Server error occurred while updating tournament. Please try again.';
+                } else if (error?.message) {
+                    errorMessage = error.message;
+                }
+                
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: error?.message || 'Failed to update tournament'
+                    detail: errorMessage
                 });
             }
         });
@@ -428,6 +461,9 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
             summary: 'Cancelled',
             detail: 'Tournament changes cancelled'
         });
+        
+        // Navigate back to tournament list
+        this.router.navigate(['/admin/tournaments']);
     }
 
     onTournamentReset(): void {
@@ -530,7 +566,7 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
                         this.tournamentService.createTournamentGroups(
                             this.tournamentId,
                             Number(this.tournament?.maxParticipants) || 0,
-                            Number(this.tournament?.noOfGroups) || 0,
+                            Number(this.getNoOfGroups()) || 0,
                             this.tournament?.venue || undefined
                         ).subscribe({
                             next: () => {
@@ -595,5 +631,19 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
                 this.participants = [];
             }
         });
-}
+    }
+
+    private getNoOfGroups(): number | undefined {
+        if (this.tournament?.tournamentType === 'ROUND_ROBIN') {
+            return (this.tournament as any).noOfGroups;
+        }
+        return undefined;
+    }
+
+    private getNoOfGroupsFromTournament(tournament: Tournament): number | undefined {
+        if (tournament.tournamentType === 'ROUND_ROBIN') {
+            return (tournament as any).noOfGroups;
+        }
+        return undefined;
+    }
 } 

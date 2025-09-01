@@ -172,6 +172,8 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
                             ...group,
                             teamCount: this.teams[group.id!]?.length || 0
                         }));
+                        
+
     
                         return this.groups;
                     })
@@ -476,7 +478,7 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
 
     getTeamCounts(): string {
         const totalTeams = this.groups.reduce((acc, group) => acc + (group.teamCount || 0), 0);
-        return `${totalTeams} Teams`;
+        return `${totalTeams}`;
     }
 
     hasExistingTeams(): boolean {
@@ -507,9 +509,7 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
         return venue ? venue.name : '';
     }
 
-    trackByGroupId(index: number, group: TournamentGroup): string {
-        return group.id!;
-    }
+
 
     // Team Editor Event Handlers
     onTeamSaved(team: TournamentTeam): void {
@@ -630,7 +630,7 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
     }
 
     regenerateGroups(): void {
-        if (!this.tournament?.id || !this.tournament.maxParticipants || !this.tournament.noOfGroups) return;
+        if (!this.tournament?.id || !this.tournament.maxParticipants || !this.getNoOfGroups()) return;
         this.confirmationService.confirm({
             message: 'Are you sure you want to regenerate all groups? This will delete all existing groups and teams.',
             header: 'Regenerate Groups',
@@ -645,7 +645,7 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
                         this.tournamentService.createTournamentGroups(
                             this.tournament!.id!,
                             this.tournament!.maxParticipants!,
-                            this.tournament!.noOfGroups!,
+                            this.getNoOfGroups()!,
                             this.tournament!.venue || undefined
                         ).subscribe({
                             next: () => {
@@ -686,16 +686,12 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
         });
     }
 
-    // TrackBy methods for better performance
-    trackByGroup(index: number, group: TournamentGroup): string {
-        return group.id || `group-${index}`;
-    }
 
-    trackByTeam(index: number, team: TournamentTeam): string {
-        return team.id || `team-${index}`;
-    }
 
-    trackByPlayer(index: number, player: any): string {
-        return player.uid || player.firebase_uid || `player-${index}`;
+    private getNoOfGroups(): number | undefined {
+        if (this.tournament?.tournamentType === 'ROUND_ROBIN') {
+            return (this.tournament as any).noOfGroups;
+        }
+        return undefined;
     }
 } 

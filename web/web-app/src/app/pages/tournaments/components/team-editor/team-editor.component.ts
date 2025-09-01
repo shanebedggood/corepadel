@@ -491,9 +491,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         return this.getCurrentPlayerCount() >= maxPlayers;
     }
 
-    trackByPlayerUid(index: number, player: UserProfile): string {
-        return player.firebase_uid;
-    }
+
 
     removePlayer(player: UserProfile): void {
         const currentPlayers = this.teamForm.get('players')?.value || [];

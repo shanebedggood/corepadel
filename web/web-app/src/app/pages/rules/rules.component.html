@@ -13,7 +13,8 @@
             <!-- Detailed Rules -->
             <div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-                    <div *ngFor="let rule of padelRules; let i = index" class="modern-rule-card group relative overflow-hidden">
+                    @for (rule of padelRules; track rule.title; let i = $index) {
+                        <div class="modern-rule-card group relative overflow-hidden">
                         <div class="flex flex-col items-center justify-center p-8">
                             <div class="rule-icon mb-4 flex items-center justify-center">
                                 <span class="rule-number">{{ i + 1 }}</span>
@@ -25,6 +26,7 @@
                             </button>
                         </div>
                     </div>
+                }
                 </div>
             </div>
         </div>
@@ -42,7 +44,9 @@
             <div>
                 <div class="text-2xl font-extrabold mb-4 text-center">{{ padelRules[selectedRuleIndex].title }}</div>
                 <div class="prose max-w-none text-lg text-gray-700 dark:text-gray-200">
-                    <p *ngFor="let point of padelRules[selectedRuleIndex].rule_description">{{ point }}</p>
+                    @for (point of padelRules[selectedRuleIndex].rule_description; track $index) {
+                        <p>{{ point }}</p>
+                    }
                 </div>
             </div>
         }

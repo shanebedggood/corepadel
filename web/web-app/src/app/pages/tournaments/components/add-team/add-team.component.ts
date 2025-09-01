@@ -450,8 +450,5 @@ export class AddTeamComponent implements OnInit, AfterViewInit {
         }
     }
 
-    // TrackBy function for ngFor to prevent rendering issues
-    trackByPlayerUid(index: number, player: UserProfile): string {
-        return player.firebase_uid;
-    }
+
 } 

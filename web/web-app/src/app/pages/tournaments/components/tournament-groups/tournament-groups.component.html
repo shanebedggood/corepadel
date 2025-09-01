@@ -29,7 +29,7 @@
     <!-- Groups Summary -->
     <div class="mb-6">
         <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span class="text-md font-medium text-gray-700 dark:text-gray-300">
                 Groups: {{ groups.length }} | Teams: {{ getTeamCounts() }}
             </span>
         </div>
@@ -61,18 +61,22 @@
     <!-- Mobile view: Accordion -->
     @if (!loading && groups.length > 0 && isMobile) {
         <div class="space-y-4">
-            <p-accordion [(value)]="activeGroupId" styleClass="groups-accordion">
-                @for (group of groups; track trackByGroup($index, group); let i = $index) {
+            <p-accordion [(value)]="activeGroupId" class="groups-accordion">
+                @for (group of groups; track group.id + '-mobile'; let i = $index) {
                     <p-accordion-panel [value]="group.id!">
                         <p-accordion-header>
                             <div class="flex items-center justify-between w-full">
                                 <div class="flex items-baseline gap-2">
                                     <span class="font-semibold">{{ group.name }}</span>
-                                    @if (getGroupVenueName(group)) {
-                                        <span class="text-sm text-gray-500">• {{ getGroupVenueName(group) }}</span>
-                                    }
+                                    <span class="text-base text-gray-500">
+                                        @if (getGroupVenueName(group)) {
+                                            {{ getGroupVenueName(group) }}
+                                        } @else {
+                                            No venue specified
+                                        }
+                                    </span>
                                 </div>
-                                <span class="text-sm text-gray-500">{{ group.teamCount || 0 }}/{{ group.maxTeams }} teams</span>
+                                <span class="text-base text-gray-500">{{ group.teamCount || 0 }}/{{ group.maxTeams }} teams</span>
                             </div>
                         </p-accordion-header>
                         <p-accordion-content>
@@ -87,7 +91,7 @@
                                 </div>
 
                                 <div class="grid grid-cols-1 gap-4">
-                                    @for (team of teams[group.id!]; track trackByTeam($index, team)) {
+                                    @for (team of teams[group.id!]; track team.id) {
                                         <div [ngClass]="{
                                             'border rounded-lg p-4 flex flex-col bg-gray-50 dark:bg-gray-700': true,
                                             'border-red-500 border-2': hasIncompleteTeam(team),
@@ -101,7 +105,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="mt-2">
-                                                    @for (player of team.players; track trackByPlayer($index, player)) {
+                                                    @for (player of team.players; track $index) {
                                                         <span class="block text-md text-gray-600">
                                                             {{ player.displayName }}
                                                         </span>
@@ -139,23 +143,27 @@
     <!-- Desktop view: Grid -->
     @if (!loading && groups.length > 0 && !isMobile) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            @for (group of groups; track trackByGroup($index, group)) {
+            @for (group of groups; track group.id + '-desktop') {
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <div class="bg-gray-100 dark:bg-gray-700 px-3 py-2 border-b border-gray-200 dark:border-gray-600">
                         <div class="flex justify-between items-center">
-                            <div class="flex items-baseline gap-2">
-                                <h4 class="font-semibold text-gray-900 dark:text-white m-0 text-sm">{{ group.name }}</h4>
-                                @if (getGroupVenueName(group)) {
-                                    <span class="text-xs text-gray-500">• {{ getGroupVenueName(group) }}</span>
-                                }
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-900 dark:text-white text-xl leading-none">{{ group.name }}</span>
+                                <span class="text-base text-gray-500 leading-none">
+                                    @if (getGroupVenueName(group)) {
+                                        {{ getGroupVenueName(group) }}
+                                    } @else {
+                                        No venue specified
+                                    }
+                                </span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-xs text-gray-500">{{ group.teamCount || 0 }}/{{ group.maxTeams }} teams</span>
+                                <span class="text-md text-gray-500 leading-none">{{ group.teamCount || 0 }}/{{ group.maxTeams }} teams</span>
                                 <div class="flex gap-1">
-                                    <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-outlined"
+                                    <button pButton type="button" icon="pi pi-pencil" class="p-button-md p-button-outlined"
                                         (click)="editGroup(group)" pTooltip="Edit Group">
                                     </button>
-                                    <button pButton type="button" icon="pi pi-plus" class="p-button-sm p-button-success"
+                                    <button pButton type="button" icon="pi pi-plus" class="p-button-md p-button-success"
                                         (click)="openAddTeamDialog(group)" [disabled]="isGroupFull(group.id!)" pTooltip="Add Team">
                                     </button>
                                 </div>
@@ -164,7 +172,7 @@
                     </div>
                     <div class="p-3">
                         <div class="grid grid-cols-2 gap-2">
-                            @for (team of teams[group.id!]; track trackByTeam($index, team)) {
+                            @for (team of teams[group.id!]; track team.id) {
                                 <div [ngClass]="{
                                     'border rounded-lg p-3 flex flex-col bg-white dark:bg-gray-800': true,
                                     'border-red-500 border-2': hasIncompleteTeam(team),
@@ -173,12 +181,12 @@
                                     <div class="flex-grow">
                                         <div class="flex justify-between items-start">
                                             <span class="font-bold text-base">{{ team.name }}</span>
-                                            <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-xs">
+                                            <div class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-md">
                                                 {{ getTeamCombinedRating(team) }}
                                             </div>
                                         </div>
                                         <div class="mt-1">
-                                            @for (player of team.players; track trackByPlayer($index, player)) {
+                                            @for (player of team.players; track $index) {
                                                 <span class="block text-sm text-gray-600">
                                                     {{ player.displayName }}
                                                 </span>
@@ -186,11 +194,11 @@
                                         </div>
                                     </div>
                                     <div class="mt-2 flex justify-end gap-1">
-                                        <button pButton type="button" icon="pi pi-pencil" class="p-button-sm p-button-outlined"
+                                        <button pButton type="button" icon="pi pi-pencil" class="p-button-md p-button-outlined"
                                             (click)="openEditTeamDialog(team, group)" pTooltip="Edit Team">
                                         </button>
                                         <button pButton type="button" icon="pi pi-trash"
-                                            class="p-button-sm p-button-danger p-button-outlined" (click)="deleteTeam(team, group)"
+                                            class="p-button-md p-button-danger p-button-outlined" (click)="deleteTeam(team, group)"
                                             pTooltip="Delete Team">
                                         </button>
                                     </div>

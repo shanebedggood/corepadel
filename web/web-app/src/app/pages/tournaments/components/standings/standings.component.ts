@@ -28,6 +28,7 @@ interface TeamStanding {
 }
 
 interface GroupStanding {
+    id: string; // Unique identifier for tracking
     group: TournamentGroup & { venue?: Venue };
     standings: TeamStanding[];
 }
@@ -78,6 +79,7 @@ export class StandingsComponent implements OnInit {
             this.errorMessage = 'Tournament ID is required';
             return;
         }
+        
         this.loadStandings();
     }
 
@@ -135,6 +137,7 @@ export class StandingsComponent implements OnInit {
                         const teams = groupsWithTeams.teams[index] || [];
                         const standings = this.calculateGroupStandings(teams);
                         return {
+                            id: `group-standing-${group.id}-${index}`,
                             group: group,
                             standings: standings
                         };
@@ -162,7 +165,7 @@ export class StandingsComponent implements OnInit {
     private calculateGroupStandings(teams: TournamentTeam[]): TeamStanding[] {
         // For now, return mock data since we don't have matches yet
         // This will be replaced with actual match data when matches are implemented
-        return teams.map((team, index) => ({
+        const initialStandings = teams.map((team, index) => ({
             team: team,
             played: 0,
             won: 0,
@@ -173,15 +176,17 @@ export class StandingsComponent implements OnInit {
             goalDifference: 0,
             points: 0,
             position: index + 1
-        })).sort((a, b) => {
-            // Sort by points (descending), then goal difference, then goals for
+        }));
+        
+        // Sort by points (descending), then goal difference, then goals for
+        const sortedStandings = initialStandings.sort((a, b) => {
             if (b.points !== a.points) return b.points - a.points;
             if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
             return b.goalsFor - a.goalsFor;
-        }).map((standing, index) => ({
-            ...standing,
-            position: index + 1
-        }));
+        });
+        
+        // Ensure each standing has a unique position
+        return sortedStandings.map((standing, index) => ({ ...standing, position: index + 1 }));
     }
 
     getPositionClass(position: number): string {
@@ -201,4 +206,5 @@ export class StandingsComponent implements OnInit {
     viewTournament(): void {
         this.router.navigate(['/admin/edit-tournament', this.tournamentId]);
     }
+
 }

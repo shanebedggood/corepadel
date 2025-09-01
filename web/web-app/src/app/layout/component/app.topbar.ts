@@ -21,7 +21,7 @@ import { Observable, map, Subscription } from 'rxjs';
 
             <div class="layout-topbar-logo" (click)="onLogoClick()">
                 <img [src]="'assets/logo.svg'" alt="Logo" height="40px" />
-                <span>Core Padel</span>
+                <span>STRIDE & SERVE</span>
             </div>
 
             <div class="layout-topbar-button-container">
@@ -49,7 +49,7 @@ import { Observable, map, Subscription } from 'rxjs';
                 <div class="layout-topbar-user-menu">
                     @if (userProfile$ | async; as profile) {
                         <div class="user-info">
-                            <span class="user-name">{{ profile.firstName }} {{ profile.lastName }}</span>
+                            <span class="user-name">{{ profile.first_name }} {{ profile.last_name }}</span>
                             <span class="user-email">{{ profile.email }}</span>
                         </div>
                     }

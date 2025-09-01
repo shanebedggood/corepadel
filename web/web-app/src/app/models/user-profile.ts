@@ -1,6 +1,5 @@
 export interface UserProfile {
-  user_id?: string; // Database UUID, optional since it might not be available
-  firebase_uid: string; // Firebase user identifier
+  firebase_uid: string; // Firebase user identifier - single source of truth
   email: string;
   username: string;
   first_name?: string;
@@ -11,4 +10,6 @@ export interface UserProfile {
   mobile?: string;
   rating?: number;
   profile_picture?: string;
+  interests?: string[];
+  profile_completed?: boolean;
 }

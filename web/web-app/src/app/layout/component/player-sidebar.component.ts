@@ -15,16 +15,18 @@ import { LayoutService } from '../service/layout.service';
   styles: [`
     .layout-sidebar.player-sidebar {
       position: fixed;
-      height: 100vh;
+      height: calc(100vh - 4rem);
       z-index: 999;
       overflow-y: auto;
       user-select: none;
-      top: 0;
+      top: 4rem;
       left: 0;
       transition: transform 0.3s ease;
-      background-color: #1e293b;
-      border-right: 1px solid #334155;
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      border-right: 1px solid #86efac;
       width: 16rem;
+      padding: 0.5rem 1.5rem;
+      box-sizing: border-box;
     }
 
     .layout-sidebar.player-sidebar::-webkit-scrollbar {
@@ -32,36 +34,38 @@ import { LayoutService } from '../service/layout.service';
     }
 
     .layout-sidebar.player-sidebar::-webkit-scrollbar-track {
-      background: #1e293b;
+      background: #dcfce7;
     }
 
     .layout-sidebar.player-sidebar::-webkit-scrollbar-thumb {
-      background: #475569;
+      background: #86efac;
       border-radius: 3px;
     }
 
     .layout-sidebar.player-sidebar::-webkit-scrollbar-thumb:hover {
-      background: #64748b;
+      background: #4ade80;
+    }
+
+    /* Static layout behavior */
+    .layout-wrapper.layout-static .layout-sidebar.player-sidebar {
+      transform: translateX(0);
+    }
+
+    .layout-wrapper.layout-static.layout-static-inactive .layout-sidebar.player-sidebar {
+      transform: translateX(-100%);
     }
 
     @media screen and (max-width: 991px) {
       .layout-sidebar.player-sidebar {
+        position: fixed;
         transform: translateX(-100%);
         width: 100%;
+        top: 0;
+        height: 100vh;
       }
 
       .layout-sidebar.player-sidebar.layout-sidebar-active {
         transform: translateX(0);
-      }
-    }
-
-    @media screen and (min-width: 992px) {
-      .layout-sidebar.player-sidebar {
-        transform: translateX(0);
-      }
-
-      .layout-sidebar.player-sidebar.layout-sidebar-inactive {
-        transform: translateX(-100%);
       }
     }
   `]
@@ -71,12 +75,12 @@ export class PlayerSidebar {
 
   get sidebarClass() {
     return {
-      'layout-sidebar-active': this.isOverlayActive(),
-      'layout-sidebar-inactive': !this.isOverlayActive()
+      'layout-sidebar-active': this.isStaticActive(),
+      'layout-sidebar-inactive': !this.isStaticActive()
     };
   }
 
-  isOverlayActive() {
-    return this.layoutService.layoutState().overlayMenuActive;
+  isStaticActive() {
+    return !this.layoutService.layoutState().staticMenuDesktopInactive;
   }
 }

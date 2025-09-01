@@ -66,6 +66,8 @@ export class Rules implements OnInit {
         this.padelRulesService.getPadelRules().subscribe({
             next: (rules) => {
                 this.padelRules = rules;
+                
+
             },
             error: (error) => {
                 // Remove all console.error statements
@@ -80,4 +82,6 @@ export class Rules implements OnInit {
     closeRuleModal() {
         this.selectedRuleIndex = null;
     }
+
+
 }

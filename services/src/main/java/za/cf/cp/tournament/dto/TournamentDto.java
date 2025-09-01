@@ -1,15 +1,27 @@
 package za.cf.cp.tournament.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * DTO representing tournament data.
+ * Abstract DTO representing tournament data.
+ * Contains common fields shared by all tournament formats.
  * Matches the Firebase structure for backward compatibility.
  */
-public class TournamentDto {
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "tournamentType"
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = RoundRobinTournamentDto.class, name = "ROUND_ROBIN"),
+    @JsonSubTypes.Type(value = AmericanoTournamentDto.class, name = "AMERICANO")
+})
+public abstract class TournamentDto {
     
     @JsonProperty("id")
     public String id;
@@ -41,15 +53,11 @@ public class TournamentDto {
     @JsonProperty("entryFee")
     public BigDecimal entryFee;
     
-    @JsonProperty("noOfGroups")
-    public Integer noOfGroups;
-    
     @JsonProperty("clubId")
     public String clubId;
     
-    @JsonProperty("userId")
-    public String userId;
-
+    @JsonProperty("firebaseUid")
+    public String firebaseUid;
     
     // Foreign key relationships as nested objects
     @JsonProperty("format")
@@ -73,18 +81,11 @@ public class TournamentDto {
     @JsonProperty("venue")
     public Object venue;
     
-    // Round-robin specific fields
-    @JsonProperty("progressionOption")
-    public TournamentProgressionOptionDto progressionOption;
-    
-    @JsonProperty("advancementModel")
-    public AdvancementModelDto advancementModel;
-    
-    @JsonProperty("eliminationBracketSize")
-    public EliminationBracketSizeDto eliminationBracketSize;
-    
     @JsonProperty("club")
     public ClubDto club;
+    
+    // Abstract method that subclasses must implement
+    public abstract String getTournamentType();
     
     // Default constructor
     public TournamentDto() {}
@@ -92,7 +93,7 @@ public class TournamentDto {
     // Constructor with essential fields
     public TournamentDto(String id, String name, String description, LocalDateTime startDate, 
                         LocalDateTime endDate, Integer maxParticipants, 
-                        String clubId, String userId) {
+                        String clubId, String firebaseUid) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -102,8 +103,7 @@ public class TournamentDto {
         this.currentParticipants = 0;
         this.entryFee = BigDecimal.ZERO;
         this.clubId = clubId;
-        this.userId = userId;
-
+        this.firebaseUid = firebaseUid;
     }
     
     // Getters and setters
@@ -187,14 +187,6 @@ public class TournamentDto {
         this.entryFee = entryFee;
     }
     
-    public Integer getNoOfGroups() {
-        return noOfGroups;
-    }
-    
-    public void setNoOfGroups(Integer noOfGroups) {
-        this.noOfGroups = noOfGroups;
-    }
-    
     public String getClubId() {
         return clubId;
     }
@@ -203,16 +195,14 @@ public class TournamentDto {
         this.clubId = clubId;
     }
     
-    public String getUserId() {
-        return userId;
+    public String getFirebaseUid() {
+        return firebaseUid;
     }
     
-    public void setUserId(String userId) {
-        System.out.println("Setting userId in DTO: " + userId);
-        this.userId = userId;
+    public void setFirebaseUid(String firebaseUid) {
+        System.out.println("Setting firebaseUid in DTO: " + firebaseUid);
+        this.firebaseUid = firebaseUid;
     }
-    
-
     
     public TournamentFormatDto getFormat() {
         return format;
@@ -268,30 +258,6 @@ public class TournamentDto {
     
     public void setVenue(Object venue) {
         this.venue = venue;
-    }
-    
-    public TournamentProgressionOptionDto getProgressionOption() {
-        return progressionOption;
-    }
-    
-    public void setProgressionOption(TournamentProgressionOptionDto progressionOption) {
-        this.progressionOption = progressionOption;
-    }
-    
-    public AdvancementModelDto getAdvancementModel() {
-        return advancementModel;
-    }
-    
-    public void setAdvancementModel(AdvancementModelDto advancementModel) {
-        this.advancementModel = advancementModel;
-    }
-    
-    public EliminationBracketSizeDto getEliminationBracketSize() {
-        return eliminationBracketSize;
-    }
-    
-    public void setEliminationBracketSize(EliminationBracketSizeDto eliminationBracketSize) {
-        this.eliminationBracketSize = eliminationBracketSize;
     }
     
     public ClubDto getClub() {

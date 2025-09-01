@@ -52,8 +52,7 @@ interface MatchGenerationStatus {
         MatchScoreDisplayComponent
     ],
     providers: [MessageService],
-    templateUrl: './tournament-matches.component.html',
-    styleUrls: ['./tournament-matches.component.scss']
+    templateUrl: './tournament-matches.component.html'
 })
 export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges {
     @Input() tournament: Tournament | undefined;
@@ -78,7 +77,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     editingMatch: TournamentMatch | null = null;
     showEditDialog: boolean = false;
     matchForm!: FormGroup;
-    
+
     // Schedule editing
     showScheduleDialog: boolean = false;
     scheduleForm!: FormGroup;
@@ -95,6 +94,8 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
 
 
+
+
     constructor(
         private tournamentService: TournamentService,
         private fb: FormBuilder,
@@ -108,7 +109,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     ngOnInit(): void {
         // Check if mobile view
         this.checkMobileView();
-        
+
         // Listen for window resize events
         window.addEventListener('resize', () => {
             this.checkMobileView();
@@ -122,7 +123,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
                 // Teams data is already available from parent
             }
         }
-        
+
         if (changes['matches'] && this.matches) {
             // Matches data is already available from parent
         }
@@ -197,7 +198,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         if (completedSets.length > 0) {
             const team1Wins = completedSets.filter(s => s.team1 > s.team2).length;
             const team2Wins = completedSets.filter(s => s.team2 > s.team1).length;
-            
+
             if (completedSets.length === 2 && team1Wins === 1 && team2Wins === 1) {
                 errors.push('Match requires a third set to determine the winner');
             }
@@ -215,6 +216,8 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         if (!this.tournament?.id) return;
 
         this.loading = true;
+
+        
         this.tournamentService.getAllTournamentMatches(this.tournament.id).pipe(
             map((matches: any) => {
                 this.matches = matches as TournamentMatch[];
@@ -236,7 +239,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
     loadAllTeams(): Observable<any> {
         if (!this.tournament?.id || !this.groups || this.groups.length === 0) {
-            console.warn('[DEBUG] loadAllTeams: No tournament or groups.');
+    
             return of(null);
         }
 
@@ -281,11 +284,11 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     // Match generation methods
     canGenerateMatches(): boolean {
         // Check if groups exist and tournament is configured
-        const hasValidConfiguration = this.groups.length > 0 && this.tournament?.maxParticipants! > 0 && this.tournament?.noOfGroups! > 0;
-        
+        const hasValidConfiguration = this.groups.length > 0 && this.tournament?.maxParticipants! > 0 && this.getNoOfGroups()! > 0;
+
         // Check if matches have already been generated
         const hasExistingMatches = this.matches.length > 0;
-        
+
         // Can generate if configuration is valid AND no matches exist yet
         return hasValidConfiguration && !hasExistingMatches;
     }
@@ -344,6 +347,13 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
     hasMatchesInDatabase(): boolean {
         return this.matches.length > 0;
+    }
+
+    private getNoOfGroups(): number | undefined {
+        if (this.tournament?.tournamentType === 'ROUND_ROBIN') {
+            return (this.tournament as any).noOfGroups;
+        }
+        return undefined;
     }
 
     clearAllMatches(): void {
@@ -426,7 +436,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
             if (a.round !== b.round) {
                 return a.round - b.round;
             }
-            
+
             // Then sort by group name
             const groupA = this.getGroupName(a.groupId || '');
             const groupB = this.getGroupName(b.groupId || '');
@@ -460,18 +470,18 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     startEditSchedule(match: TournamentMatch, event: Event): void {
         event.stopPropagation(); // Prevent row click
         this.editingMatch = { ...match };
-        
+
         let scheduledTime = null;
         if (match.scheduledTime) {
             const date = new Date(match.scheduledTime);
             // Format for datetime-local input: YYYY-MM-DDTHH:MM
             scheduledTime = date.toISOString().slice(0, 16);
         }
-        
+
         this.scheduleForm.patchValue({
             scheduledTime: scheduledTime
         });
-        
+
         this.showScheduleDialog = true;
     }
 
@@ -484,19 +494,18 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     saveSchedule(): void {
         if (this.editingMatch) {
             const formValue = this.scheduleForm.value;
-            
+
             // Convert the datetime-local string to a proper Date object
             let scheduledTime: Date | undefined = undefined;
             if (formValue.scheduledTime) {
                 scheduledTime = new Date(formValue.scheduledTime);
             }
-            
+
             const matchData = {
                 scheduledTime: scheduledTime
             };
 
-            this.tournamentService.updateTournamentMatch(
-                this.tournament?.id!,
+            this.tournamentService.updateMatchScore(
                 this.editingMatch.id!,
                 matchData
             ).subscribe({
@@ -533,7 +542,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     saveMatch(): void {
         if (this.matchForm.valid && this.editingMatch) {
             const formValue = this.matchForm.value;
-            
+
             // Calculate winner based on scores
             const sets = [
                 { team1: formValue.team1Set1, team2: formValue.team2Set1 },
@@ -547,7 +556,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
             if (completedSets.length > 0) {
                 const team1Wins = completedSets.filter(s => s.team1! > s.team2!).length;
                 const team2Wins = completedSets.filter(s => s.team2! > s.team1!).length;
-                
+
                 if (team1Wins > team2Wins && team1Wins >= 2) {
                     winnerId = this.editingMatch.team1Id || undefined;
                 } else if (team2Wins > team1Wins && team2Wins >= 2) {
@@ -565,8 +574,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
                 winnerId: winnerId
             };
 
-            this.tournamentService.updateTournamentMatch(
-                this.tournament?.id!,
+            this.tournamentService.updateMatchScore(
                 this.editingMatch.id!,
                 matchData
             ).subscribe({
@@ -626,7 +634,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     // Utility methods
     getTeamName(teamId: string | undefined): string {
         if (!teamId) return 'Unknown Team';
-        
+
         for (const groupId in this.teams) {
             const team = this.teams[groupId].find(t => t.id === teamId);
             if (team) {
@@ -638,7 +646,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
     getTeamPlayerNames(teamId: string | undefined): string {
         if (!teamId) return '';
-        
+
         for (const groupId in this.teams) {
             const team = this.teams[groupId].find(t => t.id === teamId);
             if (team && team.players && team.players.length > 0) {
@@ -706,6 +714,21 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         }
     }
 
+    getStatusBadgeClass(status: string): string {
+        switch (status) {
+            case 'scheduled':
+                return 'bg-blue-100 text-blue-800';
+            case 'in_progress':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'completed':
+                return 'bg-green-100 text-green-800';
+            case 'cancelled':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+
     formatDate(date: Date | string | undefined): string {
         if (!date) return 'Not scheduled';
         const dateObj = new Date(date);
@@ -726,14 +749,14 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
         const completedSets = sets.filter(s => s.team1 !== null && s.team2 !== null);
         const setResults = completedSets.map(s => `${s.team1!}-${s.team2!}`);
-        
+
         let winner = null;
         let isComplete = false;
 
         if (completedSets.length > 0) {
             const team1Wins = completedSets.filter(s => s.team1! > s.team2!).length;
             const team2Wins = completedSets.filter(s => s.team2! > s.team1!).length;
-            
+
             if (team1Wins > team2Wins) {
                 winner = this.getTeamName(match.team1Id);
                 isComplete = team1Wins >= 2;
@@ -748,21 +771,21 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
     getScoreSummary(match: TournamentMatch): string {
         const result = this.getMatchResult(match);
-        
+
         if (result.sets.length === 0) {
             return 'No score entered';
         }
-        
+
         return result.sets.join(', ');
     }
 
     getScoreNumbers(match: TournamentMatch): string {
         const result = this.getMatchResult(match);
-        
+
         if (result.sets.length === 0) {
             return '';
         }
-        
+
         return result.sets.join(', ');
     }
 
@@ -777,9 +800,9 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
             { team1: match.team1Set2, team2: match.team2Set2 },
             { team1: match.team1Set3, team2: match.team2Set3 }
         ];
-        
-        const completedSets = sets.filter(s => 
-            s.team1 !== null && s.team2 !== null && 
+
+        const completedSets = sets.filter(s =>
+            s.team1 !== null && s.team2 !== null &&
             !(s.team1 === 0 && s.team2 === 0)
         );
         return completedSets.map(s => s.team1).join(' ');
@@ -791,16 +814,16 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
             { team1: match.team1Set2, team2: match.team2Set2 },
             { team1: match.team1Set3, team2: match.team2Set3 }
         ];
-        
-        const completedSets = sets.filter(s => 
-            s.team1 !== null && s.team2 !== null && 
+
+        const completedSets = sets.filter(s =>
+            s.team1 !== null && s.team2 !== null &&
             !(s.team1 === 0 && s.team2 === 0)
         );
         return completedSets.map(s => s.team2).join(' ');
     }
 
     getSet1Score(match: TournamentMatch): string {
-        if (match.team1Set1 !== null && match.team2Set1 !== null && 
+        if (match.team1Set1 !== null && match.team2Set1 !== null &&
             !(match.team1Set1 === 0 && match.team2Set1 === 0)) {
             return `${match.team1Set1} ${match.team2Set1}`;
         }
@@ -808,7 +831,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     getSet2Score(match: TournamentMatch): string {
-        if (match.team1Set2 !== null && match.team2Set2 !== null && 
+        if (match.team1Set2 !== null && match.team2Set2 !== null &&
             !(match.team1Set2 === 0 && match.team2Set2 === 0)) {
             return `${match.team1Set2} ${match.team2Set2}`;
         }
@@ -816,7 +839,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     getSet3Score(match: TournamentMatch): string {
-        if (match.team1Set3 !== null && match.team2Set3 !== null && 
+        if (match.team1Set3 !== null && match.team2Set3 !== null &&
             !(match.team1Set3 === 0 && match.team2Set3 === 0)) {
             return `${match.team1Set3} ${match.team2Set3}`;
         }
@@ -825,7 +848,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
     getFormScoreSummary(): string {
         if (!this.matchForm) return '';
-        
+
         const formValue = this.matchForm.value;
         const sets = [
             { set: 1, team1: formValue.team1Set1, team2: formValue.team2Set1 },
@@ -835,21 +858,49 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
         const completedSets = sets.filter(s => s.team1 !== null && s.team2 !== null);
         const setResults = completedSets.map(s => `${s.team1}-${s.team2}`);
-        
+
         if (setResults.length === 0) {
             return '';
         }
-        
+
         const team1Wins = completedSets.filter(s => s.team1! > s.team2!).length;
         const team2Wins = completedSets.filter(s => s.team2! > s.team1!).length;
-        
+
         if (team1Wins > team2Wins && team1Wins >= 2) {
             return `${this.getTeamName(this.editingMatch?.team1Id)} wins ${setResults.join(', ')}`;
         } else if (team2Wins > team1Wins && team2Wins >= 2) {
             return `${this.getTeamName(this.editingMatch?.team2Id)} wins ${setResults.join(', ')}`;
         }
-        
+
         return `In progress: ${setResults.join(', ')}`;
+    }
+
+    getFormWinner(): string | null {
+        if (!this.matchForm || !this.editingMatch) return null;
+
+        const formValue = this.matchForm.value;
+        const sets = [
+            { set: 1, team1: formValue.team1Set1, team2: formValue.team2Set1 },
+            { set: 2, team1: formValue.team1Set2, team2: formValue.team2Set2 },
+            { set: 3, team1: formValue.team1Set3, team2: formValue.team2Set3 }
+        ];
+
+        const completedSets = sets.filter(s => s.team1 !== null && s.team1 !== undefined && s.team2 !== null && s.team2 !== undefined);
+        
+        if (completedSets.length === 0) {
+            return null;
+        }
+
+        const team1Wins = completedSets.filter(s => s.team1! > s.team2!).length;
+        const team2Wins = completedSets.filter(s => s.team2! > s.team1!).length;
+
+        if (team1Wins > team2Wins && team1Wins >= 2) {
+            return this.getTeamName(this.editingMatch.team1Id);
+        } else if (team2Wins > team1Wins && team2Wins >= 2) {
+            return this.getTeamName(this.editingMatch.team2Id);
+        }
+
+        return null; // No winner yet
     }
 
     get teamsLoaded(): boolean {
@@ -860,25 +911,25 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     getMatchesByRound(): { round: number; matches: TournamentMatch[] }[] {
         const filteredMatches = this.getFilteredMatches();
         const matchesByRound: { [round: number]: TournamentMatch[] } = {};
-        
+
         filteredMatches.forEach(match => {
             if (!matchesByRound[match.round]) {
                 matchesByRound[match.round] = [];
             }
             matchesByRound[match.round].push(match);
         });
-        
+
         return Object.keys(matchesByRound).map(round => ({
             round: parseInt(round),
             matches: matchesByRound[parseInt(round)].sort((a, b) => {
                 // Sort matches by group name, then by team names
                 const groupA = this.getGroupName(a.groupId || '');
                 const groupB = this.getGroupName(b.groupId || '');
-                
+
                 if (groupA !== groupB) {
                     return groupA.localeCompare(groupB);
                 }
-                
+
                 // If same group, sort by team names
                 const team1A = this.getTeamName(a.team1Id);
                 const team1B = this.getTeamName(b.team1Id);
@@ -888,15 +939,29 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     getMatchCardClass(match: TournamentMatch): string {
-        const baseClass = 'match-card';
-        const statusClass = `status-${match.status}`;
-        return `${baseClass} ${statusClass}`;
+        switch (match.status) {
+            case 'completed':
+                return 'bg-green-50 border-green-200';
+            case 'in_progress':
+                return 'bg-yellow-50 border-yellow-200';
+            case 'cancelled':
+                return 'bg-red-50 border-red-200';
+            default:
+                return '';
+        }
     }
 
     getMatchRowClass(match: TournamentMatch): string {
-        const baseClass = 'match-row';
-        const statusClass = `status-${match.status}`;
-        return `${baseClass} ${statusClass}`;
+        switch (match.status) {
+            case 'completed':
+                return 'bg-green-50 hover:bg-green-100';
+            case 'in_progress':
+                return 'bg-yellow-50 hover:bg-yellow-100';
+            case 'cancelled':
+                return 'bg-red-50 hover:bg-red-100';
+            default:
+                return '';
+        }
     }
 
     isWinner(match: TournamentMatch, teamId: string | undefined): boolean {
@@ -913,20 +978,21 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
     getAllMatchesSorted(): TournamentMatch[] {
         const filteredMatches = this.getFilteredMatches();
+        
         return filteredMatches.sort((a, b) => {
             // First sort by round
             if (a.round !== b.round) {
                 return a.round - b.round;
             }
-            
+
             // Then sort by group name
             const groupA = this.getGroupName(a.groupId || '');
             const groupB = this.getGroupName(b.groupId || '');
-            
+
             if (groupA !== groupB) {
                 return groupA.localeCompare(groupB);
             }
-            
+
             // Finally sort by team names
             const team1A = this.getTeamName(a.team1Id);
             const team1B = this.getTeamName(b.team1Id);
@@ -938,21 +1004,21 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         const matches = this.getFilteredMatches();
         const now = new Date();
         const matchDuration = 90; // 90 minutes match duration
-        
+
         return {
             total: matches.length,
             scheduled: matches.filter(m => {
                 // A match is scheduled if it has a scheduled time in the future and status is scheduled
                 if (m.status !== 'scheduled') return false;
                 if (!m.scheduledTime) return true; // If no scheduled time, consider it scheduled
-                
+
                 let scheduledTime: Date | null = null;
                 if (m.scheduledTime instanceof Date) {
                     scheduledTime = m.scheduledTime;
                 } else if (m.scheduledTime && typeof (m.scheduledTime as any).toDate === 'function') {
                     scheduledTime = (m.scheduledTime as any).toDate();
                 }
-                
+
                 return scheduledTime ? now < scheduledTime : true;
             }).length,
             inProgress: matches.filter(m => {
@@ -967,7 +1033,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
                     } else if (m.scheduledTime && typeof (m.scheduledTime as any).toDate === 'function') {
                         scheduledTime = (m.scheduledTime as any).toDate();
                     }
-                    
+
                     if (scheduledTime) {
                         const matchEndTime = new Date(scheduledTime.getTime() + (matchDuration * 60 * 1000));
                         return now >= scheduledTime && now <= matchEndTime;
@@ -978,8 +1044,16 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
             completed: matches.filter(m => {
                 // A match is completed if:
                 // 1. Status is explicitly 'completed', OR
-                // 2. Status is 'scheduled' and current time is past the match window (scheduled time + 90 mins)
+                // 2. Has scores entered (indicating the match was played), OR
+                // 3. Status is 'scheduled' and current time is past the match window (scheduled time + 90 mins)
                 if (m.status === 'completed') return true;
+                
+                // Check if match has scores entered
+                const hasScores = (m.team1Set1 !== null && m.team1Set1 !== undefined && m.team2Set1 !== null && m.team2Set1 !== undefined) ||
+                                 (m.team1Set2 !== null && m.team1Set2 !== undefined && m.team2Set2 !== null && m.team2Set2 !== undefined) ||
+                                 (m.team1Set3 !== null && m.team1Set3 !== undefined && m.team2Set3 !== null && m.team2Set3 !== undefined);
+                if (hasScores) return true;
+                
                 if (m.status === 'scheduled' && m.scheduledTime) {
                     let scheduledTime: Date | null = null;
                     if (m.scheduledTime instanceof Date) {
@@ -987,7 +1061,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
                     } else if (m.scheduledTime && typeof (m.scheduledTime as any).toDate === 'function') {
                         scheduledTime = (m.scheduledTime as any).toDate();
                     }
-                    
+
                     if (scheduledTime) {
                         const matchEndTime = new Date(scheduledTime.getTime() + (matchDuration * 60 * 1000));
                         return now > matchEndTime;
@@ -998,4 +1072,6 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
             cancelled: matches.filter(m => m.status === 'cancelled').length
         };
     }
+
+
 } 

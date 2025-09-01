@@ -63,7 +63,7 @@ import { LayoutService } from '../service/layout.service';
       }
       @if (item.items && item.visible !== false) {
         <ul [@children]="submenuAnimation">
-          @for (child of item.items; track child; let i = $index) {
+          @for (child of item.items; track $index; let i = $index) {
             <li app-menuitem [item]="child" [index]="i" [parentKey]="key" [class]="child['badgeClass']"></li>
           }
         </ul>

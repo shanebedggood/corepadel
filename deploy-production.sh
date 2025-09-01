@@ -1,17 +1,16 @@
 #!/bin/bash
 
-set -e
+# Production deployment script for STRIDE & SERVE
+# This script builds and deploys the application to production
 
-echo "🚀 Starting production deployment..."
+set -e  # Exit on any error
 
-# Check if required tools are installed
+echo "🚀 Starting production deployment for STRIDE & SERVE..."
+
+# Check if Firebase CLI is installed
 if ! command -v firebase &> /dev/null; then
-    echo "❌ Firebase CLI is not installed. Please install it first."
-    exit 1
-fi
-
-if ! command -v gcloud &> /dev/null; then
-    echo "❌ Google Cloud CLI is not installed. Please install it first."
+    echo "❌ Firebase CLI is not installed. Please install it first:"
+    echo "   npm install -g firebase-tools"
     exit 1
 fi
 
@@ -21,52 +20,22 @@ if ! firebase projects:list &> /dev/null; then
     exit 1
 fi
 
-if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
-    echo "❌ Not logged into Google Cloud. Please run 'gcloud auth login' first."
-    exit 1
-fi
+echo "✅ Firebase CLI verified"
 
-echo "✅ Authentication verified"
-
-# Build Angular app
-echo "📦 Building Angular app..."
+# Build Angular application
+echo "📦 Building Angular application..."
 cd web/web-app
-npm run build
+npm run build:prod
 cd ../..
 
-# Build Firebase Functions
-echo "📦 Building Firebase Functions..."
-cd functions
-npm run build
-cd ..
+# Deploy Firebase services (Auth, Hosting)
+echo "🚀 Deploying to Firebase..."
+firebase deploy --only auth,hosting
 
-# Deploy Firebase services (Auth, Functions, Hosting)
-echo "🔥 Deploying Firebase services..."
-firebase deploy --only auth,functions,hosting
-
-# Build Quarkus app
-echo "📦 Building Quarkus app..."
-cd services
-./mvnw clean package -Dquarkus.package.type=jar
-cd ..
-
-# Deploy Quarkus to Cloud Run
-echo "🚀 Deploying Quarkus to Cloud Run..."
-gcloud run deploy corepadel-quarkus \
-  --source services/target/quarkus-app \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars="QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql:///corepadel?host=/cloudsql/corepadelapp:us-central1:corepadel-fdc&user=corepadel&password=corepadel123" \
-  --set-env-vars="QUARKUS_HTTP_CORS_ORIGINS=https://corepadelapp.web.app" \
-  --set-env-vars="FIREBASE_PROJECT_ID=corepadelapp"
-
-echo "✅ Production deployment completed!"
+echo "✅ Production deployment completed successfully!"
 echo ""
-echo "🌐 Your app is now available at:"
-echo "   Frontend: https://corepadelapp.web.app"
-echo "   Backend: https://corepadel-quarkus-xxxxx-uc.a.run.app"
+echo "🌐 Your application is now live at:"
+echo "   https://corepadelapp.web.app"
 echo ""
-echo "📊 Monitor your deployment:"
-echo "   Firebase Console: https://console.firebase.google.com/project/corepadelapp"
-echo "   Cloud Run Console: https://console.cloud.google.com/run"
+echo "📊 Firebase Console:"
+echo "   https://console.firebase.google.com/project/corepadelapp"

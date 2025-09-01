@@ -5,8 +5,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface User {
-    user_id?: string;
-    firebase_uid: string; // Firebase user identifier
+    firebase_uid: string; // Firebase user identifier - single source of truth
     email: string;
     username: string;
     first_name?: string;
@@ -121,6 +120,15 @@ export class UserService {
     }
 
     /**
+     * Update user profile by Firebase UID
+     */
+    updateUserProfile(firebaseUid: string, profileData: any): Observable<User | null> {
+        return this.http.put<User>(`${this.apiUrl}/firebase/${firebaseUid}/profile`, profileData).pipe(
+            catchError(this.handleError<User | null>('updateUserProfile', null))
+        );
+    }
+
+    /**
      * Delete a user (soft delete)
      */
     deleteUser(userId: string): Observable<boolean> {
@@ -174,10 +182,10 @@ export class UserService {
     addRoleToUserByFirebaseUid(firebaseUid: string, roleName: string): Observable<UserRole | null> {
         return this.getUserByFirebaseUid(firebaseUid).pipe(
             switchMap(user => {
-                if (!user || !user.user_id) {
-                    throw new Error('User not found or user_id is missing');
+                if (!user || !user.firebase_uid) {
+                    throw new Error('User not found or firebase_uid is missing');
                 }
-                return this.addRoleToUser(user.user_id, roleName);
+                return this.addRoleToUser(user.firebase_uid, roleName);
             }),
             catchError(this.handleError<UserRole | null>('addRoleToUserByFirebaseUid', null))
         );
@@ -236,10 +244,10 @@ export class UserService {
     addUserToClubByFirebaseUid(firebaseUid: string, clubId: string, role: string = 'member'): Observable<UserClub | null> {
         return this.getUserByFirebaseUid(firebaseUid).pipe(
             switchMap((user: User | null) => {
-                if (!user || !user.user_id) {
+                if (!user || !user.firebase_uid) {
                     return of(null);
                 }
-                return this.addUserToClub(user.user_id, clubId, role);
+                return this.addUserToClub(user.firebase_uid, clubId, role);
             }),
             catchError(this.handleError<UserClub | null>('addUserToClubByFirebaseUid', null))
         );
@@ -261,10 +269,10 @@ export class UserService {
     removeUserFromClubByFirebaseUid(firebaseUid: string, clubId: string): Observable<boolean> {
         return this.getUserByFirebaseUid(firebaseUid).pipe(
             switchMap((user: User | null) => {
-                if (!user || !user.user_id) {
+                if (!user || !user.firebase_uid) {
                     return of(false);
                 }
-                return this.removeUserFromClub(user.user_id, clubId);
+                return this.removeUserFromClub(user.firebase_uid, clubId);
             }),
             catchError(this.handleError<boolean>('removeUserFromClubByFirebaseUid', false))
         );
@@ -290,11 +298,11 @@ export class UserService {
                     const user: User = {
                         firebase_uid: firebaseUid,
                         email: firebaseProfile.email,
-                        username: firebaseProfile.displayName || firebaseProfile.email?.split('@')[0],
-                        first_name: firebaseProfile.firstName || firebaseProfile.displayName?.split(' ')[0],
-                        last_name: firebaseProfile.lastName || firebaseProfile.displayName?.split(' ').slice(1).join(' '),
-                        display_name: firebaseProfile.displayName || `${firebaseProfile.firstName || ''} ${firebaseProfile.lastName || ''}`.trim(),
-                        email_verified: firebaseProfile.emailVerified || false
+                        username: firebaseProfile.display_name || firebaseProfile.email?.split('@')[0],
+                        first_name: firebaseProfile.first_name || firebaseProfile.display_name?.split(' ')[0],
+                        last_name: firebaseProfile.last_name || firebaseProfile.display_name?.split(' ').slice(1).join(' '),
+                        display_name: firebaseProfile.display_name || `${firebaseProfile.first_name || ''} ${firebaseProfile.last_name || ''}`.trim(),
+                        email_verified: firebaseProfile.email_verified || false
                     };
                     return this.createUser(user);
                 }

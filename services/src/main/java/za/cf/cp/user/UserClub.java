@@ -9,6 +9,7 @@ import java.util.UUID;
 /**
  * UserClub entity representing user club memberships stored in PostgreSQL.
  * Maps to the 'user_club' table in the database.
+ * Uses firebase_uid as the foreign key reference.
  */
 @Entity
 @Table(name = "user_club", schema = "core")
@@ -21,7 +22,7 @@ public class UserClub extends PanacheEntityBase {
     public UUID membershipId;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "firebase_uid", nullable = false)
     public User user;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -78,7 +79,7 @@ public class UserClub extends PanacheEntityBase {
     public String toString() {
         return "UserClub{" +
                 "membershipId=" + membershipId +
-                ", user=" + (user != null ? user.getUserId() : "null") +
+                ", user=" + (user != null ? user.getFirebaseUid() : "null") +
                 ", club=" + (club != null ? club.getClubId() : "null") +
                 ", role='" + role + '\'' +
                 '}';

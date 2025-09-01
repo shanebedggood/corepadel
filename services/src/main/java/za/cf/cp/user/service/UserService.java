@@ -14,6 +14,7 @@ import java.util.UUID;
 
 /**
  * Service class for managing users in PostgreSQL.
+ * Uses firebase_uid as the primary identifier.
  */
 @ApplicationScoped
 public class UserService {
@@ -40,10 +41,10 @@ public class UserService {
     }
     
     /**
-     * Find a user by their UUID
+     * Find a user by their Firebase UID (alias for findByFirebaseUid)
      */
-    public Optional<User> findById(UUID userId) {
-        return User.findByIdOptional(userId);
+    public Optional<User> findById(String firebaseUid) {
+        return findByFirebaseUid(firebaseUid);
     }
     
     /**
@@ -57,7 +58,7 @@ public class UserService {
      * Get all users with pagination
      */
     public List<User> findAllWithPagination(int page, int size) {
-        return User.findAll(Sort.by("userId").descending())
+        return User.findAll(Sort.by("firebaseUid").descending())
                 .page(page, size)
                 .list();
     }
@@ -76,9 +77,9 @@ public class UserService {
      */
     @Transactional
     public User updateUser(User user) {
-        User existingUser = User.findById(user.userId);
+        User existingUser = User.findById(user.firebaseUid);
         if (existingUser == null) {
-            throw new RuntimeException("User not found with ID: " + user.userId);
+            throw new RuntimeException("User not found with Firebase UID: " + user.firebaseUid);
         }
         
         // Update fields
@@ -89,6 +90,8 @@ public class UserService {
         existingUser.rating = user.rating;
         existingUser.profilePicture = user.profilePicture;
         existingUser.emailVerified = user.emailVerified;
+        if (user.interests != null) existingUser.interests = user.interests;
+        if (user.profileCompleted != null) existingUser.profileCompleted = user.profileCompleted;
         
         return existingUser;
     }
@@ -97,127 +100,126 @@ public class UserService {
      * Delete a user
      */
     @Transactional
-    public boolean deleteUser(UUID userId) {
-        User user = User.findById(userId);
-        if (user == null) {
-            return false;
+    public boolean deleteUser(String firebaseUid) {
+        User user = User.findById(firebaseUid);
+        if (user != null) {
+            user.delete();
+            return true;
         }
-        
-        user.delete();
-        return true;
+        return false;
     }
     
     /**
-     * Add a role to a user
+     * Get user roles by Firebase UID
      */
-    @Transactional
-    public UserRole addRoleToUser(User user, String roleName) {
-        // Check if user already has this role
-        if (userHasRole(user.userId, roleName)) {
-            // Return existing role instead of creating a new one
-            return UserRole.find("user.userId = ?1 and roleName = ?2", user.userId, roleName).firstResult();
-        }
-        
-        UserRole userRole = new UserRole(user, roleName);
-        userRole.persist();
-        return userRole;
-    }
-    
-    /**
-     * Remove a role from a user
-     */
-    @Transactional
-    public boolean removeRoleFromUser(UUID userId, String roleName) {
-        long deletedCount = UserRole.delete("user.userId = ?1 and roleName = ?2", userId, roleName);
-        return deletedCount > 0;
-    }
-    
-    /**
-     * Get all roles for a user
-     */
-    public List<UserRole> getUserRoles(UUID userId) {
-        return UserRole.find("user.userId", userId).list();
-    }
-
-    /**
-     * Get all roles for a user by Firebase UID
-     */
-    public List<UserRole> getUserRolesByFirebaseUid(String firebaseUid) {
+    public List<UserRole> getUserRoles(String firebaseUid) {
         return UserRole.find("user.firebaseUid", firebaseUid).list();
     }
-
+    
     /**
-     * Add a role to a user by Firebase UID
-     * Note: User creation is now handled automatically by Lambda trigger on email confirmation.
-     * This method is only for role assignment to existing users.
+     * Get user roles by Firebase UID (alias for getUserRoles)
+     */
+    public List<UserRole> getUserRolesByFirebaseUid(String firebaseUid) {
+        return getUserRoles(firebaseUid);
+    }
+    
+    /**
+     * Add role to user
      */
     @Transactional
-    public UserRole addRoleToUserByFirebaseUid(String firebaseUid, String roleName) {
+    public UserRole addRoleToUser(String firebaseUid, String roleName) {
         Optional<User> userOpt = findByFirebaseUid(firebaseUid);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found with Firebase UID: " + firebaseUid);
         }
         
         User user = userOpt.get();
-        return addRoleToUser(user, roleName);
+        UserRole userRole = new UserRole(user, roleName);
+        userRole.persist();
+        return userRole;
     }
     
     /**
-     * Add a user to a club
+     * Add role to user by Firebase UID (alias for addRoleToUser)
      */
     @Transactional
-    public UserClub addUserToClub(User user, Club club, String role) {
+    public UserRole addRoleToUserByFirebaseUid(String firebaseUid, String roleName) {
+        return addRoleToUser(firebaseUid, roleName);
+    }
+    
+    /**
+     * Remove role from user
+     */
+    @Transactional
+    public boolean removeRoleFromUser(String firebaseUid, String roleName) {
+        List<UserRole> userRoles = UserRole.find("user.firebaseUid = ?1 and roleName = ?2", firebaseUid, roleName).list();
+        if (!userRoles.isEmpty()) {
+            userRoles.get(0).delete();
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Get user club memberships by Firebase UID
+     */
+    public List<UserClub> getUserClubs(String firebaseUid) {
+        return UserClub.find("user.firebaseUid", firebaseUid).list();
+    }
+    
+    /**
+     * Add user to club
+     */
+    @Transactional
+    public UserClub addUserToClub(String firebaseUid, UUID clubId, String role) {
+        Optional<User> userOpt = findByFirebaseUid(firebaseUid);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with Firebase UID: " + firebaseUid);
+        }
+        
+        Club club = Club.findById(clubId);
+        if (club == null) {
+            throw new RuntimeException("Club not found with ID: " + clubId);
+        }
+        
+        User user = userOpt.get();
         UserClub userClub = new UserClub(user, club, role);
         userClub.persist();
         return userClub;
     }
     
     /**
-     * Remove a user from a club
+     * Remove user from club
      */
     @Transactional
-    public boolean removeUserFromClub(UUID userId, UUID clubId) {
-        long deletedCount = UserClub.delete("user.userId = ?1 and club.clubId = ?2", userId, clubId);
-        return deletedCount > 0;
+    public boolean removeUserFromClub(String firebaseUid, UUID clubId) {
+        List<UserClub> userClubs = UserClub.find("user.firebaseUid = ?1 and club.clubId = ?2", firebaseUid, clubId).list();
+        if (!userClubs.isEmpty()) {
+            userClubs.get(0).delete();
+            return true;
+        }
+        return false;
     }
     
     /**
-     * Get all clubs for a user
+     * Check if user exists by Firebase UID
      */
-    public List<UserClub> getUserClubs(UUID userId) {
-        return UserClub.find("user.userId", userId).list();
+    public boolean existsByFirebaseUid(String firebaseUid) {
+        return User.count("firebaseUid", firebaseUid) > 0;
     }
     
     /**
-     * Get all users in a club
+     * Check if user exists by email
      */
-    public List<UserClub> getClubUsers(UUID clubId) {
-        return UserClub.find("club.clubId", clubId).list();
+    public boolean existsByEmail(String email) {
+        return User.count("email", email) > 0;
     }
     
     /**
-     * Check if a user has a specific role
+     * Check if user exists by username
      */
-    public boolean userHasRole(UUID userId, String roleName) {
-        long count = UserRole.count("user.userId = ?1 and roleName = ?2", userId, roleName);
-        return count > 0;
-    }
-    
-    /**
-     * Check if a user is a member of a specific club
-     */
-    public boolean userIsClubMember(UUID userId, UUID clubId) {
-        long count = UserClub.count("user.userId = ?1 and club.clubId = ?2", userId, clubId);
-        return count > 0;
-    }
-    
-    /**
-     * Get user's role in a specific club
-     */
-    public Optional<String> getUserClubRole(UUID userId, UUID clubId) {
-        return UserClub.find("user.userId = ?1 and club.clubId = ?2", userId, clubId)
-                .firstResultOptional()
-                .map(userClub -> ((za.cf.cp.user.UserClub) userClub).getRole());
+    public boolean existsByUsername(String username) {
+        return User.count("username", username) > 0;
     }
     
     /**
@@ -230,9 +232,12 @@ public class UserService {
         
         String trimmedSearchTerm = "%" + searchTerm.trim().toLowerCase() + "%";
         
-        return User.find(
-            "LOWER(firstName) LIKE ?1 OR LOWER(lastName) LIKE ?1 OR LOWER(displayName) LIKE ?1 OR LOWER(email) LIKE ?1 OR LOWER(username) LIKE ?1",
-            trimmedSearchTerm
-        ).list();
+        return User.find("""
+            LOWER(firstName) LIKE ?1 OR 
+            LOWER(lastName) LIKE ?1 OR 
+            LOWER(displayName) LIKE ?1 OR 
+            LOWER(email) LIKE ?1 OR 
+            LOWER(username) LIKE ?1
+            """, trimmedSearchTerm).list();
     }
 } 

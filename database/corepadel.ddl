@@ -1,15 +1,6 @@
-CREATE DATABASE corepadel IF NOT EXISTS
-    WITH
-    OWNER = keycloak
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'en_US.utf8'
-    LC_CTYPE = 'en_US.utf8'
-    LOCALE_PROVIDER = 'libc'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
+CREATE DATABASE corepadel
+    WITH OWNER corepadel;
 
--- Create the 'core' schema
 CREATE SCHEMA core IF NOT EXISTS;
 
 -- Club table
@@ -20,10 +11,9 @@ CREATE TABLE IF NOT EXISTS core.club (
 );
 CREATE INDEX IF NOT EXISTS idx_club_name ON core.club (name);
 
--- User table
+-- User table - Updated to use firebase_uid as primary key
 CREATE TABLE IF NOT EXISTS core.user (
-    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    firebase_uid VARCHAR(255) NOT NULL UNIQUE,
+    firebase_uid VARCHAR(255) PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     username VARCHAR(255) NOT NULL UNIQUE,
     first_name VARCHAR(255),
@@ -35,23 +25,23 @@ CREATE TABLE IF NOT EXISTS core.user (
     email_verified BOOLEAN DEFAULT false
 );
 
--- User roles table to store user roles
+-- User roles table to store user roles - Updated to use firebase_uid
 CREATE TABLE IF NOT EXISTS core.user_role (
     role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES core.user(user_id) ON DELETE CASCADE,
+    firebase_uid VARCHAR(255) NOT NULL REFERENCES core.user(firebase_uid) ON DELETE CASCADE,
     role_name VARCHAR(100) NOT NULL, -- 'player', 'admin', etc.
     
-    UNIQUE(user_id, role_name)
+    UNIQUE(firebase_uid, role_name)
 );
 
--- User club membership table
+-- User club membership table - Updated to use firebase_uid
 CREATE TABLE IF NOT EXISTS core.user_club (
     membership_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES core.user(user_id) ON DELETE CASCADE,
+    firebase_uid VARCHAR(255) NOT NULL REFERENCES core.user(firebase_uid) ON DELETE CASCADE,
     club_id UUID NOT NULL REFERENCES core.club(club_id) ON DELETE CASCADE,
     role VARCHAR(100) DEFAULT 'member', -- 'member', 'admin', 'owner'
     
-    UNIQUE(user_id, club_id)
+    UNIQUE(firebase_uid, club_id)
 );
 
 -- Roles lookup table (seeded)
@@ -139,29 +129,6 @@ CREATE TABLE IF NOT EXISTS core.tournament_status (
     text_color VARCHAR(7)
 );
 
--- Table for Advancement Models (e.g., Trophy/Plate, Elimination Only) (seeded)
-CREATE TABLE IF NOT EXISTS core.advancement_model (
-    advancement_model_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT
-);
-
--- Table for Elimination Bracket Sizes (e.g., Final, Semi-finals, Quarter-finals) (seeded)
-CREATE TABLE IF NOT EXISTS core.elimination_bracket_size (
-    bracket_size_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT,
-    teams INTEGER NOT NULL
-);
-
--- Table for Teams to Advance (for combined elimination settings)
-CREATE TABLE IF NOT EXISTS core.teams_to_advance (
-    teams_advance_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT,
-    team_count INTEGER NOT NULL
-);
-
 -- Venue type table - single or multiple (seeded)
 create table core.venue_type
 (
@@ -170,9 +137,10 @@ create table core.venue_type
     description   text
 );
 
--- Tournament main table
+-- Tournament main table with inheritance support
 CREATE TABLE IF NOT EXISTS core.tournament (
     tournament_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tournament_type VARCHAR(50) NOT NULL DEFAULT 'ROUND_ROBIN', -- Discriminator column for inheritance
     name VARCHAR(255) NOT NULL,
     description TEXT,
     start_date TIMESTAMP NOT NULL,
@@ -182,9 +150,8 @@ CREATE TABLE IF NOT EXISTS core.tournament (
     max_participants INTEGER NOT NULL,
     current_participants INTEGER DEFAULT 0,
     entry_fee DECIMAL(10,2) DEFAULT 0.00,
-    no_of_groups INTEGER,
     club_id VARCHAR(255) NOT NULL,
-    user_id VARCHAR(255) NOT NULL,
+    firebase_uid VARCHAR(255) NOT NULL,
 
     -- Foreign keys
     format_id UUID REFERENCES core.format(format_id),
@@ -195,23 +162,32 @@ CREATE TABLE IF NOT EXISTS core.tournament (
     venue_id VARCHAR(255),
     
     -- Round-robin specific fields
+    no_of_groups INTEGER,
     progression_type_id UUID REFERENCES core.progression_type(progression_type_id),
-    advancement_model_id UUID REFERENCES core.advancement_model(advancement_model_id),
-    elimination_bracket_size_id UUID REFERENCES core.elimination_bracket_size(bracket_size_id),
-    teams_to_advance_id UUID REFERENCES core.teams_to_advance(teams_advance_id)
+    teams_to_advance INTEGER,
+    
+    -- Americano specific fields
+    max_players_per_team INTEGER DEFAULT 4,
+    rotation_interval INTEGER DEFAULT 15,
+    points_to_win INTEGER DEFAULT 11,
+    games_per_rotation INTEGER DEFAULT 1
 );
 
--- Tournament participants table
+-- Tournament participants table - Updated to use firebase_uid directly
 CREATE TABLE IF NOT EXISTS core.tournament_participant
 (
     participant_id uuid NOT NULL DEFAULT gen_random_uuid(),
     tournament_id uuid NOT NULL,
-    user_id character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    firebase_uid character varying(255) COLLATE pg_catalog."default" NOT NULL,
     added_by character varying(255) COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT tournament_participant_pkey PRIMARY KEY (participant_id),
-    CONSTRAINT tournament_participant_tournament_id_uid_key UNIQUE (tournament_id, user_id),
+    CONSTRAINT tournament_participant_tournament_id_uid_key UNIQUE (tournament_id, firebase_uid),
     CONSTRAINT tournament_participant_tournament_id_fkey FOREIGN KEY (tournament_id)
         REFERENCES core.tournament (tournament_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT tournament_participant_firebase_uid_fkey FOREIGN KEY (firebase_uid)
+        REFERENCES core.user(firebase_uid) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE CASCADE
 );
@@ -228,14 +204,14 @@ CREATE TABLE IF NOT EXISTS core.tournament_group (
     UNIQUE(tournament_id, name)
 );
 
--- Tournament teams table
+-- Tournament teams table - Updated to use firebase_uid directly
 CREATE TABLE IF NOT EXISTS core.tournament_team (
     team_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tournament_id UUID NOT NULL REFERENCES core.tournament(tournament_id) ON DELETE CASCADE,
     group_id UUID REFERENCES core.tournament_group(group_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    player1_uid VARCHAR(255) NOT NULL,
-    player2_uid VARCHAR(255), -- Can be NULL for teams with only one player
+    player1_firebase_uid VARCHAR(255) NOT NULL REFERENCES core.user(firebase_uid) ON DELETE CASCADE,
+    player2_firebase_uid VARCHAR(255) REFERENCES core.user(firebase_uid) ON DELETE CASCADE, -- Can be NULL for teams with only one player
     combined_rating INTEGER,
     
     UNIQUE(tournament_id, name)
@@ -264,7 +240,7 @@ CREATE TABLE IF NOT EXISTS core.tournament_match (
     venue_id VARCHAR(255)
 );
 CREATE INDEX IF NOT EXISTS idx_tournament_club_id ON core.tournament(club_id);
-CREATE INDEX IF NOT EXISTS idx_tournament_user_id ON core.tournament(user_id);
+CREATE INDEX IF NOT EXISTS idx_tournament_user_id ON core.tournament(firebase_uid);
 
 -- Create tournament_standings table if it doesn't exist
 CREATE TABLE IF NOT EXISTS core.tournament_standings (

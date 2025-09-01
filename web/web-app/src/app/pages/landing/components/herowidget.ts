@@ -30,11 +30,12 @@ import { Subscription } from 'rxjs';
       <div class="absolute inset-0 bg-black/50"></div>
       
       <div class="relative z-10 text-center px-4">
-        <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold text-white uppercase" style="font-family: 'Modern Font', sans-serif;">
-          Core Padel
+        <img src="assets/logo.png" alt="STRIDE & SERVE Logo" class="mb-8 w-32 shrink-0 mx-auto" />
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold text-white !text-white uppercase" style="font-family: 'Modern Font', sans-serif;">
+          STRIDE & SERVE
         </h1>
         <p class="font-normal text-xl sm:text-2xl md:text-3xl leading-normal md:mt-4 text-gray-200 mt-4">
-          Your padel. Organised.
+          Your activity. Organised.
         </p>
         <div class="mt-16 flex flex-col sm:flex-row justify-center gap-4">
           <button 

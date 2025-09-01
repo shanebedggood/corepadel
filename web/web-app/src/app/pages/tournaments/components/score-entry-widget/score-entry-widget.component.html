@@ -21,7 +21,7 @@
     @if (!loading && matches.length > 0) {
         <div class="mb-6">
         <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Matches</h3>
-        <p-table [value]="matches" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+        <p-table [value]="matches" [dataKey]="'id'" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} matches"
             [rowsPerPageOptions]="[5, 10, 20]" styleClass="p-datatable-sm" responsiveLayout="scroll">
             <!-- Match Details -->
@@ -114,7 +114,7 @@
             <!-- Score Entry Form -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-surface-900 dark:text-surface-0 mb-2"> {{
+                    <label class="block text-xl font-medium text-surface-900 dark:text-surface-0 mb-2"> {{
                         editingMatch.team1?.name || 'Team 1' }} Score </label>
                     <p-inputNumber [(ngModel)]="editingMatch.team1Score" [min]="0" [max]="99" placeholder="0"
                         class="w-full">

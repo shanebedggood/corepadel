@@ -8,12 +8,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Tournament entity representing tournaments stored in PostgreSQL.
+ * Abstract Tournament entity representing the base class for all tournament types.
+ * Contains common fields shared by all tournament formats.
  * Maps to the 'tournament' table in the database.
  */
 @Entity
 @Table(name = "tournament", schema = "core")
-public class Tournament extends PanacheEntityBase {
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tournament_type", discriminatorType = DiscriminatorType.STRING)
+public abstract class Tournament extends PanacheEntityBase {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -55,19 +58,13 @@ public class Tournament extends PanacheEntityBase {
     @JsonProperty("entry_fee")
     public BigDecimal entryFee = BigDecimal.ZERO;
     
-    @Column(name = "no_of_groups")
-    @JsonProperty("no_of_groups")
-    public Integer noOfGroups;
-    
     @Column(name = "club_id", nullable = false)
     @JsonProperty("club_id")
     public String clubId;
     
-    @Column(name = "user_id", nullable = false)
-    @JsonProperty("user_id")
-    public String userId;
-    
-
+    @Column(name = "firebase_uid", nullable = false)
+    @JsonProperty("firebase_uid")
+    public String firebaseUid;
     
     // Foreign key relationships
     @ManyToOne(fetch = FetchType.LAZY)
@@ -96,41 +93,23 @@ public class Tournament extends PanacheEntityBase {
     @JsonProperty("venue_id")
     public String venueId;
     
-    // Round-robin specific relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "progression_type_id")
-    @JsonProperty("progression_type")
-    public ProgressionType progressionType;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "advancement_model_id")
-    @JsonProperty("advancement_model")
-    public AdvancementModel advancementModel;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "elimination_bracket_size_id")
-    @JsonProperty("elimination_bracket_size")
-    public EliminationBracketSize eliminationBracketSize;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teams_to_advance_id")
-    @JsonProperty("teams_to_advance")
-    public TeamsToAdvance teamsToAdvance;
-    
     // Default constructor required by JPA
     public Tournament() {}
     
     // Constructor with essential fields
     public Tournament(String name, String description, LocalDateTime startDate, LocalDateTime endDate, 
-                     Integer maxParticipants, String clubId, String userId) {
+                     Integer maxParticipants, String clubId, String firebaseUid) {
         this.name = name;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
         this.maxParticipants = maxParticipants;
         this.clubId = clubId;
-        this.userId = userId;
+        this.firebaseUid = firebaseUid;
     }
+    
+    // Abstract method that subclasses must implement
+    public abstract String getTournamentType();
     
     // Getters and setters
     public UUID getTournamentId() {
@@ -213,14 +192,6 @@ public class Tournament extends PanacheEntityBase {
         this.entryFee = entryFee;
     }
     
-    public Integer getNoOfGroups() {
-        return noOfGroups;
-    }
-    
-    public void setNoOfGroups(Integer noOfGroups) {
-        this.noOfGroups = noOfGroups;
-    }
-    
     public String getClubId() {
         return clubId;
     }
@@ -229,15 +200,13 @@ public class Tournament extends PanacheEntityBase {
         this.clubId = clubId;
     }
     
-    public String getUserId() {
-        return userId;
+    public String getFirebaseUid() {
+        return firebaseUid;
     }
     
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setFirebaseUid(String firebaseUid) {
+        this.firebaseUid = firebaseUid;
     }
-    
-
     
     public Format getFormat() {
         return format;
@@ -287,38 +256,6 @@ public class Tournament extends PanacheEntityBase {
         this.venueId = venueId;
     }
     
-    public ProgressionType getProgressionType() {
-        return progressionType;
-    }
-    
-    public void setProgressionType(ProgressionType progressionType) {
-        this.progressionType = progressionType;
-    }
-    
-    public AdvancementModel getAdvancementModel() {
-        return advancementModel;
-    }
-    
-    public void setAdvancementModel(AdvancementModel advancementModel) {
-        this.advancementModel = advancementModel;
-    }
-    
-    public EliminationBracketSize getEliminationBracketSize() {
-        return eliminationBracketSize;
-    }
-    
-    public void setEliminationBracketSize(EliminationBracketSize eliminationBracketSize) {
-        this.eliminationBracketSize = eliminationBracketSize;
-    }
-    
-    public TeamsToAdvance getTeamsToAdvance() {
-        return teamsToAdvance;
-    }
-    
-    public void setTeamsToAdvance(TeamsToAdvance teamsToAdvance) {
-        this.teamsToAdvance = teamsToAdvance;
-    }
-    
     @Override
     public String toString() {
         return "Tournament{" +
@@ -330,7 +267,8 @@ public class Tournament extends PanacheEntityBase {
                 ", maxParticipants=" + maxParticipants +
                 ", currentParticipants=" + currentParticipants +
                 ", clubId='" + clubId + '\'' +
-                ", userId='" + userId + '\'' +
+                ", firebaseUid='" + firebaseUid + '\'' +
+                ", tournamentType='" + getTournamentType() + '\'' +
                 '}';
     }
 } 

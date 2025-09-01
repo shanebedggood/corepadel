@@ -9,6 +9,7 @@ import java.util.UUID;
 /**
  * UserRole entity representing user roles stored in PostgreSQL.
  * Maps to the 'user_role' table in the database.
+ * Uses firebase_uid as the foreign key reference.
  */
 @Entity
 @Table(name = "user_role", schema = "core")
@@ -21,7 +22,7 @@ public class UserRole extends PanacheEntityBase {
     public UUID roleId;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "firebase_uid", nullable = false)
     @JsonIgnore
     public User user;
     
@@ -67,7 +68,7 @@ public class UserRole extends PanacheEntityBase {
     public String toString() {
         return "UserRole{" +
                 "roleId=" + roleId +
-                ", user=" + (user != null ? user.getUserId() : "null") +
+                ", user=" + (user != null ? user.getFirebaseUid() : "null") +
                 ", roleName='" + roleName + '\'' +
                 '}';
     }

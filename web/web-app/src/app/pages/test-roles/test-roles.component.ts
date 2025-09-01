@@ -20,7 +20,7 @@ import { Observable, map, take } from 'rxjs';
                 <p-card header="Current User Information" styleClass="test-card">
                     @if (userProfile$ | async; as profile) {
                         <div class="user-info">
-                            <p><strong>Name:</strong> {{ profile.firstName }} {{ profile.lastName }}</p>
+                            <p><strong>Name:</strong> {{ profile.first_name }} {{ profile.last_name }}</p>
                             <p><strong>Email:</strong> {{ profile.email }}</p>
                             <p><strong>Username:</strong> {{ profile.username }}</p>
                         </div>

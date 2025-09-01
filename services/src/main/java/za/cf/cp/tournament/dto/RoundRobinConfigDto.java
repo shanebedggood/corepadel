@@ -70,32 +70,24 @@ public class RoundRobinConfigDto {
     
     // Inner classes for nested structures
     public static class GroupAdvancementSettingsDto {
-        @JsonProperty("advancementModels")
-        public List<AdvancementModelDto> advancementModels;
-        
         @JsonProperty("eliminationBracketSize")
-        public List<EliminationBracketSizeDto> eliminationBracketSize;
+        public List<Object> eliminationBracketSize;
         
         public GroupAdvancementSettingsDto() {}
         
-        public GroupAdvancementSettingsDto(List<AdvancementModelDto> advancementModels, List<EliminationBracketSizeDto> eliminationBracketSize) {
-            this.advancementModels = advancementModels;
+        public GroupAdvancementSettingsDto(List<Object> eliminationBracketSize) {
             this.eliminationBracketSize = eliminationBracketSize;
         }
     }
     
     public static class CombinedAdvancementSettingsDto {
         @JsonProperty("numOfTeamsToAdvanceOverall")
-        public List<TeamsToAdvanceDto> numOfTeamsToAdvanceOverall;
-        
-        @JsonProperty("eliminationBracketSize")
-        public List<EliminationBracketSizeDto> eliminationBracketSize;
+        public List<Integer> numOfTeamsToAdvanceOverall;
         
         public CombinedAdvancementSettingsDto() {}
         
-        public CombinedAdvancementSettingsDto(List<TeamsToAdvanceDto> numOfTeamsToAdvanceOverall, List<EliminationBracketSizeDto> eliminationBracketSize) {
+        public CombinedAdvancementSettingsDto(List<Integer> numOfTeamsToAdvanceOverall) {
             this.numOfTeamsToAdvanceOverall = numOfTeamsToAdvanceOverall;
-            this.eliminationBracketSize = eliminationBracketSize;
         }
     }
 } 

@@ -132,8 +132,10 @@ export interface TournamentStanding {
     goalDifference: number;
     points: number;
     position: number;
+    uniqueId?: string; // Unique identifier to prevent duplicate key warnings
 }
 
+// Base tournament interface
 export interface Tournament {
     id?: string;
     name: string;
@@ -151,12 +153,35 @@ export interface Tournament {
     format: TournamentFormat;
     category: TournamentCategory;
     registrationType: TournamentRegistrationType;
+    clubId: string;
+    userId: string;
+    tournamentType: string;
+}
+
+// Round Robin specific interface
+export interface RoundRobinTournament extends Tournament {
+    tournamentType: 'ROUND_ROBIN';
+    noOfGroups?: number;
     progressionOption?: TournamentProgressionOption;
     advancementModel?: any;
     eliminationBracketSize?: any;
-    clubId: string;
-    userId: string;
-    noOfGroups?: number;
+    roundType?: RoundType;
+}
+
+export interface RoundType {
+    id: string;
+    name: string;
+    description: string;
+    isActive: boolean;
+}
+
+// Americano specific interface
+export interface AmericanoTournament extends Tournament {
+    tournamentType: 'AMERICANO';
+    maxPlayersPerTeam?: number;
+    rotationInterval?: number;
+    pointsToWin?: number;
+    gamesPerRotation?: number;
 }
 
 export interface TournamentConfig {

@@ -356,8 +356,5 @@ export class TournamentsComponent implements OnInit {
         return `${start} - ${end}`;
     }
 
-    // TrackBy method for better performance
-    trackByTournamentId(index: number, tournament: Tournament): string {
-        return tournament.id || `tournament-${index}`;
-    }
+
 } 

@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { getStorage } from 'firebase/storage';
 
 // Real Firebase configuration for corepadelapp project
 export const firebaseConfig = {
@@ -15,7 +15,7 @@ export const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const functions = getFunctions(app);
+const storage = getStorage(app);
 
 // Configure action code settings for passwordless sign-in
 const actionCodeSettings = {
@@ -35,12 +35,9 @@ const actionCodeSettings = {
   dynamicLinkDomain: 'corepadel.page.link'
 };
 
-// Connect to local Functions emulator only in development
-if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-  try {
-    connectFunctionsEmulator(functions, 'localhost', 5001);
-  } catch (error) {
-    console.warn('⚠️ Functions emulator connection failed (might already be connected):', error);
-  }
-}
-export { app, auth, functions, actionCodeSettings };
+console.log('🚀 Using production Firebase services');
+console.log('  - Auth Domain:', firebaseConfig.authDomain);
+console.log('  - Storage Bucket:', firebaseConfig.storageBucket);
+console.log('  - Project ID:', firebaseConfig.projectId);
+
+export { app, auth, storage, actionCodeSettings };

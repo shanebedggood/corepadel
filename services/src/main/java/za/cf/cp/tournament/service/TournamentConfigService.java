@@ -125,10 +125,7 @@ public class TournamentConfigService {
      */
     @Transactional
     public RoundRobinConfigDto.GroupAdvancementSettingsDto getGroupAdvancementSettings() {
-        List<AdvancementModelDto> advancementModels = getAdvancementModels();
-        List<EliminationBracketSizeDto> eliminationBracketSizes = getEliminationBracketSizes();
-        
-        return new RoundRobinConfigDto.GroupAdvancementSettingsDto(advancementModels, eliminationBracketSizes);
+        return new RoundRobinConfigDto.GroupAdvancementSettingsDto();
     }
     
     /**
@@ -136,45 +133,14 @@ public class TournamentConfigService {
      */
     @Transactional
     public RoundRobinConfigDto.CombinedAdvancementSettingsDto getCombinedAdvancementSettings() {
-        List<TeamsToAdvanceDto> teamsToAdvance = getTeamsToAdvance();
-        List<EliminationBracketSizeDto> eliminationBracketSizes = getEliminationBracketSizes();
+        // Since teams_to_advance is now a simple integer, we return the valid options: 1, 2, 4, 8
+        List<Integer> teamsToAdvance = List.of(1, 2, 4, 8);
         
-        return new RoundRobinConfigDto.CombinedAdvancementSettingsDto(teamsToAdvance, eliminationBracketSizes);
+        return new RoundRobinConfigDto.CombinedAdvancementSettingsDto(teamsToAdvance);
     }
     
-    /**
-     * Get all advancement models.
-     */
-    @Transactional
-    public List<AdvancementModelDto> getAdvancementModels() {
-        List<AdvancementModel> advancementModels = AdvancementModel.listAll();
-        return advancementModels.stream()
-                .map(this::convertAdvancementModelToDto)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Get all elimination bracket sizes.
-     */
-    @Transactional
-    public List<EliminationBracketSizeDto> getEliminationBracketSizes() {
-        List<EliminationBracketSize> bracketSizes = EliminationBracketSize.listAll();
-        return bracketSizes.stream()
-                .map(this::convertEliminationBracketSizeToDto)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Get all teams to advance settings.
-     */
-    @Transactional
-    public List<TeamsToAdvanceDto> getTeamsToAdvance() {
-        List<TeamsToAdvance> teamsToAdvance = TeamsToAdvance.listAll();
-        return teamsToAdvance.stream()
-                .map(this::convertTeamsToAdvanceToDto)
-                .collect(Collectors.toList());
-    }
-    
+
+
     // Conversion methods
     public TournamentFormatDto convertFormatToDto(Format format) {
         return new TournamentFormatDto(
@@ -234,34 +200,6 @@ public class TournamentConfigService {
                 progressionType.name,
                 progressionType.description,
                 true // All progression types are active by default
-        );
-    }
-    
-    public AdvancementModelDto convertAdvancementModelToDto(AdvancementModel advancementModel) {
-        return new AdvancementModelDto(
-                advancementModel.advancementModelId.toString(),
-                advancementModel.name,
-                advancementModel.description,
-                true // All advancement models are active by default
-        );
-    }
-    
-    public EliminationBracketSizeDto convertEliminationBracketSizeToDto(EliminationBracketSize bracketSize) {
-        return new EliminationBracketSizeDto(
-                bracketSize.bracketSizeId.toString(),
-                bracketSize.name,
-                bracketSize.description,
-                bracketSize.teams,
-                true // All bracket sizes are active by default
-        );
-    }
-    
-    public TeamsToAdvanceDto convertTeamsToAdvanceToDto(TeamsToAdvance teamsToAdvance) {
-        return new TeamsToAdvanceDto(
-                teamsToAdvance.teamsAdvanceId.toString(),
-                teamsToAdvance.name,
-                teamsToAdvance.description,
-                true // All teams to advance settings are active by default
         );
     }
 } 

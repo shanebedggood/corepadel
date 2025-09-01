@@ -24,16 +24,12 @@ import { LayoutService } from '../service/layout.service';
                     <router-outlet></router-outlet>
                 </div>
             </div>
-            @if (layoutService.isSidebarActive()) {
-                <div class="layout-mask animate-fadein"></div>
-            }
         </div>
     `,
     styles: []
 })
 export class AdminLayoutComponent implements OnDestroy {
     overlayMenuOpenSubscription: Subscription;
-    menuOutsideClickListener: any;
 
     @ViewChild(AdminSidebar) adminSidebar!: AdminSidebar;
     @ViewChild(AdminTopbarComponent) adminTopBar!: AdminTopbarComponent;
@@ -43,21 +39,13 @@ export class AdminLayoutComponent implements OnDestroy {
         public renderer: Renderer2,
         public router: Router
     ) {
-        // Set menu mode to overlay for admin layout
+        // Set menu mode to static for admin layout (sidebar always visible, content shifts)
         this.layoutService.layoutConfig.set({
             ...this.layoutService.layoutConfig(),
-            menuMode: 'overlay'
+            menuMode: 'static'
         });
 
         this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
-            if (!this.menuOutsideClickListener) {
-                this.menuOutsideClickListener = this.renderer.listen('document', 'click', (event) => {
-                    if (this.isOutsideClicked(event)) {
-                        this.hideMenu();
-                    }
-                });
-            }
-
             if (this.layoutService.layoutState().staticMenuMobileActive) {
                 this.blockBodyScroll();
             }
@@ -70,34 +58,14 @@ export class AdminLayoutComponent implements OnDestroy {
             });
     }
 
-    isOutsideClicked(event: MouseEvent) {
-        const sidebarEl = document.querySelector('.layout-sidebar');
-        const topbarEl = document.querySelector('.layout-menu-button');
-        const hamburgerButton = document.querySelector('button[class*="pi-bars"]'); // Our hamburger button
-        const eventTarget = event.target as Node;
 
-        return !(
-            sidebarEl?.isSameNode(eventTarget) ||
-            sidebarEl?.contains(eventTarget) ||
-            topbarEl?.isSameNode(eventTarget) ||
-            topbarEl?.contains(eventTarget) ||
-            hamburgerButton?.isSameNode(eventTarget) ||
-            hamburgerButton?.contains(eventTarget)
-        );
-    }
 
     hideMenu() {
         this.layoutService.layoutState.update((prev) => ({
             ...prev,
-            overlayMenuActive: false,
             staticMenuMobileActive: false,
             menuHoverActive: false
         }));
-
-        if (this.menuOutsideClickListener) {
-            this.menuOutsideClickListener();
-            this.menuOutsideClickListener = null;
-        }
 
         this.unblockBodyScroll();
     }
@@ -123,12 +91,10 @@ export class AdminLayoutComponent implements OnDestroy {
 
     get containerClass() {
         return {
-            'layout-overlay': this.layoutService.layoutConfig().menuMode === 'overlay',
             'layout-static': this.layoutService.layoutConfig().menuMode === 'static',
             'layout-static-inactive':
                 this.layoutService.layoutState().staticMenuDesktopInactive &&
                 this.layoutService.layoutConfig().menuMode === 'static',
-            'layout-overlay-active': this.layoutService.layoutState().overlayMenuActive,
             'layout-mobile-active': this.layoutService.layoutState().staticMenuMobileActive
         };
     }
@@ -136,9 +102,6 @@ export class AdminLayoutComponent implements OnDestroy {
     ngOnDestroy() {
         if (this.overlayMenuOpenSubscription) {
             this.overlayMenuOpenSubscription.unsubscribe();
-        }
-        if (this.menuOutsideClickListener) {
-            this.menuOutsideClickListener();
         }
     }
 }

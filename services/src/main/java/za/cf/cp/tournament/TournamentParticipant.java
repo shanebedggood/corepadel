@@ -11,6 +11,7 @@ import java.util.UUID;
  * Maps to the 'tournament_participant' table in the database.
  * This table stores the relationship between tournaments and users.
  * User details are stored in the 'users' table.
+ * Uses firebase_uid as the user identifier.
  */
 @Entity
 @Table(name = "tournament_participant", schema = "core")
@@ -26,9 +27,9 @@ public class TournamentParticipant extends PanacheEntityBase {
     @JoinColumn(name = "tournament_id", nullable = false)
     public Tournament tournament;
     
-    @Column(name = "user_id", nullable = false)
-    @JsonProperty("user_id")
-    public String userId;
+    @Column(name = "firebase_uid", nullable = false)
+    @JsonProperty("firebase_uid")
+    public String firebaseUid;
     
     @Column(name = "added_by", nullable = false)
     @JsonProperty("added_by")
@@ -38,9 +39,9 @@ public class TournamentParticipant extends PanacheEntityBase {
     public TournamentParticipant() {}
     
     // Constructor with essential fields
-    public TournamentParticipant(Tournament tournament, String userId, String addedBy) {
+    public TournamentParticipant(Tournament tournament, String firebaseUid, String addedBy) {
         this.tournament = tournament;
-        this.userId = userId;
+        this.firebaseUid = firebaseUid;
         this.addedBy = addedBy;
     }
     
@@ -61,12 +62,22 @@ public class TournamentParticipant extends PanacheEntityBase {
         this.tournament = tournament;
     }
     
-    public String getUserId() {
-        return userId;
+    public String getFirebaseUid() {
+        return firebaseUid;
     }
     
+    public void setFirebaseUid(String firebaseUid) {
+        this.firebaseUid = firebaseUid;
+    }
+    
+    // Legacy getter for backward compatibility
+    public String getUserId() {
+        return firebaseUid;
+    }
+    
+    // Legacy setter for backward compatibility
     public void setUserId(String userId) {
-        this.userId = userId;
+        this.firebaseUid = userId;
     }
     
     public String getAddedBy() {
@@ -82,7 +93,7 @@ public class TournamentParticipant extends PanacheEntityBase {
         return "TournamentParticipant{" +
                 "participantId=" + participantId +
                 ", tournamentId=" + (tournament != null ? tournament.getTournamentId() : null) +
-                ", userId='" + userId + '\'' +
+                ", firebaseUid='" + firebaseUid + '\'' +
                 ", addedBy='" + addedBy + '\'' +
                 '}';
     }
