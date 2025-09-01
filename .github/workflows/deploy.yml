@@ -28,11 +28,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
-          cd web/web-app && npm ci
+          cd web/web-app
+          npm cache clean --force
+          npm ci --legacy-peer-deps
 
       - name: Build Angular app
-        run: cd web/web-app && npm run build:prod
+        run: |
+          cd web/web-app
+          npm run build:prod
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
