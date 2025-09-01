@@ -61,12 +61,14 @@ gcloud services enable \
     run.googleapis.com \
     sqladmin.googleapis.com \
     containerregistry.googleapis.com \
+    artifactregistry.googleapis.com \
     firebase.googleapis.com \
     firebasehosting.googleapis.com \
     firebasestorage.googleapis.com
 
 # Note: Firebase Auth API is enabled automatically when Firebase is set up
 echo "ℹ️  Firebase Auth API will be enabled automatically when Firebase is configured"
+echo "ℹ️  Artifact Registry API enabled for Docker image storage"
 
 # Create Cloud SQL instance
 echo "🗄️ Creating Cloud SQL PostgreSQL instance..."
@@ -143,6 +145,16 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/storage.admin"
 
+# Grant Artifact Registry permissions for Docker image storage
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/artifactregistry.admin"
+
+# Grant Cloud Build Service Account role for running builds
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudbuild.builds.builder"
+
 # Grant Cloud Build service account access to Cloud Run (will be created on first Cloud Build run)
 echo "ℹ️  Cloud Build service account will be created automatically on first build"
 echo "ℹ️  IAM permissions will be granted when Cloud Build is first used"
@@ -153,6 +165,13 @@ gcloud iam service-accounts keys create cloudbuild-deployer-key.json \
     --iam-account=cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com
 
 echo "✅ GCP setup completed successfully!"
+echo ""
+echo "🔐 Service account permissions granted:"
+echo "   - Cloud Run Admin (deploy to Cloud Run)"
+echo "   - Service Account User (impersonate other service accounts)"
+echo "   - Storage Admin (access build artifacts)"
+echo "   - Artifact Registry Admin (create/manage Docker repositories)"
+echo "   - Cloud Build Service Account (run builds)"
 echo ""
 echo "📋 Next steps:"
 echo "1. Add the following secrets to your GitHub repository:"
