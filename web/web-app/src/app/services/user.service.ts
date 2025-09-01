@@ -62,18 +62,8 @@ export class UserService {
         );
     }
 
-    /**
-     * Get a user by ID
-     */
-    getUserById(userId: string): Observable<User | null> {
-        return this.http.get<User>(`${this.apiUrl}/${userId}`).pipe(
-            catchError(this.handleError<User | null>('getUserById', null))
-        );
-    }
 
-    /**
-     * Get a user by Cognito sub (legacy method name for compatibility)
-     */
+
     /**
      * Get a user by Firebase UID
      */
@@ -110,14 +100,7 @@ export class UserService {
         );
     }
 
-    /**
-     * Update an existing user
-     */
-    updateUser(userId: string, user: User): Observable<User | null> {
-        return this.http.put<User>(`${this.apiUrl}/${userId}`, user).pipe(
-            catchError(this.handleError<User | null>('updateUser', null))
-        );
-    }
+
 
     /**
      * Update user profile by Firebase UID
@@ -128,21 +111,13 @@ export class UserService {
         );
     }
 
-    /**
-     * Delete a user (soft delete)
-     */
-    deleteUser(userId: string): Observable<boolean> {
-        return this.http.delete(`${this.apiUrl}/${userId}`).pipe(
-            map(() => true),
-            catchError(this.handleError<boolean>('deleteUser', false))
-        );
-    }
+
 
     /**
-     * Get all roles for a user by PostgreSQL user ID
+     * Get all roles for a user by Firebase UID
      */
-    getUserRoles(userId: string): Observable<UserRole[]> {
-        return this.http.get<UserRole[]>(`${this.apiUrl}/${userId}/roles`).pipe(
+    getUserRoles(firebaseUid: string): Observable<UserRole[]> {
+        return this.http.get<UserRole[]>(`${this.apiUrl}/firebase/${firebaseUid}/roles`).pipe(
             catchError(this.handleError<UserRole[]>('getUserRoles', []))
         );
     }
@@ -158,10 +133,10 @@ export class UserService {
     }
 
     /**
-     * Add a role to a user by PostgreSQL user ID
+     * Add a role to a user by Firebase UID
      */
-    addRoleToUser(userId: string, roleName: string): Observable<UserRole | null> {
-        return this.http.post<UserRole>(`${this.apiUrl}/${userId}/roles?role=${roleName}`, {}).pipe(
+    addRoleToUser(firebaseUid: string, roleName: string): Observable<UserRole | null> {
+        return this.http.post<UserRole>(`${this.apiUrl}/firebase/${firebaseUid}/roles?role=${roleName}`, {}).pipe(
             catchError(this.handleError<UserRole | null>('addRoleToUser', null))
         );
     }
@@ -192,10 +167,10 @@ export class UserService {
     }
 
     /**
-     * Remove a role from a user
+     * Remove a role from a user by Firebase UID
      */
-    removeRoleFromUser(userId: string, roleName: string): Observable<boolean> {
-        return this.http.delete(`${this.apiUrl}/${userId}/roles/${roleName}`).pipe(
+    removeRoleFromUser(firebaseUid: string, roleName: string): Observable<boolean> {
+        return this.http.delete(`${this.apiUrl}/firebase/${firebaseUid}/roles/${roleName}`).pipe(
             map(() => true),
             catchError(this.handleError<boolean>('removeRoleFromUser', false))
         );
@@ -204,18 +179,18 @@ export class UserService {
     /**
      * Check if a user has a specific role
      */
-    userHasRole(userId: string, roleName: string): Observable<boolean> {
-        return this.getUserRoles(userId).pipe(
+    userHasRole(firebaseUid: string, roleName: string): Observable<boolean> {
+        return this.getUserRoles(firebaseUid).pipe(
             map(roles => roles.some(role => role.role_name === roleName)),
             catchError(this.handleError<boolean>('userHasRole', false))
         );
     }
 
     /**
-     * Get all clubs for a user by PostgreSQL user ID
+     * Get all clubs for a user by Firebase UID
      */
-    getUserClubs(userId: string): Observable<UserClub[]> {
-        return this.http.get<UserClub[]>(`${this.apiUrl}/${userId}/clubs`).pipe(
+    getUserClubs(firebaseUid: string): Observable<UserClub[]> {
+        return this.http.get<UserClub[]>(`${this.apiUrl}/firebase/${firebaseUid}/clubs`).pipe(
             catchError(this.handleError<UserClub[]>('getUserClubs', []))
         );
     }
@@ -230,10 +205,10 @@ export class UserService {
     }
 
     /**
-     * Add a user to a club
+     * Add a user to a club by Firebase UID
      */
-    addUserToClub(userId: string, clubId: string, role: string = 'member'): Observable<UserClub | null> {
-        return this.http.post<UserClub>(`${this.apiUrl}/${userId}/clubs/${clubId}?role=${role}`, {}).pipe(
+    addUserToClub(firebaseUid: string, clubId: string, role: string = 'member'): Observable<UserClub | null> {
+        return this.http.post<UserClub>(`${this.apiUrl}/firebase/${firebaseUid}/clubs/${clubId}?role=${role}`, {}).pipe(
             catchError(this.handleError<UserClub | null>('addUserToClub', null))
         );
     }
@@ -254,10 +229,10 @@ export class UserService {
     }
 
     /**
-     * Remove a user from a club
+     * Remove a user from a club by Firebase UID
      */
-    removeUserFromClub(userId: string, clubId: string): Observable<boolean> {
-        return this.http.delete(`${this.apiUrl}/${userId}/clubs/${clubId}`).pipe(
+    removeUserFromClub(firebaseUid: string, clubId: string): Observable<boolean> {
+        return this.http.delete(`${this.apiUrl}/firebase/${firebaseUid}/clubs/${clubId}`).pipe(
             map(() => true),
             catchError(this.handleError<boolean>('removeUserFromClub', false))
         );
@@ -267,15 +242,7 @@ export class UserService {
      * Remove a user from a club by Firebase UID
      */
     removeUserFromClubByFirebaseUid(firebaseUid: string, clubId: string): Observable<boolean> {
-        return this.getUserByFirebaseUid(firebaseUid).pipe(
-            switchMap((user: User | null) => {
-                if (!user || !user.firebase_uid) {
-                    return of(false);
-                }
-                return this.removeUserFromClub(user.firebase_uid, clubId);
-            }),
-            catchError(this.handleError<boolean>('removeUserFromClubByFirebaseUid', false))
-        );
+        return this.removeUserFromClub(firebaseUid, clubId);
     }
 
     /**
