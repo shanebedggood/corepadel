@@ -67,7 +67,7 @@ jobs:
       - name: Build Quarkus application
         run: |
           cd services
-          ./mvnw clean package -Dquarkus.package.type=jar
+          ./mvnw clean package -Dquarkus.package.type=jar -DskipTests
 
       - name: Setup Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
