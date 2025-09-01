@@ -70,16 +70,6 @@ public class TournamentParticipant extends PanacheEntityBase {
         this.firebaseUid = firebaseUid;
     }
     
-    // Legacy getter for backward compatibility
-    public String getUserId() {
-        return firebaseUid;
-    }
-    
-    // Legacy setter for backward compatibility
-    public void setUserId(String userId) {
-        this.firebaseUid = userId;
-    }
-    
     public String getAddedBy() {
         return addedBy;
     }

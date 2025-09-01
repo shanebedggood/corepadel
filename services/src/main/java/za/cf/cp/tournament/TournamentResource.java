@@ -613,8 +613,8 @@ public class TournamentResource {
             if (jsonData.containsKey("clubId")) {
                 dto.setClubId(jsonData.getString("clubId"));
             }
-            if (jsonData.containsKey("userId")) {
-                dto.setUserId(jsonData.getString("userId"));
+            if (jsonData.containsKey("firebaseUid")) {
+                dto.setFirebaseUid(jsonData.getString("firebaseUid"));
             }
             if (jsonData.containsKey("venueId")) {
                 dto.setVenueId(jsonData.getString("venueId"));
