@@ -108,7 +108,7 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
         this.breakpointObserver.observe([
             Breakpoints.XSmall,
             Breakpoints.Small
-        ]).pipe(map(result => result.matches)).subscribe(isMobile => {
+        ]).pipe(map((result: any) => result.matches)).subscribe((isMobile: boolean) => {
             this.isMobile = isMobile;
         });
 
