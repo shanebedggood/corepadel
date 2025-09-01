@@ -30,7 +30,7 @@ jobs:
         run: |
           cd web/web-app
           npm cache clean --force
-          npm ci --legacy-peer-deps
+          npm install --legacy-peer-deps
 
       - name: Build Angular app
         run: |
