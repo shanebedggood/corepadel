@@ -3,3 +3,5 @@ web/dist/
 web/web-app/node_modules/
 web/web-app/dist/
 services/target/
+cloudbuild-deployer-key.json
+firebase-service-account.json
