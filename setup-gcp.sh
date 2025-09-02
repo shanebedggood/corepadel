@@ -155,17 +155,40 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/cloudbuild.builds.builder"
 
+# Grant Firebase Hosting admin to CI service account for Hosting deploys
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/firebasehosting.admin"
+
+# Allow CI service account to read Cloud Run and Cloud Functions metadata used by Hosting rewrites
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/run.viewer"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudfunctions.viewer"
+
 # Grant Cloud Build service account access to Cloud Run (will be created on first Cloud Build run)
 echo "ℹ️  Cloud Build service account will be created automatically on first build"
 echo "ℹ️  IAM permissions will be granted when Cloud Build is first used"
 
 # Grant Cloud SQL Client to the Cloud Run runtime service account (Compute Default SA)
-RUNTIME_SA="$PROJECT_NUMBER-compute@developer.gserviceaccount.com"
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+RUNTIME_SA="$PROJECT_NUMBER-compute@developer.gserviceaccount.com"
 echo "🔐 Granting Cloud SQL Client to runtime service account: $RUNTIME_SA"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$RUNTIME_SA" \
     --role="roles/cloudsql.client"
+
+# Grant Firebase service agent permissions for Hosting deploy validations
+FIREBASE_SA="service-$PROJECT_NUMBER@gcp-sa-firebase.iam.gserviceaccount.com"
+echo "🔐 Granting Firebase service agent viewer roles: $FIREBASE_SA"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$FIREBASE_SA" \
+    --role="roles/run.viewer"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$FIREBASE_SA" \
+    --role="roles/cloudfunctions.viewer"
 
 # Create a key for the service account
 echo "🔑 Creating service account key..."
