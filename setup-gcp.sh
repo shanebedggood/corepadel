@@ -190,6 +190,19 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$FIREBASE_SA" \
     --role="roles/cloudfunctions.viewer"
 
+# Grant Firebase Admin SDK service account Hosting and viewer roles (used by Hosting action)
+FIREBASE_ADM_SA="firebase-adminsdk-fbsvc@$PROJECT_ID.iam.gserviceaccount.com"
+echo "🔐 Granting Hosting admin and viewer roles to: $FIREBASE_ADM_SA"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$FIREBASE_ADM_SA" \
+    --role="roles/firebasehosting.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$FIREBASE_ADM_SA" \
+    --role="roles/run.viewer"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$FIREBASE_ADM_SA" \
+    --role="roles/cloudfunctions.viewer"
+
 # Create a key for the service account
 echo "🔑 Creating service account key..."
 gcloud iam service-accounts keys create cloudbuild-deployer-key.json \
