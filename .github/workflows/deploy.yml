@@ -52,6 +52,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: live
           projectId: ${{ env.PROJECT_ID }}
 
@@ -116,7 +117,7 @@ jobs:
             --platform managed \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
-            --set-env-vars="QUARKUS_DATASOURCE_JDBC_URL=${{ secrets.DATABASE_URL }},QUARKUS_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME }},QUARKUS_DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }},FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},FIREBASE_REGION=${{ env.REGION }}" \
+            --set-env-vars="QUARKUS_DATASOURCE_JDBC_URL=${{ secrets.QUARKUS_DATASOURCE_JDBC_URL }},QUARKUS_DATASOURCE_USERNAME=${{ secrets.QUARKUS_DATASOURCE_USERNAME }},QUARKUS_DATASOURCE_PASSWORD=${{ secrets.QUARKUS_DATASOURCE_PASSWORD }},FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},FIREBASE_REGION=${{ env.REGION }}" \
             --port 8080 \
             --memory 1Gi \
             --cpu 1 \
