@@ -68,6 +68,28 @@ public class UserService {
      */
     @Transactional
     public User createUser(User user) {
+        // Validate required fields
+        if (user.firebaseUid == null || user.firebaseUid.trim().isEmpty()) {
+            throw new RuntimeException("Firebase UID is required");
+        }
+        if (user.email == null || user.email.trim().isEmpty()) {
+            throw new RuntimeException("Email is required");
+        }
+        if (user.username == null || user.username.trim().isEmpty()) {
+            throw new RuntimeException("Username is required");
+        }
+        
+        // Ensure username is unique by appending a suffix if needed
+        String baseUsername = user.username;
+        String uniqueUsername = baseUsername;
+        int suffix = 1;
+        
+        while (findByUsername(uniqueUsername).isPresent()) {
+            uniqueUsername = baseUsername + suffix;
+            suffix++;
+        }
+        user.username = uniqueUsername;
+        
         user.persist();
         return user;
     }

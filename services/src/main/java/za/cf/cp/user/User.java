@@ -3,7 +3,6 @@ package za.cf.cp.user;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
-import java.util.UUID;
 
 /**
  * User entity representing users stored in PostgreSQL.
