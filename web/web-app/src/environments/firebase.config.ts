@@ -21,7 +21,7 @@ const storage = getStorage(app);
 const actionCodeSettings = {
   url: window.location.hostname === 'localhost' 
     ? 'http://localhost:4200/auth/verify-email'
-    : 'https://corepadel.com/auth/verify-email',
+    : 'https://corepadelapp.web.app/auth/verify-email',
   handleCodeInApp: true,
   // Add email to URL for better reliability
   iOS: {

@@ -1,7 +1,7 @@
 {
   "auth": {
     "actionCodeSettings": {
-      "url": "http://localhost:4201/auth/verify-email",
+      "url": "https://corepadelapp.web.app/auth/verify-email",
       "handleCodeInApp": true
     }
   },
@@ -9,11 +9,19 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "public": "web/web-app/dist",
+    "public": "web/web-app/dist/browser",
+    "headers": [
+      {
+        "source": "/index.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "node_modules/**"
     ],
     "rewrites": [
       {

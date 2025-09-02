@@ -19,9 +19,10 @@ public class CorsFilter implements ContainerResponseFilter {
         String origin = requestContext.getHeaderString("Origin");
         
         // Set CORS headers for all responses
-        if (origin != null && (origin.contains("localhost:4200") || origin.contains("127.0.0.1:4200"))) {
+        if (origin != null && (origin.contains("localhost:4200") || origin.contains("127.0.0.1:4200") || origin.contains("corepadelapp.web.app"))) {
             responseContext.getHeaders().add("Access-Control-Allow-Origin", origin);
         } else {
+            // Default to localhost for development
             responseContext.getHeaders().add("Access-Control-Allow-Origin", "http://localhost:4200");
         }
         
