@@ -1,10 +1,4 @@
 {
-  "auth": {
-    "actionCodeSettings": {
-      "url": "https://corepadelapp.web.app/auth/verify-email",
-      "handleCodeInApp": true
-    }
-  },
   "storage": {
     "rules": "storage.rules"
   },
