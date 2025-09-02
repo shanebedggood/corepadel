@@ -25,7 +25,9 @@ export const authTokenInterceptorFn: HttpInterceptorFn = (
 
   // Only attach token for backend API requests
   const apiBase = environment.quarkusApiUrl ?? '';
-  const isApiRequest = apiBase && req.url.startsWith(apiBase);
+  const isAbsoluteApi = apiBase && req.url.startsWith(apiBase);
+  const isRelativeApi = req.url.startsWith('/api');
+  const isApiRequest = isAbsoluteApi || isRelativeApi;
   
   if (!isApiRequest) {
     return next(req);

@@ -159,6 +159,14 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 echo "ℹ️  Cloud Build service account will be created automatically on first build"
 echo "ℹ️  IAM permissions will be granted when Cloud Build is first used"
 
+# Grant Cloud SQL Client to the Cloud Run runtime service account (Compute Default SA)
+RUNTIME_SA="$PROJECT_NUMBER-compute@developer.gserviceaccount.com"
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+echo "🔐 Granting Cloud SQL Client to runtime service account: $RUNTIME_SA"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$RUNTIME_SA" \
+    --role="roles/cloudsql.client"
+
 # Create a key for the service account
 echo "🔑 Creating service account key..."
 gcloud iam service-accounts keys create cloudbuild-deployer-key.json \
@@ -176,11 +184,10 @@ echo ""
 echo "📋 Next steps:"
 echo "1. Add the following secrets to your GitHub repository:"
 echo "   - GCP_SA_KEY: Content of cloudbuild-deployer-key.json"
-echo "   - DATABASE_URL: $DB_URL"
-echo "   - DATABASE_USERNAME: $DB_USER"
-echo "   - DATABASE_PASSWORD: $DB_PASSWORD"
-echo "   - FIREBASE_SERVICE_ACCOUNT: Your Firebase service account JSON"
-echo "   - FIREBASE_TOKEN: Your Firebase CI token"
+echo "   - FIREBASE_SERVICE_ACCOUNT or FIREBASE_TOKEN (for Hosting deploys)"
+echo "   - QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql:///$DB_NAME?cloudSqlInstance=$PROJECT_ID:$REGION:corepadel-db&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
+echo "   - QUARKUS_DATASOURCE_USERNAME: $DB_USER"
+echo "   - QUARKUS_DATASOURCE_PASSWORD: $DB_PASSWORD"
 echo ""
 echo "2. Run database migrations:"
 echo "   gcloud sql connect corepadel-db --user=$DB_USER --database=$DB_NAME"
