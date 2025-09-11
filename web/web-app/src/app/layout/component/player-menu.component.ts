@@ -59,11 +59,6 @@ export class PlayerMenu implements OnInit {
             routerLink: ['/player/teams']
           },
           {
-            label: 'My Profile',
-            icon: 'pi pi-fw pi-user',
-            routerLink: ['/player/profile']
-          },
-          {
             label: 'Padel Clubs',
             icon: 'pi pi-fw pi-warehouse',
             routerLink: ['/player/clubs']
@@ -76,7 +71,7 @@ export class PlayerMenu implements OnInit {
         ]
       },
       {
-        label: 'Fitness',
+        label: 'My Running',
         items: [
           {
             label: '5AM Run Booking',
@@ -84,18 +79,18 @@ export class PlayerMenu implements OnInit {
             routerLink: ['/player/run-booking']
           }
         ]
-      },
-      {
-        label: 'My Running',
-        items: [
-          {
-            label: 'My Runs',
-            icon: 'directions_run',
-            iconClass: 'material-icons',
-            routerLink: ['/player/rules']
-          }
-        ]
       }
+      // {
+      //   label: 'My Running',
+      //   items: [
+      //     {
+      //       label: 'My Runs',
+      //       icon: 'directions_run',
+      //       iconClass: 'material-icons',
+      //       routerLink: ['/player/rules']
+      //     }
+      //   ]
+      // }
     ];
   }
 }

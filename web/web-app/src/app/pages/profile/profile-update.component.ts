@@ -48,9 +48,10 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
                             <div class="relative inline-block">
                                 <p-avatar 
                                     [image]="profileImageUrl || profile.profile_picture" 
+                                    [label]="!(profileImageUrl || profile.profile_picture) ? getUserInitials(profile) : undefined"
                                     size="xlarge" 
                                     shape="circle"
-                                    class="w-32 h-32 border-4 border-green-500">
+                                    class="large-profile-avatar">
                                 </p-avatar>
                                 <button 
                                     type="button"
@@ -181,14 +182,6 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
                     </form>
                 }
 
-                @if (isSubmitting) {
-                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div class="bg-white rounded-lg p-6 flex items-center space-x-4">
-                            <p-progressSpinner></p-progressSpinner>
-                            <span class="text-gray-700">Saving your profile...</span>
-                        </div>
-                    </div>
-                }
             </div>
         </div>
 
@@ -204,6 +197,25 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
         
         :host ::ng-deep .p-checkbox .p-checkbox-box {
             border-radius: 0.25rem;
+        }
+        
+        .large-profile-avatar {
+            width: 8rem !important;
+            height: 8rem !important;
+            font-size: 2rem !important;
+            border: 4px solid #10b981 !important;
+        }
+        
+        .large-profile-avatar ::ng-deep .p-avatar {
+            width: 8rem !important;
+            height: 8rem !important;
+            font-size: 2rem !important;
+        }
+        
+        .large-profile-avatar ::ng-deep .p-avatar img {
+            width: 8rem !important;
+            height: 8rem !important;
+            object-fit: cover;
         }
     `]
 })
@@ -284,7 +296,18 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
             
             const imageUrl = await firstValueFrom(this.imageUploadService.uploadProfilePicture(file, profile.firebaseUid));
             this.profileImageUrl = imageUrl;
-            this.errorHandlerService.handleSuccess('Profile image uploaded successfully!');
+            
+            // Update the profile immediately with the new image URL
+            const profileData = {
+                profile_picture: imageUrl
+            };
+            
+            await firstValueFrom(this.userService.updateUserProfile(profile.firebaseUid, profileData));
+            
+            // Refresh the user profile to show the updated image
+            await this.authService.loadUserProfile();
+            
+            this.errorHandlerService.handleSuccess('Profile image uploaded and saved successfully!');
         } catch (error) {
             console.error('Error uploading image:', error);
             this.errorHandlerService.handleApiError(error, 'Profile Image Upload');
@@ -325,6 +348,9 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
 
                 await firstValueFrom(this.userService.updateUserProfile(profile.firebaseUid, profileData));
 
+                // Refresh the user profile to show the updated data
+                await this.authService.loadUserProfile();
+
                 this.errorHandlerService.handleSuccess('Profile updated successfully!');
 
                 // Redirect to profile page after a short delay
@@ -338,6 +364,24 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
             } finally {
                 this.isSubmitting = false;
             }
+        }
+    }
+
+    getUserInitials(profile: any): string {
+        const firstName = profile.first_name || '';
+        const lastName = profile.last_name || '';
+        
+        if (firstName && lastName) {
+            return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (firstName) {
+            return firstName.charAt(0).toUpperCase();
+        } else if (lastName) {
+            return lastName.charAt(0).toUpperCase();
+        } else {
+            // Fallback to email initials if no name is available
+            const email = profile.email || '';
+            const emailParts = email.split('@')[0];
+            return emailParts.charAt(0).toUpperCase();
         }
     }
 }

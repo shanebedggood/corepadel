@@ -1,7 +1,8 @@
-import { Injectable, inject, runInInjectionContext, Injector } from '@angular/core';
-import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
+import { Injectable } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
+import { storage } from '../../environments/firebase.config';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 export interface ImageUploadOptions {
   maxWidth?: number;
@@ -23,7 +24,9 @@ export class ImageUploadService {
     format: 'webp'
   };
 
-  constructor(private storage: Storage, private injector: Injector) {
+  private storage = storage;
+
+  constructor() {
     this.verifyStorageConnection();
   }
 
@@ -167,11 +170,16 @@ export class ImageUploadService {
         return false;
       }
 
-      // Try to create a test reference
+      // Try to create a test reference - this should work if storage is properly initialized
       const testRef = ref(this.storage, 'test-connection.txt');
       return true;
     } catch (error: any) {
       console.error('❌ Storage connection test failed:', error);
+      console.error('Storage instance details:', {
+        storage: this.storage,
+        storageType: typeof this.storage,
+        storageConstructor: this.storage?.constructor?.name
+      });
       return false;
     }
   }
@@ -190,35 +198,19 @@ export class ImageUploadService {
         throw new Error('Firebase Storage is not available');
       }
 
-      // Test storage connection first
-      const isConnected = await this.testStorageConnection();
-      if (!isConnected) {
-        throw new Error('Firebase Storage connection test failed');
-      }
-
       const fileName = options.fileName || `profile.${options.format}`;
       const filePath = `profile-pictures/${userId}/${fileName}`;
       
-      // Try to create storage reference
-      let fileRef;
-      try {
-        fileRef = ref(this.storage, filePath);
-      } catch (refError: any) {
-        console.error('Failed to create storage reference:', refError);
-        throw new Error(`Storage reference creation failed: ${refError.message}`);
-      }
+      // Create storage reference
+      const fileRef = ref(this.storage, filePath);
       
+      // Upload file
       const snapshot = await uploadBytes(fileRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
+      
       return downloadURL;
     } catch (error: any) {
       console.error('Error uploading to Firebase:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        stack: error?.stack
-      });
-      
       throw new Error(`Failed to upload image: ${error?.message || 'Unknown error'}`);
     }
   }

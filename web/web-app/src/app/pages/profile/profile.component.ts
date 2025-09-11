@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
@@ -30,9 +30,10 @@ import { Observable } from 'rxjs';
                             <div class="profile-photo-section text-center mb-6">
                                 <p-avatar 
                                     [image]="profile.profile_picture" 
+                                    [label]="!profile.profile_picture ? getUserInitials(profile) : undefined"
                                     size="xlarge" 
                                     shape="circle"
-                                    class="w-32 h-32 border-4 border-green-500">
+                                    class="large-profile-avatar">
                                 </p-avatar>
                             </div>
 
@@ -72,7 +73,7 @@ import { Observable } from 'rxjs';
                                 <label>Roles:</label>
                                 <div class="roles-list">
                                     @for (role of profile.roles; track role) {
-                                        <span class="role-badge">{{ role }}</span>
+                                        <span class="role-badge" [ngClass]="getRoleBadgeClass(role)">{{ role }}</span>
                                     }
                                 </div>
                             </div>
@@ -132,11 +133,40 @@ import { Observable } from 'rxjs';
         }
         
         .role-badge {
-            background-color: var(--primary-color);
             color: white;
-            padding: 0.25rem 0.75rem;
+            padding: 0.5rem 1rem;
             border-radius: 1rem;
-            font-size: 0.875rem;
+            font-size: 1rem;
+        }
+        
+        .role-badge-admin {
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #374151 !important; /* gray-700 */
+        }
+        
+        .role-badge-player {
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #374151 !important; /* gray-700 */
+        }
+        
+        .role-badge-default {
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #374151 !important; /* gray-700 */
+        }
+        
+        ::ng-deep .role-badge-admin {
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #374151 !important; /* gray-700 */
+        }
+        
+        ::ng-deep .role-badge-player {
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #374151 !important; /* gray-700 */
+        }
+        
+        ::ng-deep .role-badge-default {
+            background-color: #d1d5db !important; /* gray-300 */
+            color: #374151 !important; /* gray-700 */
         }
         
         .interests-list {
@@ -153,9 +183,28 @@ import { Observable } from 'rxjs';
             font-size: 0.875rem;
             text-transform: capitalize;
         }
+        
+        .large-profile-avatar {
+            width: 8rem !important;
+            height: 8rem !important;
+            font-size: 2rem !important;
+            border: 4px solid #10b981 !important;
+        }
+        
+        .large-profile-avatar ::ng-deep .p-avatar {
+            width: 8rem !important;
+            height: 8rem !important;
+            font-size: 2rem !important;
+        }
+        
+        .large-profile-avatar ::ng-deep .p-avatar img {
+            width: 8rem !important;
+            height: 8rem !important;
+            object-fit: cover;
+        }
     `]
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
     userProfile$: Observable<UserProfile | null>;
     
     // Page header configuration
@@ -169,6 +218,11 @@ export class ProfileComponent {
         private router: Router
     ) {
         this.userProfile$ = this.authService.userProfile$;
+    }
+
+    ngOnInit() {
+        // Refresh the profile data when the component loads
+        this.authService.loadUserProfile();
     }
 
     editProfile() {
@@ -185,5 +239,34 @@ export class ProfileComponent {
 
     getDisplayName(profile: any): string {
         return profile.display_name || 'Not provided';
+    }
+
+    getUserInitials(profile: any): string {
+        const firstName = profile.first_name || '';
+        const lastName = profile.last_name || '';
+        
+        if (firstName && lastName) {
+            return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+        } else if (firstName) {
+            return firstName.charAt(0).toUpperCase();
+        } else if (lastName) {
+            return lastName.charAt(0).toUpperCase();
+        } else {
+            // Fallback to email initials if no name is available
+            const email = profile.email || '';
+            const emailParts = email.split('@')[0];
+            return emailParts.charAt(0).toUpperCase();
+        }
+    }
+
+    getRoleBadgeClass(role: string): string {
+        switch (role.toLowerCase()) {
+            case 'admin':
+                return 'role-badge-admin';
+            case 'player':
+                return 'role-badge-player';
+            default:
+                return 'role-badge-default';
+        }
     }
 }
