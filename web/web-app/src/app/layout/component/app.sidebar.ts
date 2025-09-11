@@ -27,7 +27,41 @@ import { AppMenu } from './app.menu';
             </div>
         </div>
     `,
-    styles: []
+    styles: [`
+        .layout-sidebar {
+            position: fixed;
+            z-index: 999;
+            overflow-y: auto;
+            user-select: none;
+            left: 0;
+            width: 22rem; /* Match Sakai-NG sidebar width */
+            background: var(--surface-overlay);
+            border-right: 1px solid var(--surface-border);
+            transition: transform 0.3s ease;
+        }
+
+        /* Overlay mode - goes over topbar */
+        .layout-wrapper.layout-overlay .layout-sidebar {
+            top: 0;
+            height: 100vh;
+            transform: translateX(-100%);
+        }
+
+        .layout-wrapper.layout-overlay.layout-overlay-active .layout-sidebar {
+            transform: translateX(0);
+        }
+
+        /* Static mode - below topbar */
+        .layout-wrapper.layout-static .layout-sidebar {
+            top: 4rem;
+            height: calc(100vh - 4rem);
+            transform: translateX(0);
+        }
+
+        .layout-wrapper.layout-static.layout-static-inactive .layout-sidebar {
+            transform: translateX(-100%);
+        }
+    `]
 })
 export class AppSidebar implements OnInit, OnDestroy {
     menuItems$: Observable<MenuItem[]>;

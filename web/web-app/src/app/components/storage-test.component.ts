@@ -54,7 +54,6 @@ export class StorageTestComponent {
     try {
       this.storageAvailable = !!this.storage;
       this.storageInstance = this.storage ? 'Available' : 'Not available';
-      console.log('Storage check:', { available: this.storageAvailable, instance: this.storage });
     } catch (error) {
       console.error('Storage check failed:', error);
       this.storageAvailable = false;
@@ -75,20 +74,14 @@ export class StorageTestComponent {
       this.error = null;
       this.uploadResult = null;
 
-      console.log('Testing upload with file:', this.selectedFile);
-      
       // Create a simple test path
       const testPath = `test/${Date.now()}-${this.selectedFile.name}`;
-      console.log('Test path:', testPath);
       
       const fileRef = ref(this.storage, testPath);
-      console.log('File reference created:', fileRef);
       
       const snapshot = await uploadBytes(fileRef, this.selectedFile);
-      console.log('Upload snapshot:', snapshot);
       
       const downloadURL = await getDownloadURL(snapshot.ref);
-      console.log('Download URL:', downloadURL);
       
       this.uploadResult = {
         path: testPath,

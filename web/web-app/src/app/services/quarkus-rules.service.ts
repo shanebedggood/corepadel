@@ -7,8 +7,16 @@ import { environment } from '../../environments/environment';
 export interface PadelRule {
     ruleId?: string;
     title: string;
-    rule_description: string[];
+    sections: RuleSection[];
     order_number?: number;
+}
+
+export interface RuleSection {
+    sectionId?: string;
+    ruleId: string;
+    sectionOrder: number;
+    sectionTitle?: string;
+    content: string;
 }
 
 @Injectable({
@@ -20,18 +28,56 @@ export class QuarkusRulesService {
     constructor(private http: HttpClient) { }
 
     /**
+     * Parse rule description text into proper paragraphs
+     * @param description The raw description text
+     * @returns Array of paragraphs
+     */
+    private parseRuleDescription(description: string | string[]): string[] {
+        if (Array.isArray(description)) {
+            // If it's already an array, return as is
+            return description;
+        }
+        
+        if (!description) {
+            return [];
+        }
+        
+        // Split on paragraph breaks (double newlines or multiple spaces)
+        // This handles both actual paragraph breaks and comma-separated content better
+        let paragraphs = description
+            .split(/\n\s*\n|\s*,\s*(?=\S)/) // Split on double newlines or commas followed by non-whitespace
+            .map(p => p.trim())
+            .filter(p => p.length > 0);
+        
+        // If we only got one paragraph, try splitting on single commas that might be natural breaks
+        if (paragraphs.length === 1 && description.includes(',')) {
+            paragraphs = description
+                .split(/,\s*/)
+                .map(p => p.trim())
+                .filter(p => p.length > 0);
+        }
+        
+        // Clean up each paragraph
+        paragraphs = paragraphs.map(p => 
+            p.replace(/\s+/g, ' ') // Replace multiple spaces with single space
+             .replace(/\n/g, ' ')  // Replace newlines with spaces
+             .trim()
+        ).filter(p => p.length > 0);
+        
+        return paragraphs;
+    }
+
+    /**
      * Get all padel rules sorted by order_number
      * @returns Observable of PadelRule array sorted by order_number
      */
     getPadelRules(): Observable<PadelRule[]> {
         return this.http.get<PadelRule[]>(`${this.apiUrl}/rules`).pipe(
             map((rules: PadelRule[]) => {
-                // Ensure rule_description is always an array
+                // Use the new parsing function for better rule description handling
                 const transformedRules = rules.map(rule => ({
                     ...rule,
-                    rule_description: Array.isArray(rule.rule_description) 
-                        ? rule.rule_description 
-                        : rule.rule_description ? [rule.rule_description] : []
+                    sections: rule.sections || [] // Ensure sections is an array
                 }));
                 return transformedRules;
             }),
@@ -52,9 +98,7 @@ export class QuarkusRulesService {
         return this.http.get<PadelRule>(`${this.apiUrl}/rules/${ruleId}`).pipe(
             map(rule => ({
                 ...rule,
-                rule_description: Array.isArray(rule.rule_description) 
-                    ? rule.rule_description 
-                    : [rule.rule_description]
+                sections: rule.sections || [] // Ensure sections is an array
             })),
             catchError(error => {
                 console.error('Error fetching rule from Quarkus API:', error);
@@ -72,9 +116,9 @@ export class QuarkusRulesService {
         return this.http.post<PadelRule>(`${this.apiUrl}/rules`, rule).pipe(
             map(createdRule => ({
                 ...createdRule,
-                rule_description: Array.isArray(createdRule.rule_description) 
-                    ? createdRule.rule_description 
-                    : [createdRule.rule_description]
+                sections: Array.isArray(createdRule.sections) 
+                    ? createdRule.sections 
+                    : [createdRule.sections]
             })),
             catchError(error => {
                 console.error('Error creating rule via Quarkus API:', error);
@@ -93,9 +137,9 @@ export class QuarkusRulesService {
         return this.http.put<PadelRule>(`${this.apiUrl}/rules/${ruleId}`, rule).pipe(
             map(updatedRule => ({
                 ...updatedRule,
-                rule_description: Array.isArray(updatedRule.rule_description) 
-                    ? updatedRule.rule_description 
-                    : [updatedRule.rule_description]
+                sections: Array.isArray(updatedRule.sections) 
+                    ? updatedRule.sections 
+                    : [updatedRule.sections]
             })),
             catchError(error => {
                 console.error('Error updating rule via Quarkus API:', error);
@@ -129,9 +173,9 @@ export class QuarkusRulesService {
             map((rules: PadelRule[]) => {
                 return rules.map(rule => ({
                     ...rule,
-                    rule_description: Array.isArray(rule.rule_description) 
-                        ? rule.rule_description 
-                        : [rule.rule_description]
+                    sections: Array.isArray(rule.sections) 
+                        ? rule.sections 
+                        : [rule.sections]
                 }));
             }),
             catchError(error => {

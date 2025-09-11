@@ -43,18 +43,8 @@ export class ProfileCompletionGuard implements CanActivate {
     }
 
     private isProfileComplete(profile: any): boolean {
-        console.log('ProfileCompletionGuard: Checking profile fields:', {
-            profileCompleted: profile.profileCompleted,
-            profile_completed: profile.profile_completed,
-            first_name: profile.first_name,
-            last_name: profile.last_name,
-            display_name: profile.display_name,
-            interests: profile.interests
-        });
-
         // Check if profile_completed flag is set to true
         if (profile.profileCompleted || profile.profile_completed) {
-            console.log('ProfileCompletionGuard: Profile completion flag is true');
             return true;
         }
 
@@ -67,11 +57,6 @@ export class ProfileCompletionGuard implements CanActivate {
         const hasInterests = profile.interests && profile.interests.length > 0;
 
         const isComplete = !!(hasRequiredFields && hasInterests);
-        console.log('ProfileCompletionGuard: Required fields check:', {
-            hasRequiredFields,
-            hasInterests,
-            isComplete
-        });
 
         return isComplete;
     }

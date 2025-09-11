@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, catchError, throwError, map, combineLatest } from 'rxjs';
+import { Observable, of, catchError, throwError, map, combineLatest, tap } from 'rxjs';
 import { Venue } from './venue.service';
 import { environment } from '../../environments/environment';
 import { QuarkusTournamentService } from './quarkus-tournament.service';
@@ -165,6 +165,7 @@ export interface Tournament {
     club?: Club;
     userId: string;
     tournamentType: string;
+    accessType?: string; // 'open' (all players) or 'closed' (club members only)
 }
 
 // Round Robin specific interface
@@ -399,7 +400,12 @@ export class TournamentService {
 
     updateMatchScore(matchId: string, updates: Partial<TournamentMatch>): Observable<void> {
         return this.quarkusTournamentService.updateMatchScore(matchId, updates).pipe(
+            tap(response => {
+                console.log('=== TOURNAMENT SERVICE SUCCESS ===');
+                console.log('Quarkus service returned:', response);
+            }),
             catchError(error => {
+                console.error('=== TOURNAMENT SERVICE ERROR ===');
                 console.error('Error updating match score in PostgreSQL:', error);
                 return throwError(() => error);
             })
@@ -777,6 +783,54 @@ export class TournamentService {
             catchError(error => {
                 console.error('Error loading tournament data:', error);
                 return of({ tournament: null, config: {} as TournamentConfig, groups: [], teams: [] });
+            })
+        );
+    }
+
+    /**
+     * Generate knockout bracket matches based on round robin standings
+     */
+    generateKnockoutBracket(tournamentId: string): Observable<TournamentMatch[]> {
+        return this.quarkusTournamentService.generateKnockoutBracket(tournamentId).pipe(
+            catchError(error => {
+                console.error('Error generating knockout bracket:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Get knockout bracket matches for a tournament
+     */
+    getKnockoutMatches(tournamentId: string): Observable<TournamentMatch[]> {
+        return this.quarkusTournamentService.getKnockoutMatches(tournamentId).pipe(
+            catchError(error => {
+                console.error('Error getting knockout matches:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Generate next round of knockout matches
+     */
+    generateNextKnockoutRound(tournamentId: string): Observable<TournamentMatch[]> {
+        return this.quarkusTournamentService.generateNextKnockoutRound(tournamentId).pipe(
+            catchError(error => {
+                console.error('Error generating next knockout round:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Check if all group matches are completed
+     */
+    areAllGroupMatchesCompleted(tournamentId: string): Observable<boolean> {
+        return this.quarkusTournamentService.areAllGroupMatchesCompleted(tournamentId).pipe(
+            catchError(error => {
+                console.error('Error checking group match completion:', error);
+                return throwError(() => error);
             })
         );
     }

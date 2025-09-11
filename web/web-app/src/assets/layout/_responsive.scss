@@ -20,6 +20,7 @@
                 left: 0;
                 top: 0;
                 height: 100vh;
+                width: 22rem; /* Match Sakai-NG sidebar width */
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;
                 border-right: 1px solid var(--surface-border);
@@ -41,7 +42,18 @@
 
         &.layout-static {
             .layout-main-container {
-                margin-left: 22rem;
+                margin-left: 22rem; /* Match Sakai-NG exactly */
+            }
+
+            .layout-sidebar {
+                position: fixed;
+                top: 4rem; /* Below topbar */
+                left: 0;
+                height: calc(100vh - 4rem);
+                width: 22rem; /* Match Sakai-NG sidebar width */
+                transform: translateX(0);
+                z-index: 999;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
             &.layout-static-inactive {

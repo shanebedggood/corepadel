@@ -3,7 +3,6 @@ package za.cf.cp.tournament;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * RoundRobinTournament entity representing Round Robin tournaments.
@@ -39,8 +38,8 @@ public class RoundRobinTournament extends Tournament {
     
     // Constructor with essential fields
     public RoundRobinTournament(String name, String description, LocalDateTime startDate, LocalDateTime endDate, 
-                               Integer maxParticipants, String clubId, String firebaseUid, Integer noOfGroups) {
-        super(name, description, startDate, endDate, maxParticipants, clubId, firebaseUid);
+                               Integer maxParticipants, za.cf.cp.club.Club club, String firebaseUid, Integer noOfGroups) {
+        super(name, description, startDate, endDate, maxParticipants, club, firebaseUid);
         this.noOfGroups = noOfGroups;
     }
     

@@ -30,6 +30,6 @@ echo "   - URL: http://localhost:4200"
 echo "   - Press Ctrl+C to stop"
 echo ""
 
-# Start Angular development server
+# Start Angular development server with better state preservation
 cd web-app
-ng serve --open 
+ng serve --open --configuration=development --hmr --poll=2000 

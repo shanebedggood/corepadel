@@ -1,0 +1,223 @@
+<div class="run-booking-container p-4">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">5AM Run Bookings</h1>
+    <p class="text-gray-600">Book your 5AM weekday runs and see who else is joining</p>
+  </div>
+
+  <!-- Calendar Navigation -->
+  <div class="calendar-navigation mb-4">
+    <div class="flex items-center justify-between bg-white rounded-lg shadow-sm p-3">
+      <button 
+        pButton 
+        type="button" 
+        icon="pi pi-chevron-left" 
+        class="p-button-outlined p-button-sm"
+        (click)="onPreviousMonth()"
+        [disabled]="loading">
+      </button>
+      
+      <h2 class="text-xl font-semibold text-gray-800">{{ getMonthName() }}</h2>
+      
+      <button 
+        pButton 
+        type="button" 
+        icon="pi pi-chevron-right" 
+        class="p-button-outlined p-button-sm"
+        (click)="onNextMonth()"
+        [disabled]="loading">
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  @if (loading) {
+    <div class="flex justify-center items-center py-8">
+      <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+    </div>
+  }
+
+  <!-- Calendar Grid -->
+  @if (!loading) {
+    <div class="calendar-grid">
+    <!-- Calendar Header -->
+    <div class="calendar-header grid grid-cols-7 gap-1 mb-2">
+      <div class="text-center text-sm font-medium text-gray-500 py-2">Sun</div>
+      <div class="text-center text-sm font-medium text-gray-500 py-2">Mon</div>
+      <div class="text-center text-sm font-medium text-gray-500 py-2">Tue</div>
+      <div class="text-center text-sm font-medium text-gray-500 py-2">Wed</div>
+      <div class="text-center text-sm font-medium text-gray-500 py-2">Thu</div>
+      <div class="text-center text-sm font-medium text-gray-500 py-2">Fri</div>
+      <div class="text-center text-sm font-medium text-gray-500 py-2">Sat</div>
+    </div>
+
+    <!-- Calendar Days -->
+    <div class="calendar-days grid grid-cols-7 gap-1">
+      @for (day of calendarDays; track trackByDate($index, day)) {
+        <div 
+          class="calendar-day"
+          [class]="getDayClasses(day)"
+          (click)="onDateSelect(day.date)"
+          [pTooltip]="getDayTooltip(day)"
+          tooltipPosition="top">
+        
+        <!-- Day Number -->
+        <div class="day-number">{{ day.date.getDate() }}</div>
+        
+        <!-- Booking Events -->
+        @if (day.slot && day.isBookable) {
+          <div class="booking-events">
+            <!-- User Booking Event -->
+            @if (isUserBooked(day.slot)) {
+              <div class="booking-event user-booking">
+                <span class="event-text">Booked</span>
+              </div>
+            }
+          </div>
+        }
+        
+        <!-- Runner Count Badge -->
+        @if (day.slot && day.isBookable && getBookingCount(day.slot) > 0) {
+          <div class="runner-count-badge">
+            <p-badge [value]="getBookingCount(day.slot)" severity="info" style="font-size: 10px; min-width: 18px; height: 18px;"></p-badge>
+          </div>
+        }
+        </div>
+      }
+    </div>
+    </div>
+  }
+
+  <!-- Legend -->
+  <div class="legend mt-6 bg-gray-50 rounded-lg p-4">
+    <h3 class="text-sm font-medium text-gray-700 mb-3">Legend</h3>
+    <div class="flex flex-wrap gap-4 text-sm">
+      <div class="flex items-center gap-2">
+        <div class="booking-event-legend user-booking">
+          <span class="event-text">Booked</span>
+        </div>
+        <span class="text-gray-600">You're booked</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <p-badge value="3" severity="info"></p-badge>
+        <span class="text-gray-600">Total runners</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded" style="background-color: #ffffff; border: 1px solid #e2e8f0;"></div>
+        <span class="text-gray-600">Available weekday</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded" style="background-color: #f0fdf4; border: 1px solid #22c55e;"></div>
+        <span class="text-gray-600">Today</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 bg-gray-100 border border-gray-300 rounded" style="background-color: #f8fafc; border-color: #e2e8f0;"></div>
+        <span class="text-gray-600">Other month</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded" style="background-color: #fef2f2; border: 1px solid #fecaca;"></div>
+        <span class="text-gray-600">Weekend</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Modal -->
+<p-dialog 
+  [(visible)]="showBookingModal" 
+  [modal]="true" 
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  header="5AM Run Booking"
+  [style]="{ width: '500px' }"
+  (onHide)="onCloseModal()">
+  
+  @if (selectedSlot) {
+    <div class="booking-modal-content">
+    <!-- Date Info -->
+    <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+      <h3 class="font-semibold text-blue-800">
+        {{ selectedDate | date:'EEEE, MMMM d, y' }}
+      </h3>
+      <p class="text-blue-600 text-sm">5:00 AM - 6:00 AM</p>
+    </div>
+
+    <!-- Current Bookings -->
+    <div class="mb-4">
+      <h4 class="font-medium text-gray-700 mb-2">
+        Runners ({{ getBookingCount(selectedSlot) }})
+      </h4>
+      @if (getBookingCount(selectedSlot) === 0) {
+        <div class="text-gray-500 text-sm">
+          No runners booked yet
+        </div>
+      }
+      @if (getBookingCount(selectedSlot) > 0) {
+        <div class="runners-list-container">
+          <div class="space-y-2">
+            @for (booking of selectedSlot.bookings; track booking.booking_id) {
+              <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span class="text-sm">{{ booking.user_name }}</span>
+                @if (booking.user_id === currentUser?.firebaseUid) {
+                  <div class="flex items-center gap-2">
+                    <p-tag value="You" severity="success"></p-tag>
+                    <button 
+                      pButton 
+                      type="button" 
+                      icon="pi pi-times" 
+                      class="p-button-text p-button-sm p-button-danger"
+                      (click)="onCancelBooking(booking.booking_id!)"
+                      [loading]="isCancellingBooking"
+                      pTooltip="Cancel your booking">
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Booking Form -->
+    @if (!isUserBooked(selectedSlot)) {
+      <div class="booking-form">
+        
+        <div class="flex justify-end gap-2">
+          <button 
+            pButton 
+            type="button" 
+            label="Cancel" 
+            class="p-button-secondary"
+            (click)="onCloseModal()">
+          </button>
+          <button 
+            pButton 
+            type="button" 
+            label="Book Run" 
+            class="p-button-success"
+            (click)="onCreateBooking()"
+            [loading]="isCreatingBooking">
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Already Booked Message -->
+    @if (isUserBooked(selectedSlot)) {
+      <div class="text-center py-4">
+        <i class="pi pi-check-circle text-green-500 text-2xl mb-2"></i>
+        <p class="text-green-600 font-medium">You're already booked for this run!</p>
+        <button 
+          pButton 
+          type="button" 
+          label="Close" 
+          class="p-button-secondary mt-3"
+          (click)="onCloseModal()">
+        </button>
+      </div>
+    }
+    </div>
+  }
+</p-dialog>

@@ -15,7 +15,6 @@ import { Component } from '@angular/core';
           <ul>
             <li><a routerLink="/">Home</a></li>
             <li><a routerLink="/tournaments">Tournaments</a></li>
-            <li><a routerLink="/rules">Rules</a></li>
           </ul>
         </div>
         <div class="footer-section">

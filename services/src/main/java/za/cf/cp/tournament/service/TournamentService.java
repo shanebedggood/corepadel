@@ -31,14 +31,14 @@ public class TournamentService {
     @Inject
     EntityManager entityManager;
     
-    @Inject
-    TournamentConfigService tournamentConfigService;
+    // @Inject
+    // TournamentConfigService tournamentConfigService;
     
     @Inject
     za.cf.cp.club.service.ClubService clubService;
     
     @Inject
-    za.cf.cp.venue.service.VenueService venueService;
+    za.cf.cp.user.service.UserService userService;
     
     /**
      * Get all tournaments ordered by creation date (newest first).
@@ -46,9 +46,7 @@ public class TournamentService {
     @Transactional
     public List<TournamentDto> getAllTournaments() {
         try {
-            System.out.println("Getting all tournaments from database...");
             List<Tournament> tournaments = Tournament.listAll();
-            System.out.println("Found " + tournaments.size() + " tournaments in database");
             
             List<TournamentDto> dtos = new ArrayList<>();
             for (Tournament tournament : tournaments) {
@@ -61,7 +59,6 @@ public class TournamentService {
                 }
             }
             
-            System.out.println("Successfully converted " + dtos.size() + " tournaments to DTOs");
             return dtos;
         } catch (Exception e) {
             System.err.println("Error in getAllTournaments: " + e.getMessage());
@@ -92,6 +89,9 @@ public class TournamentService {
      */
     @Transactional
     public String createTournament(TournamentDto tournamentDto) {
+        // Validate that the user is an admin of the club
+        validateUserIsClubAdmin(tournamentDto.getFirebaseUid(), tournamentDto.getClubId());
+        
         Tournament tournament = convertToEntity(tournamentDto);
         tournament.persist();
         return tournament.getTournamentId().toString();
@@ -106,6 +106,9 @@ public class TournamentService {
             UUID tournamentId = UUID.fromString(id);
             Tournament tournament = Tournament.findById(tournamentId);
             if (tournament != null) {
+                // Validate that the user is an admin of the club
+                validateUserIsClubAdmin(tournamentDto.getFirebaseUid(), tournamentDto.getClubId());
+                
                 updateEntityFromDto(tournament, tournamentDto);
                 return true;
             }
@@ -155,8 +158,6 @@ public class TournamentService {
      */
     private TournamentDto convertToDto(Tournament tournament) {
         try {
-            System.out.println("Converting tournament to DTO: " + tournament.getTournamentId());
-            
             // Create the appropriate DTO based on tournament type
             TournamentDto dto;
             if (tournament instanceof RoundRobinTournament) {
@@ -187,28 +188,31 @@ public class TournamentService {
             dto.setClubId(tournament.getClubId());
             dto.setFirebaseUid(tournament.getFirebaseUid());
             dto.setVenueId(tournament.getVenueId());
+            dto.setAccessType(tournament.getAccessType());
             
-            // Add venue information if venueId is provided
-            if (tournament.getVenueId() != null) {
+            // Add venue information if venueClub is provided
+            if (tournament.getVenueClub() != null) {
                 try {
-                    za.cf.cp.venue.dto.VenueDto venue = venueService.getVenueById(tournament.getVenueId());
-                    if (venue != null) {
+                    za.cf.cp.club.Club venueClub = tournament.getVenueClub();
+                    if (venueClub != null && venueClub.isVenue()) {
                         // Create a venue object that matches the frontend interface
                         Map<String, Object> venueObject = new HashMap<>();
-                        venueObject.put("id", venue.id);
-                        venueObject.put("name", venue.name);
-                        venueObject.put("website", venue.website);
-                        venueObject.put("facilities", venue.facilities);
+                        venueObject.put("id", venueClub.getClubId().toString());
+                        venueObject.put("name", venueClub.getName());
+                        venueObject.put("website", venueClub.getWebsite());
+                        venueObject.put("facilities", venueClub.getFacilities());
                         
-                        // Add address information
-                        Map<String, Object> address = new HashMap<>();
-                        address.put("street", venue.address.street);
-                        address.put("suburb", venue.address.suburb);
-                        address.put("city", venue.address.city);
-                        address.put("province", venue.address.province);
-                        address.put("postalCode", venue.address.postalCode);
-                        address.put("country", venue.address.country);
-                        venueObject.put("address", address);
+                        // Add address information if available
+                        if (venueClub.getAddress() != null) {
+                            Map<String, Object> address = new HashMap<>();
+                            address.put("street", venueClub.getAddress().street);
+                            address.put("suburb", venueClub.getAddress().suburb);
+                            address.put("city", venueClub.getAddress().city);
+                            address.put("province", venueClub.getAddress().province);
+                            address.put("postalCode", venueClub.getAddress().postalCode);
+                            address.put("country", venueClub.getAddress().country);
+                            venueObject.put("address", address);
+                        }
                         
                         // Set the venue object in the DTO
                         dto.setVenue(venueObject);
@@ -227,22 +231,21 @@ public class TournamentService {
             
             // Convert related entities to DTOs
             if (tournament.getFormat() != null) {
-                dto.setFormat(tournamentConfigService.convertFormatToDto(tournament.getFormat()));
+                // dto.setFormat(tournamentConfigService.convertFormatToDto(tournament.getFormat()));
             }
             if (tournament.getCategory() != null) {
-                dto.setCategory(tournamentConfigService.convertCategoryToDto(tournament.getCategory()));
+                // dto.setCategory(tournamentConfigService.convertCategoryToDto(tournament.getCategory()));
             }
             if (tournament.getRegistrationType() != null) {
-                dto.setRegistrationType(tournamentConfigService.convertRegistrationTypeToDto(tournament.getRegistrationType()));
+                // dto.setRegistrationType(tournamentConfigService.convertRegistrationTypeToDto(tournament.getRegistrationType()));
             }
             if (tournament.getStatus() != null) {
-                dto.setStatus(tournamentConfigService.convertStatusToDto(tournament.getStatus()));
+                // dto.setStatus(tournamentConfigService.convertStatusToDto(tournament.getStatus()));
             }
             if (tournament.getVenueType() != null) {
-                dto.setVenueType(tournamentConfigService.convertVenueTypeToDto(tournament.getVenueType()));
+                // dto.setVenueType(tournamentConfigService.convertVenueTypeToDto(tournament.getVenueType()));
             }
             
-            System.out.println("Successfully converted tournament to DTO: " + tournament.getTournamentId());
             return dto;
         } catch (Exception e) {
             System.err.println("Error converting tournament " + tournament.getTournamentId() + " to DTO: " + e.getMessage());
@@ -260,7 +263,7 @@ public class TournamentService {
         
         // Convert Round Robin specific entities to DTOs
         if (tournament.getProgressionType() != null) {
-            dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
+            // dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
         }
         if (tournament.getTeamsToAdvance() != null) {
             dto.setTeamsToAdvance(tournament.getTeamsToAdvance());
@@ -287,13 +290,6 @@ public class TournamentService {
      */
     private Tournament convertToEntity(TournamentDto dto) {
         try {
-            System.out.println("Converting DTO to entity: " + dto);
-            System.out.println("DTO format: " + dto.getFormat());
-            System.out.println("DTO category: " + dto.getCategory());
-            System.out.println("DTO registrationType: " + dto.getRegistrationType());
-            System.out.println("DTO venueType: " + dto.getVenueType());
-            System.out.println("DTO status: " + dto.getStatus());
-            
             // Create the appropriate tournament entity based on type
             Tournament tournament;
             if (dto instanceof RoundRobinTournamentDto) {
@@ -302,7 +298,18 @@ public class TournamentService {
                 tournament = convertToAmericanoEntity((AmericanoTournamentDto) dto);
             } else {
                 // Default to Round Robin for backward compatibility
-                tournament = convertToRoundRobinEntity(new RoundRobinTournamentDto());
+                RoundRobinTournamentDto fallbackDto = new RoundRobinTournamentDto();
+                // Copy essential fields from the original DTO to prevent null constraint violations
+                fallbackDto.setFirebaseUid(dto.getFirebaseUid());
+                fallbackDto.setClubId(dto.getClubId());
+                fallbackDto.setName(dto.getName());
+                fallbackDto.setDescription(dto.getDescription());
+                fallbackDto.setStartDate(dto.getStartDate());
+                fallbackDto.setEndDate(dto.getEndDate());
+                fallbackDto.setMaxParticipants(dto.getMaxParticipants());
+                fallbackDto.setCurrentParticipants(dto.getCurrentParticipants());
+                fallbackDto.setEntryFee(dto.getEntryFee());
+                tournament = convertToRoundRobinEntity(fallbackDto);
             }
             
             if (dto.getId() != null) {
@@ -317,47 +324,77 @@ public class TournamentService {
             tournament.setMaxParticipants(dto.getMaxParticipants());
             tournament.setCurrentParticipants(dto.getCurrentParticipants());
             tournament.setEntryFee(dto.getEntryFee());
-            tournament.setClubId(dto.getClubId());
-            System.out.println("Setting firebaseUid: " + dto.getFirebaseUid());
+            // Set club relationship if clubId is provided
+            if (dto.getClubId() != null && !dto.getClubId().trim().isEmpty()) {
+                String clubIdStr = dto.getClubId().trim();
+                
+                // Handle special case for "default-club-id" - this should be replaced with actual club ID
+                if ("default-club-id".equals(clubIdStr)) {
+                    throw new RuntimeException("Invalid club ID: 'default-club-id' is a placeholder. Please provide a valid club ID.");
+                }
+                
+                try {
+                    UUID clubId = UUID.fromString(clubIdStr);
+                    za.cf.cp.club.Club club = za.cf.cp.club.Club.findById(clubId);
+                    if (club != null) {
+                        tournament.setClub(club);
+                    } else {
+                        throw new RuntimeException("Club not found with ID: " + clubId);
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException("Invalid club ID format: '" + clubIdStr + "'. Expected a valid UUID format.", e);
+                } catch (Exception e) {
+                    throw new RuntimeException("Error setting club for tournament: " + e.getMessage(), e);
+                }
+            } else {
+                throw new RuntimeException("Club ID is required but not provided or empty");
+            }
+            
             tournament.setFirebaseUid(dto.getFirebaseUid());
-            tournament.setVenueId(dto.getVenueId());
+            
+            // Set access type
+            if (dto.getAccessType() != null && !dto.getAccessType().trim().isEmpty()) {
+                tournament.setAccessType(dto.getAccessType());
+            } else {
+                tournament.setAccessType("open"); // Default to open
+            }
+            
+            // Set venue club relationship if venueId is provided
+            if (dto.getVenueId() != null) {
+                try {
+                    UUID venueId = UUID.fromString(dto.getVenueId());
+                    za.cf.cp.club.Club venueClub = za.cf.cp.club.Club.findById(venueId);
+                    if (venueClub != null && venueClub.isVenue()) {
+                        tournament.setVenueClub(venueClub);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error setting venue club for tournament: " + e.getMessage());
+                }
+            }
             
             // Set related entities if IDs are provided
             if (dto.getFormat() != null && dto.getFormat().getId() != null) {
-                System.out.println("Looking up format with ID: " + dto.getFormat().getId());
                 Format format = Format.findById(UUID.fromString(dto.getFormat().getId()));
                 if (format == null) {
                     throw new RuntimeException("Format not found with ID: " + dto.getFormat().getId());
                 }
-                System.out.println("Found format: " + format.getName());
                 tournament.setFormat(format);
-            } else {
-                System.out.println("Format is null or has no ID: " + dto.getFormat());
             }
             if (dto.getCategory() != null && dto.getCategory().getId() != null) {
-                System.out.println("Looking up category with ID: " + dto.getCategory().getId());
                 Category category = Category.findById(UUID.fromString(dto.getCategory().getId()));
                 if (category == null) {
                     throw new RuntimeException("Category not found with ID: " + dto.getCategory().getId());
                 }
-                System.out.println("Found category: " + category.getName());
                 tournament.setCategory(category);
-            } else {
-                System.out.println("Category is null or has no ID: " + dto.getCategory());
             }
             if (dto.getRegistrationType() != null && dto.getRegistrationType().getId() != null) {
-                System.out.println("Looking up registration type with ID: " + dto.getRegistrationType().getId());
                 RegistrationType registrationType = RegistrationType.findById(UUID.fromString(dto.getRegistrationType().getId()));
                 if (registrationType == null) {
                     throw new RuntimeException("RegistrationType not found with ID: " + dto.getRegistrationType().getId());
                 }
-                System.out.println("Found registration type: " + registrationType.getName());
                 tournament.setRegistrationType(registrationType);
-            } else {
-                System.out.println("Registration type is null or has no ID: " + dto.getRegistrationType());
             }
             if (dto.getStatus() != null && dto.getStatus().getId() != null) {
-                System.out.println("Looking up status with ID: " + dto.getStatus().getId());
                 TournamentStatus status = TournamentStatus.findById(UUID.fromString(dto.getStatus().getId()));
                 if (status == null) {
                     throw new RuntimeException("TournamentStatus not found with ID: " + dto.getStatus().getId());
@@ -365,50 +402,35 @@ public class TournamentService {
                 tournament.setStatus(status);
             }
             if (dto.getVenueType() != null && dto.getVenueType().getId() != null) {
-                System.out.println("Looking up venue type with ID: " + dto.getVenueType().getId());
                 VenueType venueType = VenueType.findById(UUID.fromString(dto.getVenueType().getId()));
                 if (venueType == null) {
                     throw new RuntimeException("VenueType not found with ID: " + dto.getVenueType().getId());
                 }
-                System.out.println("Found venue type: " + venueType.getName());
                 tournament.setVenueType(venueType);
             }
             // Set related entities if IDs are provided
             if (dto.getFormat() != null && dto.getFormat().getId() != null) {
-                System.out.println("Looking up format with ID: " + dto.getFormat().getId());
                 Format format = Format.findById(UUID.fromString(dto.getFormat().getId()));
                 if (format == null) {
                     throw new RuntimeException("Format not found with ID: " + dto.getFormat().getId());
                 }
-                System.out.println("Found format: " + format.getName());
                 tournament.setFormat(format);
-            } else {
-                System.out.println("Format is null or has no ID: " + dto.getFormat());
             }
             if (dto.getCategory() != null && dto.getCategory().getId() != null) {
-                System.out.println("Looking up category with ID: " + dto.getCategory().getId());
                 Category category = Category.findById(UUID.fromString(dto.getCategory().getId()));
                 if (category == null) {
                     throw new RuntimeException("Category not found with ID: " + dto.getCategory().getId());
                 }
-                System.out.println("Found category: " + category.getName());
                 tournament.setCategory(category);
-            } else {
-                System.out.println("Category is null or has no ID: " + dto.getCategory());
             }
             if (dto.getRegistrationType() != null && dto.getRegistrationType().getId() != null) {
-                System.out.println("Looking up registration type with ID: " + dto.getRegistrationType().getId());
                 RegistrationType registrationType = RegistrationType.findById(UUID.fromString(dto.getRegistrationType().getId()));
                 if (registrationType == null) {
                     throw new RuntimeException("RegistrationType not found with ID: " + dto.getRegistrationType().getId());
                 }
-                System.out.println("Found registration type: " + registrationType.getName());
                 tournament.setRegistrationType(registrationType);
-            } else {
-                System.out.println("Registration type is null or has no ID: " + dto.getRegistrationType());
             }
             if (dto.getStatus() != null && dto.getStatus().getId() != null) {
-                System.out.println("Looking up status with ID: " + dto.getStatus().getId());
                 TournamentStatus status = TournamentStatus.findById(UUID.fromString(dto.getStatus().getId()));
                 if (status == null) {
                     throw new RuntimeException("TournamentStatus not found with ID: " + dto.getStatus().getId());
@@ -416,12 +438,10 @@ public class TournamentService {
                 tournament.setStatus(status);
             }
             if (dto.getVenueType() != null && dto.getVenueType().getId() != null) {
-                System.out.println("Looking up venue type with ID: " + dto.getVenueType().getId());
                 VenueType venueType = VenueType.findById(UUID.fromString(dto.getVenueType().getId()));
                 if (venueType == null) {
                     throw new RuntimeException("VenueType not found with ID: " + dto.getVenueType().getId());
                 }
-                System.out.println("Found venue type: " + venueType.getName());
                 tournament.setVenueType(venueType);
             }
             
@@ -458,6 +478,13 @@ public class TournamentService {
             tournament.setTeamsToAdvance(dto.getTeamsToAdvance());
         }
         
+        // Set the firebaseUid to prevent null constraint violation
+        if (dto.getFirebaseUid() != null && !dto.getFirebaseUid().trim().isEmpty()) {
+            tournament.setFirebaseUid(dto.getFirebaseUid());
+        } else {
+            System.err.println("Warning: firebaseUid is null or empty in RoundRobinTournamentDto");
+        }
+        
         return tournament;
     }
     
@@ -481,6 +508,13 @@ public class TournamentService {
             tournament.setGamesPerRotation(dto.getGamesPerRotation());
         }
         
+        // Set the firebaseUid to prevent null constraint violation
+        if (dto.getFirebaseUid() != null && !dto.getFirebaseUid().trim().isEmpty()) {
+            tournament.setFirebaseUid(dto.getFirebaseUid());
+        } else {
+            System.err.println("Warning: firebaseUid is null or empty in AmericanoTournamentDto");
+        }
+        
         return tournament;
     }
     
@@ -497,7 +531,18 @@ public class TournamentService {
         if (dto.getMaxParticipants() != null) tournament.setMaxParticipants(dto.getMaxParticipants());
         if (dto.getCurrentParticipants() != null) tournament.setCurrentParticipants(dto.getCurrentParticipants());
         if (dto.getEntryFee() != null) tournament.setEntryFee(dto.getEntryFee());
-        if (dto.getVenueId() != null) tournament.setVenueId(dto.getVenueId());
+        // Set venue club relationship if venueId is provided
+        if (dto.getVenueId() != null) {
+            try {
+                UUID venueId = UUID.fromString(dto.getVenueId());
+                za.cf.cp.club.Club venueClub = za.cf.cp.club.Club.findById(venueId);
+                if (venueClub != null && venueClub.isVenue()) {
+                    tournament.setVenueClub(venueClub);
+                }
+            } catch (Exception e) {
+                System.err.println("Error setting venue club for tournament: " + e.getMessage());
+            }
+        }
         
         // Update related entities if provided
         if (dto.getFormat() != null && dto.getFormat().getId() != null) {
@@ -572,8 +617,6 @@ public class TournamentService {
     @Transactional
     public List<Object> getTournamentParticipants(String tournamentId) {
         try {
-            System.out.println("Getting participants for tournament: " + tournamentId);
-            
             // Validate tournament ID format
             if (tournamentId == null || tournamentId.trim().isEmpty()) {
                 throw new IllegalArgumentException("Tournament ID cannot be null or empty");
@@ -589,7 +632,6 @@ public class TournamentService {
             // Check if tournament exists
             Tournament tournament = Tournament.findById(id);
             if (tournament == null) {
-                System.out.println("Tournament not found with ID: " + tournamentId);
                 return new ArrayList<>();
             }
             
@@ -604,9 +646,6 @@ public class TournamentService {
                 WHERE tp.tournament_id = ?
                 """;
             
-            System.out.println("Executing query: " + query);
-            System.out.println("Tournament ID parameter: " + id);
-            
             List<Object[]> results;
             try {
                 results = entityManager.createNativeQuery(query)
@@ -617,9 +656,7 @@ public class TournamentService {
                 e.printStackTrace();
                 throw new RuntimeException("Database query failed: " + e.getMessage(), e);
             }
-            
-            System.out.println("Found " + results.size() + " participants for tournament " + tournamentId);
-            
+                        
                             return results.stream().map(row -> {
                 try {
                     Map<String, Object> participantDto = new HashMap<>();
@@ -633,9 +670,6 @@ public class TournamentService {
                     participantDto.put("mobile", row[9]); // mobile
                     participantDto.put("rating", row[10] != null ? row[10] : 0); // rating
                     participantDto.put("addedBy", row[3]); // added_by
-
-                    System.out.println("Participant " + (row[6] != null ? row[6] : "Unknown") + " (UID: " + (row[2] != null ? row[2] : "Unknown") + ") has rating: " + (row[10] != null ? row[10] : 0));
-
                     return participantDto;
                 } catch (Exception e) {
                     System.err.println("Error processing participant row: " + e.getMessage());
@@ -736,8 +770,6 @@ public class TournamentService {
             if (updatedRows == 0) {
                 throw new RuntimeException("User not found for participant: " + participantId);
             }
-            
-            System.out.println("Updated participant " + participant.firebaseUid + " rating to: " + rating);
         } catch (Exception e) {
             throw new RuntimeException("Error updating participant rating: " + e.getMessage(), e);
         }
@@ -985,8 +1017,6 @@ public class TournamentService {
                             player.put("mobile", row[8]); // mobile
                             player.put("rating", row[9]); // rating
                             players.add(player);
-                            
-                            System.out.println("Team player " + row[5] + " (UID: " + row[1] + ") has rating: " + row[9]);
                         } else {
                             // Fallback if participant not found
                             Map<String, Object> player = new HashMap<>();
@@ -1226,7 +1256,6 @@ public class TournamentService {
     @Transactional
     public void updateMatchScore(String matchId, Object matchData) {
         try {
-            System.out.println("Updating match score for matchId: " + matchId);
             UUID id = UUID.fromString(matchId);
             
             // Find the match
@@ -1238,32 +1267,41 @@ public class TournamentService {
             // Parse the match data from JSON
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNode = mapper.valueToTree(matchData);
-            System.out.println("Match data received: " + jsonNode.toString());
             
             // Update match fields if provided
+            boolean hasScores = false;
+            
             if (jsonNode.has("team1Score")) {
                 match.team1Score = jsonNode.get("team1Score").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("team2Score")) {
                 match.team2Score = jsonNode.get("team2Score").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("team1Set1")) {
                 match.team1Set1 = jsonNode.get("team1Set1").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("team2Set1")) {
                 match.team2Set1 = jsonNode.get("team2Set1").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("team1Set2")) {
                 match.team1Set2 = jsonNode.get("team1Set2").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("team2Set2")) {
                 match.team2Set2 = jsonNode.get("team2Set2").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("team1Set3")) {
                 match.team1Set3 = jsonNode.get("team1Set3").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("team2Set3")) {
                 match.team2Set3 = jsonNode.get("team2Set3").asInt();
+                hasScores = true;
             }
             if (jsonNode.has("winnerId")) {
                 String winnerId = jsonNode.get("winnerId").asText();
@@ -1295,7 +1333,6 @@ public class TournamentService {
                             match.scheduledTime = LocalDateTime.parse(scheduledTimeStr);
                         }
                     } catch (Exception e) {
-                        System.err.println("Error parsing scheduledTime: " + scheduledTimeStr + " - " + e.getMessage());
                         // Don't update if parsing fails
                     }
                 } else {
@@ -1311,11 +1348,57 @@ public class TournamentService {
                 }
             }
             
-            // Persist the changes
-            match.persist();
+            // Update match status based on whether the match is actually completed
+            if (hasScores) {
+                // For knockout matches, only set to completed if we have enough sets to determine a winner
+                if (match.phase != null && !match.phase.equals("group")) {
+                    // Knockout match - check if we have at least 2 sets with scores to determine winner
+                    int completedSets = 0;
+                    if (match.team1Set1 != null && match.team2Set1 != null && 
+                        !(match.team1Set1 == 0 && match.team2Set1 == 0)) {
+                        completedSets++;
+                    }
+                    if (match.team1Set2 != null && match.team2Set2 != null && 
+                        !(match.team1Set2 == 0 && match.team2Set2 == 0)) {
+                        completedSets++;
+                    }
+                    if (match.team1Set3 != null && match.team2Set3 != null && 
+                        !(match.team1Set3 == 0 && match.team2Set3 == 0)) {
+                        completedSets++;
+                    }
+                    
+                    // Only set to completed if we have at least 2 sets and can determine a winner
+                    if (completedSets >= 2) {
+                        match.status = "completed";
+                    } else {
+                        match.status = "in_progress";
+                    }
+                } else {
+                    // Group match - set to completed if scores are provided
+                    match.status = "completed";
+                }
+            }
             
-            // Recalculate standings for the group
-            calculateAndUpdateStandings(match.tournament.tournamentId.toString(), match.group.groupId.toString());
+            // Use merge to ensure the entity is properly managed and changes are persisted
+            entityManager.merge(match);
+            
+            // Force flush to ensure the data is written to the database
+            entityManager.flush();
+            
+            // Check for auto-generation opportunities (but do it in a separate transaction to avoid interference)
+            if (match.status != null && match.status.equals("completed")) {
+                try {
+                    checkAndAutoGenerateNextRound(match);
+                } catch (Exception e) {
+                    // Don't let auto-generation errors break match updates
+                    System.err.println("Error in auto-generation: " + e.getMessage());
+                }
+            }
+            
+            // Recalculate standings for the group (only for group matches, not knockout matches)
+            if (match.group != null) {
+                calculateAndUpdateStandings(match.tournament.tournamentId.toString(), match.group.groupId.toString());
+            }
             
         } catch (Exception e) {
             throw new RuntimeException("Error updating match score: " + e.getMessage(), e);
@@ -1349,7 +1432,6 @@ public class TournamentService {
                 List<TournamentTeam> teams = TournamentTeam.find("group.groupId", group.groupId).list();
                 
                 if (teams.size() < 2) {
-                    System.out.println("Group " + group.name + " has less than 2 teams, skipping match generation");
                     continue;
                 }
                 
@@ -1580,14 +1662,24 @@ public class TournamentService {
         List<TournamentStanding> standings = TournamentStanding.findByTournamentAndGroup(tournamentId, groupId);
         
         // Sort by points (desc), goal difference (desc), goals for (desc)
+        // Add deterministic fallbacks to avoid unstable ordering when fully tied
         standings.sort((a, b) -> {
             int pointsCompare = Integer.compare(b.points, a.points);
             if (pointsCompare != 0) return pointsCompare;
-            
+
             int goalDiffCompare = Integer.compare(b.goalDifference, a.goalDifference);
             if (goalDiffCompare != 0) return goalDiffCompare;
-            
-            return Integer.compare(b.goalsFor, a.goalsFor);
+
+            int goalsForCompare = Integer.compare(b.goalsFor, a.goalsFor);
+            if (goalsForCompare != 0) return goalsForCompare;
+
+            // Fallback: sort by team name if available, otherwise by teamId
+            String aTeamName = getTeamNameSafe(a.teamId);
+            String bTeamName = getTeamNameSafe(b.teamId);
+            int nameCompare = aTeamName.compareToIgnoreCase(bTeamName);
+            if (nameCompare != 0) return nameCompare;
+
+            return a.teamId.compareTo(b.teamId);
         });
         
         // Update positions
@@ -1596,6 +1688,17 @@ public class TournamentService {
             standings.get(i).persist();
         }
     }
+
+    private String getTeamNameSafe(String teamId) {
+        try {
+            if (teamId == null) return "";
+            TournamentTeam team = TournamentTeam.findById(UUID.fromString(teamId));
+            if (team != null && team.name != null) {
+                return team.name;
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
     
     /**
      * Get standings for a tournament group.
@@ -1603,9 +1706,7 @@ public class TournamentService {
     @Transactional
     public List<Object> getTournamentStandings(String tournamentId, String groupId) {
         try {
-            System.out.println("Service: Getting standings for tournament: " + tournamentId + ", group: " + groupId);
             List<TournamentStanding> standings = TournamentStanding.findByTournamentAndGroup(tournamentId, groupId);
-            System.out.println("Service: Found " + standings.size() + " standings records");
             
             return standings.stream().map(standing -> {
                 Map<String, Object> standingDto = new HashMap<>();
@@ -1678,6 +1779,48 @@ public class TournamentService {
         }
     }
     
+    /**
+     * Validate that a user is an admin of a club
+     */
+    private void validateUserIsClubAdmin(String firebaseUid, String clubId) {
+        if (firebaseUid == null || firebaseUid.trim().isEmpty()) {
+            System.err.println("ERROR: Firebase UID is null or empty");
+            throw new RuntimeException("User authentication required to create tournament");
+        }
+        
+        if (clubId == null || clubId.trim().isEmpty()) {
+            System.err.println("ERROR: Club ID is null or empty");
+            throw new RuntimeException("Club ID is required to create tournament");
+        }
+        
+        try {
+            UUID clubUuid = UUID.fromString(clubId);
+            
+            // Check if user exists
+            Optional<za.cf.cp.user.User> userOpt = userService.findByFirebaseUid(firebaseUid);
+            if (userOpt.isEmpty()) {
+                System.err.println("ERROR: User not found with Firebase UID: " + firebaseUid);
+                throw new RuntimeException("User not found with Firebase UID: " + firebaseUid);
+            }
+            
+            // Check if user is admin of the club using the new method
+            boolean isAdmin = userService.isUserClubAdmin(firebaseUid, clubUuid);
+            
+            if (!isAdmin) {
+                System.err.println("ERROR: User is not admin of club: " + clubId);
+                throw new RuntimeException("Only club admins can create tournaments. User is not an admin of club: " + clubId);
+            }
+            
+        } catch (IllegalArgumentException e) {
+            System.err.println("ERROR: Invalid club ID format: " + clubId);
+            throw new RuntimeException("Invalid club ID format: " + clubId, e);
+        } catch (Exception e) {
+            System.err.println("ERROR: Error validating user permissions: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error validating user permissions: " + e.getMessage(), e);
+        }
+    }
+    
     // Helper classes
     private static class MatchResult {
         final boolean isComplete;
@@ -1701,5 +1844,665 @@ public class TournamentService {
             this.team1Score = team1Score;
             this.team2Score = team2Score;
         }
+    }
+
+    // ==================== KNOCKOUT BRACKET METHODS ====================
+
+    /**
+     * Generate knockout bracket matches based on round robin standings
+     */
+    @Transactional
+    public List<Object> generateKnockoutBracket(String tournamentId) {
+        try {
+            UUID id = UUID.fromString(tournamentId);
+            
+            // Find the tournament
+            Tournament tournament = Tournament.findById(id);
+            if (tournament == null) {
+                throw new RuntimeException("Tournament not found: " + tournamentId);
+            }
+
+            // Check if tournament is round robin type
+            if (!"ROUND_ROBIN".equals(tournament.getTournamentType())) {
+                throw new RuntimeException("Knockout bracket can only be generated for round robin tournaments");
+            }
+
+            // Check if all group matches are completed
+            if (!areAllGroupMatchesCompleted(tournamentId)) {
+                throw new RuntimeException("All group matches must be completed before generating knockout bracket");
+            }
+
+            // Get all groups for this tournament
+            List<TournamentGroup> groups = TournamentGroup.find("tournament.tournamentId", id).list();
+            if (groups.isEmpty()) {
+                throw new RuntimeException("No groups found for tournament: " + tournamentId);
+            }
+
+            // Get advancing teams based on standings
+            List<TournamentTeam> advancingTeams = getAdvancingTeams(tournament, groups);
+            
+            if (advancingTeams.size() < 2) {
+                throw new RuntimeException("At least 2 teams must advance to generate knockout bracket");
+            }
+
+            // Generate knockout matches
+            List<TournamentMatch> knockoutMatches = generateKnockoutMatches(tournament, advancingTeams);
+            
+            // Convert matches to DTOs for response
+            List<Object> matchDtos = new ArrayList<>();
+            for (TournamentMatch match : knockoutMatches) {
+                Map<String, Object> matchDto = new HashMap<>();
+                matchDto.put("id", match.matchId.toString());
+                matchDto.put("tournamentId", tournamentId);
+                matchDto.put("groupId", null); // Knockout matches don't have groups
+                matchDto.put("phase", match.phase);
+                matchDto.put("round", match.round);
+                matchDto.put("team1Id", match.team1.teamId.toString());
+                matchDto.put("team2Id", match.team2.teamId.toString());
+                matchDto.put("team1Score", match.team1Score);
+                matchDto.put("team2Score", match.team2Score);
+                matchDto.put("status", match.status);
+                matchDto.put("scheduledTime", match.scheduledTime);
+                matchDto.put("venueId", match.venueId);
+                
+                matchDtos.add(matchDto);
+            }
+            
+            return matchDtos;
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating knockout bracket: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get knockout bracket matches for a tournament
+     */
+    public List<Object> getKnockoutMatches(String tournamentId) {
+        try {
+            UUID id = UUID.fromString(tournamentId);
+            
+            // Get all knockout matches for this tournament (exclude group phase)
+            List<TournamentMatch> matches = TournamentMatch.find(
+                "tournament.tournamentId = ?1 and phase != ?2", 
+                id, 
+                "group"
+            ).list();
+            
+            // Convert matches to DTOs for response
+            List<Object> matchDtos = new ArrayList<>();
+            for (TournamentMatch match : matches) {
+                
+                Map<String, Object> matchDto = new HashMap<>();
+                matchDto.put("id", match.matchId.toString());
+                matchDto.put("tournamentId", tournamentId);
+                matchDto.put("groupId", match.group != null ? match.group.groupId.toString() : null);
+                matchDto.put("phase", match.phase);
+                matchDto.put("round", match.round);
+                matchDto.put("team1Id", match.team1.teamId.toString());
+                matchDto.put("team2Id", match.team2.teamId.toString());
+                matchDto.put("team1Score", match.team1Score);
+                matchDto.put("team2Score", match.team2Score);
+                matchDto.put("team1Set1", match.team1Set1);
+                matchDto.put("team2Set1", match.team2Set1);
+                matchDto.put("team1Set2", match.team1Set2);
+                matchDto.put("team2Set2", match.team2Set2);
+                matchDto.put("team1Set3", match.team1Set3);
+                matchDto.put("team2Set3", match.team2Set3);
+                matchDto.put("status", match.status);
+                matchDto.put("scheduledTime", match.scheduledTime);
+                matchDto.put("venueId", match.venueId);
+                
+                matchDtos.add(matchDto);
+            }
+            
+            return matchDtos;
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting knockout matches: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Check if all group matches are completed
+     */
+    public boolean areAllGroupMatchesCompleted(String tournamentId) {
+        try {
+            UUID id = UUID.fromString(tournamentId);
+            
+            // Get all group matches for this tournament
+            List<TournamentMatch> groupMatches = TournamentMatch.find(
+                "tournament.tournamentId = ?1 and phase = ?2", 
+                id, 
+                "group"
+            ).list();
+            
+            if (groupMatches.isEmpty()) {
+                return false; // No group matches found
+            }
+            
+            // Check if all matches are completed
+            int completedCount = 0;
+            for (TournamentMatch match : groupMatches) {
+                if ("completed".equals(match.status)) {
+                    completedCount++;
+                } else {
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error checking group match completion: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Get advancing teams based on standings and tournament configuration
+     * Uses proper tournament seeding: group winners vs runners-up from different groups
+     */
+    private List<TournamentTeam> getAdvancingTeams(Tournament tournament, List<TournamentGroup> groups) {
+        List<TournamentTeam> advancingTeams = new ArrayList<>();
+        
+        // Get teams to advance per group from tournament configuration
+        int teamsToAdvancePerGroup = 2; // Default to 2 teams per group
+        
+        // If it's a RoundRobinTournament, get the teamsToAdvance value
+        if (tournament instanceof RoundRobinTournament) {
+            RoundRobinTournament roundRobinTournament = (RoundRobinTournament) tournament;
+            if (roundRobinTournament.getTeamsToAdvance() != null) {
+                teamsToAdvancePerGroup = roundRobinTournament.getTeamsToAdvance();
+            }
+        }
+        
+        // Collect group winners and runners-up separately
+        List<TournamentTeam> groupWinners = new ArrayList<>();
+        List<TournamentTeam> runnersUp = new ArrayList<>();
+        
+        for (TournamentGroup group : groups) {
+            // Get standings for this group
+            List<TournamentStanding> standings = TournamentStanding.find(
+                "tournamentId = ?1 and groupId = ?2 order by position asc", 
+                tournament.tournamentId.toString(), 
+                group.groupId.toString()
+            ).list();
+            
+            // Add group winner (1st place)
+            if (standings.size() > 0) {
+                TournamentStanding winnerStanding = standings.get(0);
+                TournamentTeam winner = TournamentTeam.find("teamId", UUID.fromString(winnerStanding.teamId)).firstResult();
+                if (winner != null) {
+                    groupWinners.add(winner);
+                }
+            }
+            
+            // Add runner-up (2nd place) if advancing 2 teams per group
+            if (teamsToAdvancePerGroup >= 2 && standings.size() > 1) {
+                TournamentStanding runnerUpStanding = standings.get(1);
+                TournamentTeam runnerUp = TournamentTeam.find("teamId", UUID.fromString(runnerUpStanding.teamId)).firstResult();
+                if (runnerUp != null) {
+                    runnersUp.add(runnerUp);
+                }
+            }
+        }
+        
+        // Apply proper tournament seeding based on tournament type
+        if (teamsToAdvancePerGroup == 2) {
+            // Standard group-based elimination: group winners vs runners-up from different groups
+            advancingTeams = createGroupBasedEliminationBracket(groupWinners, runnersUp);
+        } else {
+            // Combined elimination: all advancing teams seeded by overall performance
+            advancingTeams = createCombinedEliminationBracket(groupWinners, runnersUp, tournament, groups);
+        }        
+        return advancingTeams;
+    }
+
+    /**
+     * Create bracket for Group-Based Elimination (standard tournament format)
+     * Group winners face runners-up from different groups
+     * Uses FIFA/UEFA style bracket to ensure same-group teams are on opposite sides
+     */
+    private List<TournamentTeam> createGroupBasedEliminationBracket(List<TournamentTeam> groupWinners, List<TournamentTeam> runnersUp) {
+        List<TournamentTeam> bracket = new ArrayList<>();
+        
+        int numGroups = Math.min(groupWinners.size(), runnersUp.size());
+        
+        // FIFA/UEFA style bracket structure to avoid same-group matchups
+        // For 4 groups: A1 vs B2, C1 vs D2, B1 vs A2, D1 vs C2
+        // This ensures same-group teams are on opposite sides of the bracket
+        
+        for (int i = 0; i < numGroups; i++) {
+            // Add group winner
+            TournamentTeam winner = groupWinners.get(i);
+            bracket.add(winner);
+            
+            // Calculate runner-up index to avoid same-group matchups
+            // Use a pattern that ensures different group pairings
+            int runnerUpIndex;
+            if (numGroups == 4) {
+                // Standard 4-group bracket: A1 vs B2, C1 vs D2, B1 vs A2, D1 vs C2
+                if (i == 0) runnerUpIndex = 1;      // A1 vs B2
+                else if (i == 1) runnerUpIndex = 0; // B1 vs A2  
+                else if (i == 2) runnerUpIndex = 3; // C1 vs D2
+                else runnerUpIndex = 2;             // D1 vs C2
+            } else if (numGroups == 3) {
+                // 3-group bracket: A1 vs B2, B1 vs C2, C1 vs A2
+                runnerUpIndex = (i + 1) % numGroups;
+            } else if (numGroups == 2) {
+                // 2-group bracket: A1 vs B2, B1 vs A2
+                runnerUpIndex = (i + 1) % numGroups;
+            } else {
+                // For other numbers, use a simple offset but ensure no same-group matchups
+                runnerUpIndex = (i + 1) % numGroups;
+            }
+            
+            TournamentTeam runnerUp = runnersUp.get(runnerUpIndex);
+            bracket.add(runnerUp);
+        }
+        
+        return bracket;
+    }
+
+    /**
+     * Create bracket for Combined Elimination (all teams seeded by overall performance)
+     * Teams are ranked by their overall performance across all groups and seeded accordingly
+     */
+    private List<TournamentTeam> createCombinedEliminationBracket(List<TournamentTeam> groupWinners, List<TournamentTeam> runnersUp, Tournament tournament, List<TournamentGroup> groups) {
+        List<TournamentTeam> allAdvancingTeams = new ArrayList<>();
+        allAdvancingTeams.addAll(groupWinners);
+        allAdvancingTeams.addAll(runnersUp);
+        
+        // Create a comprehensive ranking of all advancing teams based on overall performance
+        List<TeamPerformance> teamPerformances = new ArrayList<>();
+        
+        for (TournamentTeam team : allAdvancingTeams) {
+            TeamPerformance performance = calculateOverallPerformance(team, tournament);
+            teamPerformances.add(performance);
+        }
+        
+        // Sort by overall performance (points, goal difference, goals scored, etc.)
+        teamPerformances.sort((a, b) -> {
+            // Primary: Points
+            int pointsComparison = Integer.compare(b.points, a.points);
+            if (pointsComparison != 0) return pointsComparison;
+            
+            // Secondary: Goal difference
+            int goalDiffComparison = Integer.compare(b.goalDifference, a.goalDifference);
+            if (goalDiffComparison != 0) return goalDiffComparison;
+            
+            // Tertiary: Goals scored
+            int goalsScoredComparison = Integer.compare(b.goalsScored, a.goalsScored);
+            if (goalsScoredComparison != 0) return goalsScoredComparison;
+            
+            // Quaternary: Goals conceded (fewer is better)
+            return Integer.compare(a.goalsConceded, b.goalsConceded);
+        });
+        
+        // Extract teams in performance order
+        List<TournamentTeam> seededTeams = new ArrayList<>();
+        for (TeamPerformance performance : teamPerformances) {
+            seededTeams.add(performance.team);
+        }
+        
+        return seededTeams;
+    }
+    
+    /**
+     * Calculate overall performance metrics for a team across all group matches
+     */
+    private TeamPerformance calculateOverallPerformance(TournamentTeam team, Tournament tournament) {
+        TeamPerformance performance = new TeamPerformance();
+        performance.team = team;
+        performance.points = 0;
+        performance.goalsScored = 0;
+        performance.goalsConceded = 0;
+        performance.matchesPlayed = 0;
+        
+        // Get all group matches for this team
+        List<TournamentMatch> teamMatches = TournamentMatch.find(
+            "tournament.tournamentId = ?1 and (team1.teamId = ?2 or team2.teamId = ?2) and phase = 'group'", 
+            tournament.tournamentId, 
+            team.teamId
+        ).list();
+        
+        for (TournamentMatch match : teamMatches) {
+            if (match.team1Score != null && match.team2Score != null) {
+                performance.matchesPlayed++;
+                
+                if (match.team1.teamId.equals(team.teamId)) {
+                    // Team is team1
+                    performance.goalsScored += match.team1Score;
+                    performance.goalsConceded += match.team2Score;
+                    
+                    if (match.team1Score > match.team2Score) {
+                        performance.points += 3; // Win
+                    } else if (match.team1Score.equals(match.team2Score)) {
+                        performance.points += 1; // Draw
+                    }
+                } else {
+                    // Team is team2
+                    performance.goalsScored += match.team2Score;
+                    performance.goalsConceded += match.team1Score;
+                    
+                    if (match.team2Score > match.team1Score) {
+                        performance.points += 3; // Win
+                    } else if (match.team2Score.equals(match.team1Score)) {
+                        performance.points += 1; // Draw
+                    }
+                }
+            }
+        }
+        
+        performance.goalDifference = performance.goalsScored - performance.goalsConceded;
+        return performance;
+    }
+    
+    /**
+     * Helper class to hold team performance metrics
+     */
+    private static class TeamPerformance {
+        TournamentTeam team;
+        int points;
+        int goalsScored;
+        int goalsConceded;
+        int goalDifference;
+        int matchesPlayed;
+    }
+
+    /**
+     * Generate knockout matches for advancing teams - only the first round
+     */
+    private List<TournamentMatch> generateKnockoutMatches(Tournament tournament, List<TournamentTeam> advancingTeams) {
+        List<TournamentMatch> matches = new ArrayList<>();
+        
+        int numTeams = advancingTeams.size();
+        if (numTeams < 2) {
+            return matches;
+        }
+        
+        // Only generate the first round of matches
+        // Subsequent rounds will be generated as previous rounds are completed
+        String firstPhase = determineFirstKnockoutPhase(numTeams);
+        
+        // Generate first round matches
+        // For group-based elimination, pair teams sequentially as they come from bracket creation
+        // For combined elimination, use 1st vs last seeding
+        for (int i = 0; i < numTeams / 2; i++) {
+            TournamentMatch match = new TournamentMatch();
+            match.tournament = tournament;
+            match.group = null; // Knockout matches don't have groups
+            match.phase = firstPhase;
+            match.round = 1;
+            
+            int team1Index, team2Index;
+            
+            // Check if this is group-based elimination (teams are already properly paired)
+            // or combined elimination (need 1st vs last seeding)
+            if (isGroupBasedElimination(tournament)) {
+                // Group-based elimination: pair teams sequentially (already properly paired)
+                team1Index = i * 2;
+                team2Index = i * 2 + 1;
+            } else {
+                // Combined elimination: 1st vs last, 2nd vs second-to-last, etc.
+                team1Index = i;
+                team2Index = numTeams - 1 - i;
+            }
+            
+            match.team1 = advancingTeams.get(team1Index);
+            match.team2 = advancingTeams.get(team2Index);
+            match.team1Score = null;
+            match.team2Score = null;
+            match.status = "scheduled";
+            match.scheduledTime = null; // Will be set later
+            match.venueId = null; // Will be set later            
+            match.persist();
+            matches.add(match);
+        }
+        
+        return matches;
+    }
+
+    /**
+     * Check if this is group-based elimination (2 teams per group) or combined elimination
+     */
+    private boolean isGroupBasedElimination(Tournament tournament) {
+        if (tournament instanceof RoundRobinTournament) {
+            RoundRobinTournament roundRobinTournament = (RoundRobinTournament) tournament;
+            return roundRobinTournament.getTeamsToAdvance() != null && roundRobinTournament.getTeamsToAdvance() == 2;
+        }
+        return true; // Default to group-based elimination
+    }
+
+    /**
+     * Determine the first knockout phase based on number of teams
+     */
+    private String determineFirstKnockoutPhase(int numTeams) {
+        if (numTeams <= 2) {
+            return "final";
+        } else if (numTeams <= 4) {
+            return "semifinal";
+        } else if (numTeams <= 8) {
+            return "quarterfinal";
+        } else {
+            // For more than 8 teams, start with round_1
+            return "round_1";
+        }
+    }
+
+    /**
+     * Determine knockout phases based on number of teams
+     */
+    private String[] determineKnockoutPhases(int numTeams) {
+        if (numTeams <= 2) {
+            return new String[]{"final"};
+        } else if (numTeams <= 4) {
+            return new String[]{"semifinal", "final"};
+        } else if (numTeams <= 8) {
+            return new String[]{"quarterfinal", "semifinal", "final"};
+        } else {
+            // For more than 8 teams, we need additional rounds
+            int totalRounds = (int) Math.ceil(Math.log(numTeams) / Math.log(2));
+            String[] phases = new String[totalRounds];
+            phases[totalRounds - 1] = "final";
+            if (totalRounds > 1) {
+                phases[totalRounds - 2] = "semifinal";
+            }
+            if (totalRounds > 2) {
+                phases[totalRounds - 3] = "quarterfinal";
+            }
+            // Add additional rounds as needed
+            for (int i = 0; i < totalRounds - 3; i++) {
+                phases[i] = "round_" + (i + 1);
+            }
+            return phases;
+        }
+    }
+
+    /**
+     * Generate next round of knockout matches when a round is completed
+     */
+    @Transactional
+    public List<Object> generateNextKnockoutRound(String tournamentId) {
+        try {
+            UUID id = UUID.fromString(tournamentId);
+            
+            // Find the tournament
+            Tournament tournament = Tournament.findById(id);
+            if (tournament == null) {
+                throw new RuntimeException("Tournament not found: " + tournamentId);
+            }
+
+            // Find the highest completed round
+            List<TournamentMatch> allKnockoutMatches = TournamentMatch.find(
+                "tournament.tournamentId = ?1 and phase != ?2", 
+                id, 
+                "group"
+            ).list();
+
+            if (allKnockoutMatches.isEmpty()) {
+                throw new RuntimeException("No knockout matches found for tournament: " + tournamentId);
+            }
+
+            // Find the highest round number
+            int maxRound = allKnockoutMatches.stream()
+                .mapToInt(match -> match.round)
+                .max()
+                .orElse(0);
+
+            // Check if the highest round is completed
+            List<TournamentMatch> currentRoundMatches = allKnockoutMatches.stream()
+                .filter(match -> match.round == maxRound)
+                .collect(java.util.stream.Collectors.toList());
+
+            boolean allCompleted = currentRoundMatches.stream()
+                .allMatch(match -> "completed".equals(match.status));
+
+            if (!allCompleted) {
+                throw new RuntimeException("Current round must be completed before generating next round");
+            }
+
+            // Get winners from current round using set-based scoring
+            List<TournamentTeam> winners = new ArrayList<>();
+            for (TournamentMatch match : currentRoundMatches) {
+                // Use the same logic as calculateMatchResult to determine winner
+                MatchResult result = calculateMatchResult(match);
+                if (result.isComplete && result.winner != null) {
+                    if (result.winner.equals(match.team1.teamId.toString())) {
+                        winners.add(match.team1);
+                    } else if (result.winner.equals(match.team2.teamId.toString())) {
+                        winners.add(match.team2);
+                    }
+                }
+            }
+
+            if (winners.size() < 2) {
+                throw new RuntimeException("Not enough winners to generate next round");
+            }
+
+            // Determine next phase
+            String nextPhase = determineNextKnockoutPhase(maxRound, winners.size());
+            int nextRound = maxRound + 1;
+
+            // Generate next round matches
+            List<TournamentMatch> newMatches = new ArrayList<>();
+            for (int i = 0; i < winners.size() / 2; i++) {
+                TournamentMatch match = new TournamentMatch();
+                match.tournament = tournament;
+                match.group = null;
+                match.phase = nextPhase;
+                match.round = nextRound;
+                match.team1 = winners.get(i * 2);
+                match.team2 = winners.get(i * 2 + 1);
+                match.team1Score = null;
+                match.team2Score = null;
+                match.status = "scheduled";
+                match.scheduledTime = null;
+                match.venueId = null;
+                
+                match.persist();
+                newMatches.add(match);
+            }
+
+            // Convert to DTOs
+            List<Object> matchDtos = new ArrayList<>();
+            for (TournamentMatch match : newMatches) {
+                Map<String, Object> matchDto = new HashMap<>();
+                matchDto.put("id", match.matchId.toString());
+                matchDto.put("tournamentId", tournamentId);
+                matchDto.put("groupId", null);
+                matchDto.put("phase", match.phase);
+                matchDto.put("round", match.round);
+                matchDto.put("team1Id", match.team1.teamId.toString());
+                matchDto.put("team2Id", match.team2.teamId.toString());
+                matchDto.put("team1Score", match.team1Score);
+                matchDto.put("team2Score", match.team2Score);
+                matchDto.put("status", match.status);
+                matchDto.put("scheduledTime", match.scheduledTime);
+                matchDto.put("venueId", match.venueId);
+                
+                matchDtos.add(matchDto);
+            }
+
+            return matchDtos;
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating next knockout round: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Determine the next knockout phase based on current round and number of teams
+     */
+    private String determineNextKnockoutPhase(int currentRound, int numTeams) {
+        if (numTeams == 2) {
+            return "final";
+        } else if (numTeams == 4) {
+            return "semifinal";
+        } else if (numTeams == 8) {
+            return "quarterfinal";
+        } else {
+            // For other cases, continue with round numbering
+            return "round_" + (currentRound + 1);
+        }
+    }
+
+    /**
+     * Check if auto-generation should be triggered and generate next round if needed
+     */
+    private void checkAndAutoGenerateNextRound(TournamentMatch completedMatch) {
+        try {
+            String tournamentId = completedMatch.tournament.tournamentId.toString();
+            
+            // Check if this was a group match and all group matches are now completed
+            if (completedMatch.phase != null && completedMatch.phase.equals("group")) {
+                if (areAllGroupMatchesCompleted(tournamentId)) {
+                    generateKnockoutBracket(tournamentId);
+                }
+            }
+            // Check if this was a knockout match and all matches in current round are completed
+            else if (completedMatch.phase != null && !completedMatch.phase.equals("group")) {
+                if (areAllMatchesInCurrentRoundCompleted(tournamentId, completedMatch.round)) {
+                    generateNextKnockoutRound(tournamentId);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error in auto-generation check: " + e.getMessage());
+            // Don't throw - auto-generation failure shouldn't break match updates
+        }
+    }
+    
+    /**
+     * Check if all matches in a specific round are completed
+     */
+    private boolean areAllMatchesInCurrentRoundCompleted(String tournamentId, int round) {
+        UUID id = UUID.fromString(tournamentId);
+        
+        List<TournamentMatch> roundMatches = TournamentMatch.find(
+            "tournament.tournamentId = ?1 and round = ?2 and phase != ?3", 
+            id, 
+            round,
+            "group"
+        ).list();
+        
+        if (roundMatches.isEmpty()) {
+            return false;
+        }
+        
+        return roundMatches.stream().allMatch(match -> "completed".equals(match.status));
+    }
+
+    /**
+     * Determine number of teams per phase
+     */
+    private int[] determineTeamsPerPhase(int numTeams) {
+        int totalRounds = (int) Math.ceil(Math.log(numTeams) / Math.log(2));
+        int[] teamsPerPhase = new int[totalRounds];
+        
+        int currentTeams = numTeams;
+        for (int i = 0; i < totalRounds; i++) {
+            teamsPerPhase[i] = currentTeams;
+            currentTeams = currentTeams / 2;
+        }
+        
+        return teamsPerPhase;
     }
 } 

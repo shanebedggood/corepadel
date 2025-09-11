@@ -2,11 +2,14 @@ package za.cf.cp.user.service;
 
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import za.cf.cp.user.User;
 import za.cf.cp.user.UserRole;
+import za.cf.cp.user.Role;
 import za.cf.cp.user.UserClub;
 import za.cf.cp.club.Club;
+import za.cf.cp.user.dto.CachedUserData;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +21,9 @@ import java.util.UUID;
  */
 @ApplicationScoped
 public class UserService {
+    
+    @Inject
+    UserAuthCacheService userAuthCacheService;
     
     /**
      * Find a user by their Firebase UID
@@ -79,6 +85,34 @@ public class UserService {
             throw new RuntimeException("Username is required");
         }
         
+        // Apply sensible defaults
+        if (user.displayName == null || user.displayName.trim().isEmpty()) {
+            user.displayName = user.username;
+        }
+        if ((user.firstName == null || user.firstName.isBlank()) && (user.lastName == null || user.lastName.isBlank())) {
+            // Derive first/last from displayName if possible (split on first space)
+            String dn = user.displayName != null ? user.displayName.trim() : "";
+            int spaceIdx = dn.indexOf(' ');
+            if (spaceIdx > 0) {
+                user.firstName = dn.substring(0, spaceIdx).trim();
+                user.lastName = dn.substring(spaceIdx + 1).trim();
+            } else {
+                user.firstName = dn; // put all in first name
+            }
+        }
+        if (user.rating == null) {
+            user.rating = 0;
+        }
+        if (user.emailVerified == null) {
+            user.emailVerified = false;
+        }
+        if (user.interests == null) {
+            user.interests = new String[0];
+        }
+        if (user.profileCompleted == null) {
+            user.profileCompleted = false;
+        }
+        
         // Ensure username is unique by appending a suffix if needed
         String baseUsername = user.username;
         String uniqueUsername = baseUsername;
@@ -91,7 +125,36 @@ public class UserService {
         user.username = uniqueUsername;
         
         user.persist();
+        
+        // Assign default role 'player' if no roles exist yet
+        assignDefaultPlayerRole(user.firebaseUid);
+        
         return user;
+    }
+    
+    private void assignDefaultPlayerRole(String firebaseUid) {
+        try {
+            // Check if user already has any role
+            List<UserRole> roles = UserRole.find("user.firebaseUid", firebaseUid).list();
+            
+            if (roles == null || roles.isEmpty()) {
+                Optional<User> userOpt = findByFirebaseUid(firebaseUid);
+                if (userOpt.isPresent()) {
+                    // Find the 'player' role from the role table
+                    Role playerRole = Role.find("roleName", "player").firstResult();
+                    if (playerRole == null) {
+                        System.err.println("❌ 'player' role not found in role table");
+                        return;
+                    }
+                    
+                    UserRole userRole = new UserRole(userOpt.get(), playerRole);
+                    userRole.persist();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error creating default role: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -155,8 +218,14 @@ public class UserService {
             throw new RuntimeException("User not found with Firebase UID: " + firebaseUid);
         }
         
+        // Find the role from the role table
+        Role role = Role.find("roleName", roleName).firstResult();
+        if (role == null) {
+            throw new RuntimeException("Role not found: " + roleName);
+        }
+        
         User user = userOpt.get();
-        UserRole userRole = new UserRole(user, roleName);
+        UserRole userRole = new UserRole(user, role);
         userRole.persist();
         return userRole;
     }
@@ -193,7 +262,7 @@ public class UserService {
      * Add user to club
      */
     @Transactional
-    public UserClub addUserToClub(String firebaseUid, UUID clubId, String role) {
+    public UserClub addUserToClub(String firebaseUid, UUID clubId, String roleName) {
         Optional<User> userOpt = findByFirebaseUid(firebaseUid);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found with Firebase UID: " + firebaseUid);
@@ -202,6 +271,12 @@ public class UserService {
         Club club = Club.findById(clubId);
         if (club == null) {
             throw new RuntimeException("Club not found with ID: " + clubId);
+        }
+        
+        // Find the role by name
+        Role role = Role.find("roleName", roleName).firstResult();
+        if (role == null) {
+            throw new RuntimeException("Role not found: " + roleName);
         }
         
         User user = userOpt.get();
@@ -221,6 +296,63 @@ public class UserService {
             return true;
         }
         return false;
+    }
+    
+    /**
+     * Get club admins by club ID
+     */
+    public List<UserClub> getClubAdmins(UUID clubId) {
+        return UserClub.find("club.clubId = ?1 and role.roleName in ('admin', 'owner')", clubId).list();
+    }
+    
+    
+    /**
+     * Get user's club memberships with roles
+     */
+    public List<UserClub> getUserClubMemberships(String firebaseUid) {
+        return UserClub.find("user.firebaseUid = ?1", firebaseUid).list();
+    }
+    
+    /**
+     * Get cached user authentication data (roles and club memberships)
+     */
+    public CachedUserData getCachedUserData(String firebaseUid) {
+        return userAuthCacheService.getCachedUserData(firebaseUid);
+    }
+    
+    /**
+     * Check if user has a specific role (using cache)
+     */
+    public boolean hasRole(String firebaseUid, String roleName) {
+        return userAuthCacheService.hasRole(firebaseUid, roleName);
+    }
+    
+    /**
+     * Check if user is admin of a specific club (using cache)
+     */
+    public boolean isUserClubAdmin(String firebaseUid, UUID clubId) {
+        return userAuthCacheService.isAdminOfClub(firebaseUid, clubId);
+    }
+    
+    /**
+     * Get all clubs where user is admin (using cache)
+     */
+    public List<CachedUserData.ClubMembership> getAdminClubs(String firebaseUid) {
+        return userAuthCacheService.getAdminClubs(firebaseUid);
+    }
+    
+    /**
+     * Get all club memberships for user (using cache)
+     */
+    public List<CachedUserData.ClubMembership> getCachedClubMemberships(String firebaseUid) {
+        return userAuthCacheService.getClubMemberships(firebaseUid);
+    }
+    
+    /**
+     * Invalidate user cache (call when user data changes)
+     */
+    public void invalidateUserCache(String firebaseUid) {
+        userAuthCacheService.invalidateUserCache(firebaseUid);
     }
     
     /**

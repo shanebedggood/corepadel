@@ -1,0 +1,64 @@
+.clubs-container {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.search-filters {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.club-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.club-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.club-header {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.address-info {
+  border-left: 3px solid #10b981;
+  padding-left: 0.75rem;
+}
+
+.website-link a:hover {
+  text-decoration: underline;
+}
+
+.search-field label {
+  color: #374151;
+  font-weight: 500;
+}
+
+:host ::ng-deep .p-select,
+:host ::ng-deep .p-iconfield {
+  width: 100%;
+}
+
+:host ::ng-deep .p-card {
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+:host ::ng-deep .p-card .p-card-body {
+  padding: 1.5rem;
+}
+
+:host ::ng-deep .p-card .p-card-content {
+  padding: 0;
+}
+
+:host ::ng-deep .p-card .p-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+:host ::ng-deep .p-card .p-card-header h3 {
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
+}

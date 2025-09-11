@@ -58,6 +58,11 @@ public class User extends PanacheEntityBase {
     @JsonProperty("profile_completed")
     public Boolean profileCompleted = false;
     
+    // One-to-many relationship with UserRole
+    // @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    // @JsonProperty("roles")
+    // public List<UserRole> roles;
+    
     // Default constructor required by JPA
     public User() {}
     
@@ -181,6 +186,14 @@ public class User extends PanacheEntityBase {
         this.profileCompleted = profileCompleted != null ? profileCompleted : false;
     }
     
+    // public List<UserRole> getRoles() {
+    //     return roles;
+    // }
+    
+    // public void setRoles(List<UserRole> roles) {
+    //     this.roles = roles;
+    // }
+    
     @Override
     public String toString() {
         return "User{" +
@@ -196,6 +209,7 @@ public class User extends PanacheEntityBase {
                 ", emailVerified=" + emailVerified +
                 ", interests=" + java.util.Arrays.toString(interests) +
                 ", profileCompleted=" + profileCompleted +
+                // ", roles=" + (roles != null ? roles.size() : "null") +
                 '}';
     }
 } 

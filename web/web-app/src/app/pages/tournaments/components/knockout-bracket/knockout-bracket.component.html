@@ -1,0 +1,380 @@
+<div class="knockout-bracket">
+    <!-- Loading State -->
+    @if (loading) {
+        <div class="loading-container">
+            <div class="loading-spinner">
+                <i class="pi pi-spin pi-spinner"></i>
+                <p>Loading knockout bracket...</p>
+            </div>
+        </div>
+    }
+
+    <!-- Error State -->
+    @if (error) {
+        <div class="error-container">
+            <div class="error-message">
+                <i class="pi pi-exclamation-triangle"></i>
+                <p>{{ error }}</p>
+            </div>
+        </div>
+    }
+
+    <!-- Knockout Bracket Content -->
+    @if (!loading && !error && hasMatches()) {
+        <div class="bracket-content">
+            <div class="bracket-header">
+                <div class="header-left">
+                    <h2>Knockout Bracket</h2>
+                    <p class="text-sm text-gray-600">Elimination phase matches</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Auto-generation is now handled automatically when matches are completed -->
+                </div>
+            </div>
+
+            <div class="bracket-phases">
+                <!-- Other Rounds (Round 1, Round 2, etc.) -->
+                @for (phase of getOtherRoundPhases(); track phase) {
+                    <div class="phase-section">
+                        <h3>{{ getPhaseTitle(phase) }}</h3>
+                        <div class="matches-grid">
+                            @for (match of otherRounds[phase]; track match.id) {
+                                <div class="match-card" [class]="getMatchStatusClass(match.status)">
+                                    <div class="match-header">
+                                        <div class="header-left">
+                                            <span class="match-phase">{{ getPhaseTitle(phase) }}</span>
+                                            <div class="match-schedule">
+                                                <i class="pi pi-calendar"></i>
+                                                {{ formatDate(match.scheduledTime) }}
+                                            </div>
+                                            <div class="match-venue">
+                                                <i class="pi pi-map-marker"></i>
+                                                {{ getVenueName(match.venueId) }}
+                                            </div>
+                                        </div>
+                                        <span class="match-status">
+                                            <i [class]="getMatchStatusIcon(match.status)"></i>
+                                            {{ match.status | titlecase }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="match-teams">
+                                        <div class="team team1">
+                                            <div class="team-name">{{ getTeamName(match.team1Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team1Id) }}</div>
+                                        </div>
+                                        
+                                        <div class="vs">VS</div>
+                                        
+                                        <div class="team team2">
+                                            <div class="team-name">{{ getTeamName(match.team2Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team2Id) }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="match-info">
+                                        <div class="match-score">
+                                            <app-knockout-score-display [match]="match" [teams]="teams" [getTeamName]="getTeamName"></app-knockout-score-display>
+                                        </div>
+                                    </div>
+                                    
+                                    @if (canEditMatch(match)) {
+                                        <div class="match-actions">
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-pencil" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditMatch(match)"
+                                                pTooltip="Enter/Edit Match Score">
+                                            </button>
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-calendar" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditSchedule(match, $event)"
+                                                pTooltip="Edit Match Schedule">
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Quarterfinals -->
+                @if (quarterfinals.length > 0) {
+                    <div class="phase-section">
+                        <h3 style="background-color: #fffbeb; padding: 8px 16px; border-radius: 4px;">{{ getPhaseTitle('quarterfinal') }}</h3>
+                        <div class="matches-grid">
+                            @for (match of quarterfinals; track match.id) {
+                                <div class="match-card" [class]="getMatchStatusClass(match.status)">
+                                    <div class="match-header">
+                                        <span class="match-phase">{{ getPhaseTitle('quarterfinal') }}</span>
+                                        <span class="match-status">
+                                            <i [class]="getMatchStatusIcon(match.status)"></i>
+                                            {{ match.status | titlecase }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="match-teams">
+                                        <div class="team team1">
+                                            <div class="team-name">{{ getTeamName(match.team1Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team1Id) }}</div>
+                                        </div>
+                                        
+                                        <div class="vs">VS</div>
+                                        
+                                        <div class="team team2">
+                                            <div class="team-name">{{ getTeamName(match.team2Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team2Id) }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="match-info">
+                                        <div class="match-score">
+                                            <app-knockout-score-display [match]="match" [teams]="teams" [getTeamName]="getTeamName"></app-knockout-score-display>
+                                        </div>
+                                    </div>
+                                    
+                                    @if (canEditMatch(match)) {
+                                        <div class="match-actions">
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-pencil" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditMatch(match)"
+                                                pTooltip="Enter/Edit Match Score">
+                                            </button>
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-calendar" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditSchedule(match, $event)"
+                                                pTooltip="Edit Match Schedule">
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Semifinals -->
+                @if (semifinals.length > 0) {
+                    <div class="phase-section">
+                        <h3 style="background-color: #fefce8; padding: 8px 16px; border-radius: 4px;">{{ getPhaseTitle('semifinal') }}</h3>
+                        <div class="matches-grid">
+                            @for (match of semifinals; track match.id) {
+                                <div class="match-card" [class]="getMatchStatusClass(match.status)">
+                                    <div class="match-header">
+                                        <div class="header-left">
+                                            <span class="match-phase">{{ getPhaseTitle('semifinal') }}</span>
+                                            <div class="match-schedule">
+                                                <i class="pi pi-calendar"></i>
+                                                {{ formatDate(match.scheduledTime) }}
+                                            </div>
+                                            <div class="match-venue">
+                                                <i class="pi pi-map-marker"></i>
+                                                {{ getVenueName(match.venueId) }}
+                                            </div>
+                                        </div>
+                                        <span class="match-status">
+                                            <i [class]="getMatchStatusIcon(match.status)"></i>
+                                            {{ match.status | titlecase }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="match-teams">
+                                        <div class="team team1">
+                                            <div class="team-name">{{ getTeamName(match.team1Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team1Id) }}</div>
+                                        </div>
+                                        
+                                        <div class="vs">VS</div>
+                                        
+                                        <div class="team team2">
+                                            <div class="team-name">{{ getTeamName(match.team2Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team2Id) }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="match-info">
+                                        <div class="match-score">
+                                            <app-knockout-score-display [match]="match" [teams]="teams" [getTeamName]="getTeamName"></app-knockout-score-display>
+                                        </div>
+                                    </div>
+                                    
+                                    @if (canEditMatch(match)) {
+                                        <div class="match-actions">
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-pencil" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditMatch(match)"
+                                                pTooltip="Enter/Edit Match Score">
+                                            </button>
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-calendar" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditSchedule(match, $event)"
+                                                pTooltip="Edit Match Schedule">
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Finals -->
+                @if (finals.length > 0) {
+                    <div class="phase-section final-section">
+                        <h3 style="background-color: #fef3c7; padding: 8px 16px; border-radius: 4px;">{{ getPhaseTitle('final') }}</h3>
+                        <div class="matches-grid final-grid">
+                            @for (match of finals; track match.id) {
+                                <div class="match-card final-match" [class]="getMatchStatusClass(match.status)">
+                                    <div class="match-header">
+                                        <span class="match-phase">{{ getPhaseTitle('final') }}</span>
+                                        <span class="match-status">
+                                            <i [class]="getMatchStatusIcon(match.status)"></i>
+                                            {{ match.status | titlecase }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="match-teams">
+                                        <div class="team team1">
+                                            <div class="team-name">{{ getTeamName(match.team1Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team1Id) }}</div>
+                                        </div>
+                                        
+                                        <div class="vs">VS</div>
+                                        
+                                        <div class="team team2">
+                                            <div class="team-name">{{ getTeamName(match.team2Id) }}</div>
+                                            <div class="team-players">{{ getTeamPlayerNames(match.team2Id) }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="match-info">
+                                        <div class="match-score">
+                                            <app-knockout-score-display [match]="match" [teams]="teams" [getTeamName]="getTeamName"></app-knockout-score-display>
+                                        </div>
+                                    </div>
+                                    
+                                    @if (canEditMatch(match)) {
+                                        <div class="match-actions">
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-pencil" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditMatch(match)"
+                                                pTooltip="Enter/Edit Match Score">
+                                            </button>
+                                            <button 
+                                                pButton 
+                                                type="button" 
+                                                icon="pi pi-calendar" 
+                                                class="p-button-sm p-button-outlined"
+                                                (click)="startEditSchedule(match, $event)"
+                                                pTooltip="Edit Match Schedule">
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- No Matches State -->
+    @if (!loading && !error && !hasMatches()) {
+        <div class="no-matches">
+            <div class="empty-state">
+                <i class="pi pi-trophy"></i>
+                <h4>No Knockout Matches</h4>
+                <p>Knockout bracket has not been generated yet. Complete all group matches to generate the elimination phase.</p>
+                
+                <p class="text-sm text-gray-500 mt-2">
+                    The knockout bracket will be automatically generated when all group stage matches are completed.
+                </p>
+            </div>
+        </div>
+    }
+
+    <!-- Shared Match Score Dialog -->
+    <app-match-score-dialog
+        [(visible)]="showScoreDialog"
+        [match]="editingMatch"
+        [teams]="teams"
+        [venues]="venues"
+        [groups]="[]"
+        [showGroupInfo]="false"
+        (save)="onScoreDialogSave($event)"
+        (cancel)="onScoreDialogCancel()">
+    </app-match-score-dialog>
+
+    <!-- Schedule Edit Dialog -->
+    <p-dialog 
+        [(visible)]="showScheduleDialog" 
+        [modal]="true" 
+        [closable]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [style]="{width: '90vw', maxWidth: '400px'}"
+        (onHide)="cancelEditSchedule()">
+        
+        @if (editingMatch) {
+            <div class="p-0">
+                <div class="border-b border-gray-200 p-5 pb-4">
+                    <h4 class="text-xl font-semibold text-gray-900 mb-3">Edit Match Schedule</h4>
+                    <div class="space-y-1">
+                        <div class="text-lg font-semibold text-gray-900">{{ getTeamName(editingMatch.team1Id) }} vs {{ getTeamName(editingMatch.team2Id) }}</div>
+                        <div class="text-sm text-gray-600">{{ getTeamPlayerNames(editingMatch.team1Id) }} vs {{ getTeamPlayerNames(editingMatch.team2Id) }}</div>
+                    </div>
+                </div>
+                
+                <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule()" class="p-5 pt-4">
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Scheduled Date & Time</label>
+                        <input type="datetime-local" pInputText formControlName="scheduledTime" class="w-full p-2 border border-gray-300 rounded">
+                        <small class="block mt-1 text-xs text-gray-500">Leave empty to remove scheduling</small>
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Venue</label>
+                        <p-select 
+                            formControlName="venueId" 
+                            [options]="venues" 
+                            optionLabel="name" 
+                            optionValue="id"
+                            placeholder="Select venue"
+                            class="w-full">
+                        </p-select>
+                    </div>
+
+                    <div class="flex justify-end gap-2">
+                        <button pButton type="button" label="Cancel" class="p-button-text" (click)="cancelEditSchedule()"></button>
+                        <button pButton type="button" label="Save Schedule" class="p-button-sm" (click)="saveSchedule()" [disabled]="!scheduleForm.valid"></button>
+                    </div>
+                </form>
+            </div>
+        }
+    </p-dialog>
+
+    <!-- Toast Messages -->
+    <p-toast></p-toast>
+</div>

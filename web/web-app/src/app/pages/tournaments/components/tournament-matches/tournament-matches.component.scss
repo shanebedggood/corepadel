@@ -1,0 +1,6 @@
+// Force appropriate width for score inputs in dialogs
+::ng-deep .p-dialog input[type="number"] {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+}

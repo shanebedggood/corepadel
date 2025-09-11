@@ -249,9 +249,9 @@ export class MatchScheduleComponent implements OnInit {
                 team1Score: this.editingMatch.team1Score,
                 team2Score: this.editingMatch.team2Score,
                 winnerId: this.editingMatch.winnerId,
-                scheduledTime: this.editingMatch.scheduledTime,
+                scheduledTime: this.editingMatch.scheduledTime ? this.formatDateTimeOnly(new Date(this.editingMatch.scheduledTime)) : undefined,
                 venueId: this.editingMatch.venueId
-            }
+            } as any
         ).subscribe({
             next: () => {
                 this.messageService.add({
@@ -394,5 +394,16 @@ export class MatchScheduleComponent implements OnInit {
         this.router.navigate(['/admin/edit-tournament', this.tournamentId], { queryParams: { tab: 'groups' } });
     }
 
+    /**
+     * Format a Date object to YYYY-MM-DDTHH:mm string to avoid timezone issues
+     */
+    private formatDateTimeOnly(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 
 } 

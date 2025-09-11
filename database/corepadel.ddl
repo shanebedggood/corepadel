@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS core.venue (
     venue_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL UNIQUE,
     website VARCHAR(255),
-	facilities VARCHAR(255),		   
+    -- facilities field removed - now handled by venue_facility junction table
     address_id UUID NOT NULL,
 
     -- Define the foreign key constraint
@@ -87,6 +87,33 @@ CREATE TABLE IF NOT EXISTS core.venue (
         ON DELETE RESTRICT 
 );
 CREATE INDEX IF NOT EXISTS idx_venue_name ON core.venue (name);
+
+-- Facilities table
+CREATE TABLE IF NOT EXISTS core.facility (
+    facility_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    icon VARCHAR(100),
+    category VARCHAR(100) NOT NULL DEFAULT 'Amenity',
+    is_countable BOOLEAN DEFAULT FALSE,
+    unit VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_facility_name ON core.facility (name);
+CREATE INDEX IF NOT EXISTS idx_facility_category ON core.facility (category);
+
+-- Venue-Facility junction table (many-to-many with quantities)
+CREATE TABLE IF NOT EXISTS core.venue_facility (
+    venue_id UUID NOT NULL REFERENCES core.venue(venue_id) ON DELETE CASCADE,
+    facility_id UUID NOT NULL REFERENCES core.facility(facility_id) ON DELETE CASCADE,
+    quantity INTEGER DEFAULT 1,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (venue_id, facility_id)
+);
+CREATE INDEX IF NOT EXISTS idx_venue_facility_venue ON core.venue_facility(venue_id);
+CREATE INDEX IF NOT EXISTS idx_venue_facility_facility ON core.venue_facility(facility_id);
 
 -- Table for Tournament Categories (e.g., Men's, Women's, Mixed) (seeded)
 CREATE TABLE IF NOT EXISTS core.category (

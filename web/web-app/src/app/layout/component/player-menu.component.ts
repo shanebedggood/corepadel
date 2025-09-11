@@ -62,6 +62,26 @@ export class PlayerMenu implements OnInit {
             label: 'My Profile',
             icon: 'pi pi-fw pi-user',
             routerLink: ['/player/profile']
+          },
+          {
+            label: 'Padel Clubs',
+            icon: 'pi pi-fw pi-warehouse',
+            routerLink: ['/player/clubs']
+          },
+          {
+            label: 'Padel Rules',
+            icon: 'pi pi-fw pi-book',
+            routerLink: ['/player/rules']
+          }
+        ]
+      },
+      {
+        label: 'Fitness',
+        items: [
+          {
+            label: '5AM Run Booking',
+            icon: 'pi pi-fw pi-clock',
+            routerLink: ['/player/run-booking']
           }
         ]
       },
@@ -69,47 +89,10 @@ export class PlayerMenu implements OnInit {
         label: 'My Running',
         items: [
           {
-            label: 'Rules',
-            icon: 'pi pi-fw pi-running',
+            label: 'My Runs',
+            icon: 'directions_run',
+            iconClass: 'material-icons',
             routerLink: ['/player/rules']
-          }
-        ]
-      },
-      {
-        label: 'Destinations',
-        items: [
-          {
-            label: 'South Africa',
-            icon: 'pi pi-fw pi-map',
-            routerLink: ['/player/destinations'],
-            items: [
-              {
-                label: 'Clubs / Courts',
-                icon: 'pi pi-fw pi-list',
-                routerLink: ['/player/destinations/clubs']
-              },
-              {
-                label: 'Events',
-                icon: 'pi pi-fw pi-bookmark',
-                items: [
-                  {
-                    label: 'Kids Parties',
-                    icon: 'pi pi-fw pi-sparkles',
-                    routerLink: ['/player/destinations/events/kids']
-                  },
-                  {
-                    label: 'Social',
-                    icon: 'pi pi-fw pi-users',
-                    routerLink: ['/player/destinations/events/social']
-                  },
-                  {
-                    label: 'Corporate',
-                    icon: 'pi pi-fw pi-briefcase',
-                    routerLink: ['/player/destinations/events/corporate']
-                  }
-                ]
-              }
-            ]
           }
         ]
       }

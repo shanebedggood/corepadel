@@ -15,18 +15,38 @@ import { LayoutService } from '../service/layout.service';
   styles: [`
     .layout-sidebar.player-sidebar {
       position: fixed;
-      height: calc(100vh - 4rem);
       z-index: 999;
       overflow-y: auto;
       user-select: none;
-      top: 4rem;
       left: 0;
       transition: transform 0.3s ease;
       background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
       border-right: 1px solid #86efac;
-      width: 16rem;
+      width: 22rem; /* Match Sakai-NG sidebar width */
       padding: 0.5rem 1.5rem;
       box-sizing: border-box;
+    }
+
+    /* Overlay mode - goes over topbar */
+    .layout-wrapper.layout-overlay .layout-sidebar.player-sidebar {
+      top: 0;
+      height: 100vh;
+      transform: translateX(-100%);
+    }
+
+    .layout-wrapper.layout-overlay.layout-overlay-active .layout-sidebar.player-sidebar {
+      transform: translateX(0);
+    }
+
+    /* Static mode - below topbar */
+    .layout-wrapper.layout-static .layout-sidebar.player-sidebar {
+      top: 4rem;
+      height: calc(100vh - 4rem);
+      transform: translateX(0);
+    }
+
+    .layout-wrapper.layout-static.layout-static-inactive .layout-sidebar.player-sidebar {
+      transform: translateX(-100%);
     }
 
     .layout-sidebar.player-sidebar::-webkit-scrollbar {
@@ -44,15 +64,6 @@ import { LayoutService } from '../service/layout.service';
 
     .layout-sidebar.player-sidebar::-webkit-scrollbar-thumb:hover {
       background: #4ade80;
-    }
-
-    /* Static layout behavior */
-    .layout-wrapper.layout-static .layout-sidebar.player-sidebar {
-      transform: translateX(0);
-    }
-
-    .layout-wrapper.layout-static.layout-static-inactive .layout-sidebar.player-sidebar {
-      transform: translateX(-100%);
     }
 
     @media screen and (max-width: 991px) {

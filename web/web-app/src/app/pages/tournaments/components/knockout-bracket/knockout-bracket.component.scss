@@ -1,0 +1,558 @@
+.knockout-bracket {
+    .loading-container,
+    .error-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+        padding: 2rem;
+
+        .loading-spinner,
+        .error-message {
+            text-align: center;
+            color: var(--text-color-secondary);
+
+            i {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+                display: block;
+            }
+
+            p {
+                margin: 0;
+                font-size: 1rem;
+            }
+        }
+
+        .error-message {
+            color: var(--red-600);
+
+            i {
+                color: var(--red-500);
+            }
+        }
+    }
+
+    .bracket-content {
+        .bracket-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+
+            .header-left {
+                text-align: left;
+
+                h2 {
+                    margin: 0 0 0.5rem 0;
+                    color: var(--text-color);
+                    font-size: 1.75rem;
+                    font-weight: 700;
+                }
+
+                p {
+                    margin: 0;
+                    color: var(--text-color-secondary);
+                }
+            }
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+        }
+
+        .bracket-phases {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+
+            .phase-section {
+                .matches-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 1.5rem;
+                    margin-top: 1rem;
+
+                    &.final-grid {
+                        grid-template-columns: 1fr;
+                        max-width: 500px;
+                        margin: 1rem auto 0;
+                    }
+                }
+
+                h3 {
+                    margin: 0 0 1rem 0;
+                    color: var(--text-color);
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    text-align: center;
+                    padding: 0.75rem 1rem;
+                    background: var(--surface-section);
+                    border-radius: 8px;
+                    border: 1px solid var(--surface-border);
+                }
+
+                .match-card {
+                    background: var(--surface-card);
+                    border: 1px solid var(--surface-border);
+                    border-radius: 12px;
+                    padding: 1.5rem;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+                    }
+
+                    &.match-completed {
+                        border-left: 4px solid var(--green-500);
+                        background: var(--green-50);
+                    }
+
+                    &.match-in-progress {
+                        border-left: 4px solid var(--blue-500);
+                        background: var(--blue-50);
+                    }
+
+                    &.match-scheduled {
+                        border-left: 4px solid var(--gray-400);
+                    }
+
+                    &.match-cancelled {
+                        border-left: 4px solid var(--red-500);
+                        background: var(--red-50);
+                        opacity: 0.7;
+                    }
+
+                    .match-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        margin-bottom: 1rem;
+                        padding-bottom: 0.75rem;
+                        border-bottom: 1px solid var(--surface-border);
+
+                        .header-left {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.25rem;
+
+                            .match-phase {
+                                font-weight: 600;
+                                color: var(--text-color);
+                                font-size: 0.875rem;
+                            }
+
+                            .match-schedule,
+                            .match-venue {
+                                display: flex;
+                                align-items: center;
+                                gap: 0.25rem;
+                                font-size: 0.75rem;
+                                color: var(--text-color-secondary);
+
+                                i {
+                                    font-size: 0.75rem;
+                                    width: 12px;
+                                }
+                            }
+                        }
+
+                        .match-status {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            font-size: 0.75rem;
+                            color: var(--text-color-secondary);
+
+                            i {
+                                font-size: 0.875rem;
+                            }
+                        }
+                    }
+
+                    .match-teams {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        margin-bottom: 1rem;
+
+                        .team {
+                            flex: 1;
+                            text-align: center;
+
+                            .team-name {
+                                font-weight: 600;
+                                color: var(--text-color);
+                                font-size: 1rem;
+                                margin-bottom: 0.25rem;
+                            }
+
+                            .team-players {
+                                font-size: 0.75rem;
+                                color: var(--text-color-secondary);
+                                margin-bottom: 0.5rem;
+                            }
+
+                            .team-score {
+                                font-size: 1.5rem;
+                                font-weight: 700;
+                                color: var(--primary-color);
+                                background: var(--surface-section);
+                                border-radius: 50%;
+                                width: 40px;
+                                height: 40px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin: 0 auto;
+                            }
+                        }
+
+                        .vs {
+                            font-weight: 700;
+                            color: var(--text-color-secondary);
+                            font-size: 0.875rem;
+                            background: var(--surface-hover);
+                            padding: 0.5rem;
+                            border-radius: 50%;
+                            width: 30px;
+                            height: 30px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                    }
+
+
+                    .match-info {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                        padding-top: 0.75rem;
+                        border-top: 1px solid var(--surface-border);
+
+                        .match-schedule,
+                        .match-venue,
+                        .match-score {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 0.5rem;
+                            font-size: 0.75rem;
+                            color: var(--text-color-secondary);
+                            text-align: center;
+
+                            i {
+                                font-size: 0.875rem;
+                                width: 12px;
+                            }
+                        }
+                    }
+
+                    .match-actions {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.5rem;
+                        margin-top: 0.75rem;
+                        padding-top: 0.75rem;
+                        border-top: 1px solid var(--surface-border);
+                    }
+                }
+
+                &.final-section {
+                    .match-card.final-match {
+                        background: linear-gradient(135deg, var(--yellow-50) 0%, var(--orange-50) 100%);
+                        border: 2px solid var(--yellow-400);
+                        position: relative;
+
+                        &::before {
+                            content: '🏆';
+                            position: absolute;
+                            top: -10px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            font-size: 1.5rem;
+                            background: var(--surface-card);
+                            padding: 0.25rem;
+                            border-radius: 50%;
+                            border: 2px solid var(--yellow-400);
+                        }
+
+                        .match-header .match-phase {
+                            color: var(--yellow-700);
+                            font-weight: 700;
+                        }
+
+                        .match-teams .vs {
+                            background: var(--yellow-200);
+                            color: var(--yellow-800);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .no-matches {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 300px;
+        padding: 2rem;
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-color-secondary);
+
+            i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                display: block;
+                color: var(--text-color-secondary);
+            }
+
+            h4 {
+                margin: 0 0 0.5rem 0;
+                color: var(--text-color);
+                font-size: 1.25rem;
+                font-weight: 600;
+            }
+
+            p {
+                margin: 0;
+                font-size: 0.875rem;
+                max-width: 400px;
+            }
+        }
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .knockout-bracket {
+        .bracket-content {
+            .bracket-phases {
+                .phase-section {
+                    .matches-grid {
+                        grid-template-columns: 1fr;
+                        gap: 1rem;
+                    }
+
+                    .match-card {
+                        padding: 1rem;
+
+                        .match-teams {
+                            gap: 0.75rem;
+
+                            .team {
+                                .team-name {
+                                    font-size: 0.875rem;
+                                }
+
+                                .team-players {
+                                    font-size: 0.625rem;
+                                }
+
+                                .team-score {
+                                    width: 35px;
+                                    height: 35px;
+                                    font-size: 1.25rem;
+                                }
+                            }
+
+                            .vs {
+                                width: 25px;
+                                height: 25px;
+                                font-size: 0.75rem;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Dialog styles
+.form-group, .field {
+    margin-bottom: 1.5rem;
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    p-datepicker {
+        width: 100%;
+        display: block;
+        
+        ::ng-deep .p-datepicker {
+            width: 100%;
+            min-width: 350px;
+        }
+        
+        ::ng-deep .p-inputtext {
+            width: 100%;
+            min-height: 40px;
+        }
+    }
+
+    p-select {
+        width: 100%;
+        display: block;
+        
+        ::ng-deep .p-select {
+            width: 100%;
+            min-height: 40px;
+        }
+        
+        ::ng-deep .p-inputtext {
+            width: 100%;
+            min-height: 40px;
+        }
+        
+        ::ng-deep .p-select-label {
+            width: 100%;
+            overflow: visible;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        
+        ::ng-deep .p-select-label-container {
+            width: 100%;
+            overflow: visible;
+        }
+    }
+
+    .score-inputs {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .score-input {
+            flex: 1;
+
+            label {
+                font-size: 0.875rem;
+                margin-bottom: 0.25rem;
+                color: var(--text-color-secondary);
+            }
+
+            input {
+                width: 100%;
+            }
+        }
+
+        .vs-label {
+            font-weight: 700;
+            color: var(--text-color-secondary);
+            font-size: 0.875rem;
+            margin-top: 1.5rem;
+        }
+    }
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--surface-border);
+}
+
+// Dialog responsive styles
+::ng-deep .p-dialog {
+    overflow: visible !important;
+    
+    .p-dialog-content {
+        padding: 2rem;
+        min-height: 400px;
+        overflow: visible !important;
+    }
+    
+    .p-datepicker {
+        width: 100% !important;
+        min-width: 350px;
+        
+        .p-inputtext {
+            width: 100% !important;
+            min-height: 40px;
+            font-size: 14px;
+        }
+    }
+    
+    .p-select {
+        width: 100% !important;
+        min-height: 40px;
+        
+        .p-inputtext {
+            width: 100% !important;
+            min-height: 40px;
+            font-size: 14px;
+        }
+        
+        .p-select-label {
+            width: 100% !important;
+            overflow: visible !important;
+            white-space: nowrap !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        .p-select-label-container {
+            width: 100% !important;
+            overflow: visible !important;
+        }
+    }
+    
+    .p-inputtext {
+        width: 100% !important;
+        min-height: 40px;
+        font-size: 14px;
+    }
+}
+
+// Mobile responsive
+@media (max-width: 768px) {
+    ::ng-deep .p-dialog {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 1rem;
+        
+        .p-dialog-content {
+            padding: 1.5rem;
+            min-height: 350px;
+        }
+        
+        .p-datepicker {
+            min-width: 280px !important;
+        }
+    }
+}
+
+// Tablet responsive
+@media (max-width: 1024px) and (min-width: 769px) {
+    ::ng-deep .p-dialog {
+        width: 80vw !important;
+        max-width: 80vw !important;
+        
+        .p-dialog-content {
+            padding: 1.75rem;
+        }
+    }
+}
+
+// Force appropriate width for score inputs in dialogs
+::ng-deep .p-dialog input[type="number"] {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+}

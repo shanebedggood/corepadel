@@ -69,6 +69,52 @@
                                     placeholder="Enter tournament name" autocomplete="off" />
                             </div>
                             <div class="field">
+                                <label id="club" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                    Club <span class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="club" [options]="adminClubs" formControlName="club"
+                                    optionLabel="club_name" optionValue="club_id" placeholder="Select a club" class="w-full" />
+                                @if (adminClubs.length === 0) {
+                                    <p-message severity="warn" text="You must be an admin of at least one club to create tournaments." styleClass="w-full mt-1">
+                                    </p-message>
+                                }
+                            </div>
+                            <div class="field">
+                                <label id="accessType" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                    Tournament Access <span class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="accessType" [options]="[
+                                    {label: 'Open to All Players', value: 'open'},
+                                    {label: 'Club Members Only', value: 'closed'}
+                                ]" formControlName="accessType" optionLabel="label" optionValue="value" 
+                                placeholder="Select tournament access" class="w-full" />
+                            </div>
+                            <div class="field">
+                                <label for="entryFee" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Entry
+                                    Fee <span class="text-red-500">*</span>
+                                </label>
+                                <p-inputgroup>
+                                    <p-inputgroup-addon>{{ currencySymbol }}</p-inputgroup-addon>
+                                    <p-inputnumber inputId="entryFee" formControlName="entryFee" class="w-full"
+                                        placeholder="0.00" />
+                                    <p-inputgroup-addon>.00</p-inputgroup-addon>
+                                </p-inputgroup>
+                            </div>
+                            <div class="field">
+                                <label id="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                                    Category <span class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="category" [options]="categories" formControlName="category"
+                                    optionLabel="name" optionValue="id" placeholder="Select a tournament category" class="w-full" />
+                            </div>                            
+                            <div class="field">
+                                <label id="format" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Format
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <p-select ariaLabelledBy="format" [options]="formats" formControlName="format"
+                                    optionLabel="name" optionValue="id" placeholder="Select a tournament format" class="w-full" />
+                            </div>
+                            <div class="field">
                                 <label for="maxParticipants"
                                     class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Max Players<span
                                         class="text-red-500">*</span>
@@ -83,20 +129,6 @@
                                 }
                             </div>
                             <div class="field">
-                                <label id="format" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Format
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <p-select ariaLabelledBy="format" [options]="formats" formControlName="format"
-                                    optionLabel="name" optionValue="id" placeholder="Select a tournament format" class="w-full" />
-                            </div>
-                            <div class="field">
-                                <label id="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                                    Category <span class="text-red-500">*</span>
-                                </label>
-                                <p-select ariaLabelledBy="category" [options]="categories" formControlName="category"
-                                    optionLabel="name" optionValue="id" placeholder="Select a tournament category" class="w-full" />
-                            </div>
-                            <div class="field">
                                 <label id="registrationType"
                                     class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Registration Type <span
                                         class="text-red-500">*</span>
@@ -104,18 +136,7 @@
                                 <p-select ariaLabelledBy="registrationType" [options]="registrationTypes"
                                     formControlName="registrationType" optionLabel="name" optionValue="id"
                                     placeholder="Select a registration type" class="w-full" />
-                            </div>
-                            <div class="field">
-                                <label for="entryFee" class="block mb-2 font-medium text-gray-700 dark:text-gray-300"> Entry
-                                    Fee <span class="text-red-500">*</span>
-                                </label>
-                                <p-inputgroup>
-                                    <p-inputgroup-addon>{{ currencySymbol }}</p-inputgroup-addon>
-                                    <p-inputnumber inputId="entryFee" formControlName="entryFee" class="w-full"
-                                        placeholder="0.00" />
-                                    <p-inputgroup-addon>.00</p-inputgroup-addon>
-                                </p-inputgroup>
-                            </div>
+                            </div>    
                         </div>
                         <div class="field mt-6">
                             <label for="description" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">

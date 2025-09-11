@@ -1,5 +1,5 @@
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { ApplicationConfig } from '@angular/core';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { ApplicationConfig, ErrorHandler } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import Lara from '@primeuix/themes/lara';
@@ -16,6 +16,8 @@ import { provideAuth } from '@angular/fire/auth';
 import { provideStorage } from '@angular/fire/storage';
 import { app, auth, storage } from '../environments/firebase.config';
 import { authTokenInterceptorFn } from './interceptors/auth-token.interceptor';
+import { httpErrorInterceptor } from './interceptors/http-error.interceptor';
+import { GlobalErrorHandlerService } from './services/global-error-handler.service';
 
 // Register South African locale data
 registerLocaleData(localeEnZA, 'en-ZA', localeEnZAExtra);
@@ -23,7 +25,7 @@ registerLocaleData(localeEnZA, 'en-ZA', localeEnZAExtra);
 export const appConfig: ApplicationConfig = {
     providers: [
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
-        provideHttpClient(withFetch(), withInterceptors([authTokenInterceptorFn])),
+        provideHttpClient(withInterceptors([authTokenInterceptorFn, httpErrorInterceptor])),
         provideAnimationsAsync(),
         providePrimeNG({ theme: { preset: Lara, options: { darkModeSelector: '.app-dark' } } }),
         // Custom providers - added to the default ones above.
@@ -32,6 +34,7 @@ export const appConfig: ApplicationConfig = {
         provideStorage(() => storage),
 
         MessageService,
-        StickyMessageService
+        StickyMessageService,
+        { provide: ErrorHandler, useClass: GlobalErrorHandlerService }
     ]
 };

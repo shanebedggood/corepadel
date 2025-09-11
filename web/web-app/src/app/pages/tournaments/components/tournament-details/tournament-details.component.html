@@ -16,6 +16,47 @@
                     <input pInputText id="name" formControlName="name" class="w-full" placeholder="Enter tournament name" />
                 </div>
                 <div class="field">
+                    <label id="club" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                        Club <span class="text-red-500">*</span>
+                    </label>
+                    <p-select ariaLabelledBy="club" [options]="adminClubs" formControlName="club"
+                        optionLabel="club_name" optionValue="club_id" placeholder="Select a club" class="w-full" />
+                </div>
+                <div class="field">
+                    <label id="accessType" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                        Tournament Access <span class="text-red-500">*</span>
+                    </label>
+                    <p-select ariaLabelledBy="accessType" [options]="[
+                        {label: 'Open to All Players', value: 'open'},
+                        {label: 'Club Members Only', value: 'closed'}
+                    ]" formControlName="accessType" optionLabel="label" optionValue="value" 
+                    placeholder="Select tournament access" class="w-full" />
+                </div>
+                <div class="field">
+                    <label for="entryFee" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                        Entry Fee ({{ currencySymbol }}) <span class="text-red-500">*</span>
+                    </label>
+                    <p-inputnumber id="entryFee" formControlName="entryFee" 
+                                  [min]="0" [maxFractionDigits]="2" [minFractionDigits]="2"
+                                  class="w-full" placeholder="0.00"></p-inputnumber>
+                </div>
+                <div class="field">
+                    <label for="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                        Category <span class="text-red-500">*</span>
+                    </label>
+                    <p-select id="category" formControlName="category" [options]="categories"
+                    optionLabel="name" optionValue="id" placeholder="Select category"
+                    class="w-full"></p-select>
+                </div>
+                <div class="field">
+                    <label for="format" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
+                        Format <span class="text-red-500">*</span>
+                    </label>
+                    <p-select id="format" formControlName="format" [options]="formats"
+                    optionLabel="name" optionValue="id" placeholder="Select format"
+                    class="w-full"></p-select>
+                </div>                                                            
+                <div class="field">
                     <label for="maxParticipants" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
                         Max Players<span class="text-red-500">*</span>
                     </label>
@@ -28,22 +69,6 @@
                     }
                 </div>
                 <div class="field">
-                    <label for="format" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                        Format <span class="text-red-500">*</span>
-                    </label>
-                    <p-select id="format" formControlName="format" [options]="formats"
-                    optionLabel="name" optionValue="id" placeholder="Select format"
-                    class="w-full"></p-select>
-                </div>
-                <div class="field">
-                    <label for="category" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                        Category <span class="text-red-500">*</span>
-                    </label>
-                    <p-select id="category" formControlName="category" [options]="categories"
-                    optionLabel="name" optionValue="id" placeholder="Select category"
-                    class="w-full"></p-select>
-                </div>
-                <div class="field">
                     <label for="registrationType" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
                         Registration Type <span class="text-red-500">*</span>
                     </label>
@@ -51,15 +76,7 @@
                     optionLabel="name" optionValue="id" placeholder="Select registration type"
                     class="w-full"></p-select>
                 </div>
-                <div class="field">
-                    <label for="entryFee" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
-                        Entry Fee ({{ currencySymbol }}) <span class="text-red-500">*</span>
-                    </label>
-                    <p-inputnumber id="entryFee" formControlName="entryFee" 
-                                  [min]="0" [maxFractionDigits]="2" [minFractionDigits]="2"
-                                  class="w-full" placeholder="0.00"></p-inputnumber>
-                </div>
-            </div>
+          </div>
             <div class="field mt-6">
                 <label for="description" class="block mb-2 font-medium text-gray-700 dark:text-gray-300">
                     Description <span class="text-red-500">*</span>

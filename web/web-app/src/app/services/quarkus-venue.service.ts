@@ -3,12 +3,30 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// Venue Types - matching the existing interface structure
+// Facility interface
+export interface Facility {
+    id: string;
+    name: string;
+    description?: string;
+    icon?: string;
+    category: string;
+    is_countable: boolean;
+    unit?: string;
+}
+
+// Venue-Facility relationship interface
+export interface VenueFacility {
+    facility: Facility;
+    quantity: number;
+    notes?: string;
+}
+
+// Venue Types - updated to use normalized facilities
 export interface Venue {
     id?: string;
     name: string;
     website?: string;
-    facilities?: string;
+    facilities: VenueFacility[];  // Array of facility relationships with quantities
     address: {
         street: string;
         suburb?: string;
@@ -28,10 +46,10 @@ export class QuarkusVenueService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Get all venues.
+     * Get all venues (now using unified Club API).
      */
     getVenues(): Observable<Venue[]> {
-        return this.http.get<Venue[]>(`${this.apiUrl}/venues`).pipe(
+        return this.http.get<Venue[]>(`${this.apiUrl}/clubs?type=VENUE`).pipe(
             catchError(error => {
                 console.error('Error fetching venues from Quarkus:', error);
                 return throwError(() => error);
@@ -40,10 +58,10 @@ export class QuarkusVenueService {
     }
 
     /**
-     * Get venue by ID.
+     * Get venue by ID (now using unified Club API).
      */
     getVenueById(id: string): Observable<Venue | null> {
-        return this.http.get<Venue>(`${this.apiUrl}/venues/${id}`).pipe(
+        return this.http.get<Venue>(`${this.apiUrl}/clubs/${id}`).pipe(
             catchError(error => {
                 console.error('Error fetching venue from Quarkus:', error);
                 return throwError(() => error);
@@ -52,10 +70,10 @@ export class QuarkusVenueService {
     }
 
     /**
-     * Create a new venue.
+     * Create a new venue (now using unified Club API).
      */
     createVenue(venue: Omit<Venue, 'id'>): Observable<Venue> {
-        return this.http.post<Venue>(`${this.apiUrl}/venues`, venue).pipe(
+        return this.http.post<Venue>(`${this.apiUrl}/clubs`, venue).pipe(
             catchError(error => {
                 console.error('Error creating venue in Quarkus:', error);
                 return throwError(() => error);
@@ -64,10 +82,10 @@ export class QuarkusVenueService {
     }
 
     /**
-     * Update an existing venue.
+     * Update an existing venue (now using unified Club API).
      */
     updateVenue(id: string, updates: Partial<Venue>): Observable<Venue> {
-        return this.http.put<Venue>(`${this.apiUrl}/venues/${id}`, updates).pipe(
+        return this.http.put<Venue>(`${this.apiUrl}/clubs/${id}`, updates).pipe(
             catchError(error => {
                 console.error('Error updating venue in Quarkus:', error);
                 return throwError(() => error);
@@ -76,10 +94,10 @@ export class QuarkusVenueService {
     }
 
     /**
-     * Delete a venue.
+     * Delete a venue (now using unified Club API).
      */
     deleteVenue(id: string): Observable<void> {
-        return this.http.delete<void>(`${this.apiUrl}/venues/${id}`).pipe(
+        return this.http.delete<void>(`${this.apiUrl}/clubs/${id}`).pipe(
             catchError(error => {
                 console.error('Error deleting venue in Quarkus:', error);
                 return throwError(() => error);
@@ -88,10 +106,34 @@ export class QuarkusVenueService {
     }
 
     /**
-     * Health check.
+     * Get all facilities.
+     */
+    getFacilities(): Observable<Facility[]> {
+        return this.http.get<Facility[]>(`${this.apiUrl}/facilities`).pipe(
+            catchError(error => {
+                console.error('Error fetching facilities from Quarkus:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Get facilities by category.
+     */
+    getFacilitiesByCategory(category: string): Observable<Facility[]> {
+        return this.http.get<Facility[]>(`${this.apiUrl}/facilities/category/${category}`).pipe(
+            catchError(error => {
+                console.error('Error fetching facilities by category from Quarkus:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Health check (now using unified Club API).
      */
     healthCheck(): Observable<string> {
-        return this.http.get(`${this.apiUrl}/venues/health`, { responseType: 'text' }).pipe(
+        return this.http.get(`${this.apiUrl}/clubs/health`, { responseType: 'text' }).pipe(
             catchError(error => {
                 console.error('Error checking venue service health:', error);
                 return throwError(() => error);

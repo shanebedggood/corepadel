@@ -1,5 +1,9 @@
 export const environment = {
   production: false,
+  development: true,
   quarkusApiUrl: '/api',
-  // Firebase config removed (migrated to Cognito)
+  // Development-specific settings
+  enableTokenRefresh: true,
+  tokenRefreshInterval: 50 * 60 * 1000, // 50 minutes
+  preserveAuthState: true
 }; 

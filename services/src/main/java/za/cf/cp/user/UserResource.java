@@ -8,7 +8,6 @@ import za.cf.cp.user.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * REST resource for managing users.
@@ -240,6 +239,54 @@ public class UserResource {
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving user clubs: " + e.getMessage())
+                    .build();
+        }
+    }
+    
+    /**
+     * Get cached user authentication data (roles and club memberships)
+     */
+    @GET
+    @Path("/firebase/{firebaseUid}/auth-data")
+    public Response getCachedUserAuthData(@PathParam("firebaseUid") String firebaseUid) {
+        try {
+            za.cf.cp.user.dto.CachedUserData cachedData = userService.getCachedUserData(firebaseUid);
+            return Response.ok(cachedData).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error retrieving cached user data: " + e.getMessage())
+                    .build();
+        }
+    }
+    
+    /**
+     * Invalidate user cache
+     */
+    @DELETE
+    @Path("/firebase/{firebaseUid}/cache")
+    public Response invalidateUserCache(@PathParam("firebaseUid") String firebaseUid) {
+        try {
+            userService.invalidateUserCache(firebaseUid);
+            return Response.ok("User cache invalidated successfully").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error invalidating user cache: " + e.getMessage())
+                    .build();
+        }
+    }
+    
+    /**
+     * Get user's admin clubs
+     */
+    @GET
+    @Path("/firebase/{firebaseUid}/admin-clubs")
+    public Response getUserAdminClubs(@PathParam("firebaseUid") String firebaseUid) {
+        try {
+            List<za.cf.cp.user.dto.CachedUserData.ClubMembership> adminClubs = userService.getAdminClubs(firebaseUid);
+            return Response.ok(adminClubs).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error retrieving admin clubs: " + e.getMessage())
                     .build();
         }
     }

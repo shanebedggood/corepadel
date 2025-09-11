@@ -15,19 +15,39 @@ import { LayoutService } from '../service/layout.service';
     styles: [`
         .layout-sidebar.admin-sidebar {
             position: fixed !important;
-            height: calc(100vh - 4rem) !important;
             z-index: 1000 !important;
             overflow-y: auto;
             user-select: none;
-            top: 4rem !important;
             left: 0 !important;
             transition: transform 0.3s ease;
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
             border-right: 1px solid #93c5fd;
-            width: 16rem !important;
+            width: 22rem !important; /* Match Sakai-NG sidebar width */
             border-radius: 0 !important;
             padding: 0.5rem 1.5rem;
             box-sizing: border-box !important;
+        }
+
+        /* Overlay mode - goes over topbar */
+        .layout-wrapper.layout-overlay .layout-sidebar.admin-sidebar {
+            top: 0 !important;
+            height: 100vh !important;
+            transform: translateX(-100%);
+        }
+
+        .layout-wrapper.layout-overlay.layout-overlay-active .layout-sidebar.admin-sidebar {
+            transform: translateX(0);
+        }
+
+        /* Static mode - below topbar */
+        .layout-wrapper.layout-static .layout-sidebar.admin-sidebar {
+            top: 4rem !important;
+            height: calc(100vh - 4rem) !important;
+            transform: translateX(0);
+        }
+
+        .layout-wrapper.layout-static.layout-static-inactive .layout-sidebar.admin-sidebar {
+            transform: translateX(-100%);
         }
 
         .layout-sidebar.admin-sidebar::-webkit-scrollbar {
@@ -45,15 +65,6 @@ import { LayoutService } from '../service/layout.service';
 
         .layout-sidebar.admin-sidebar::-webkit-scrollbar-thumb:hover {
             background: #60a5fa;
-        }
-
-        /* Static layout behavior */
-        .layout-wrapper.layout-static .layout-sidebar.admin-sidebar {
-            transform: translateX(0);
-        }
-
-        .layout-wrapper.layout-static.layout-static-inactive .layout-sidebar.admin-sidebar {
-            transform: translateX(-100%);
         }
 
         @media screen and (max-width: 991px) {

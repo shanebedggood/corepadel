@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { ErrorHandlerService } from './error-handler.service';
 
 export interface User {
     firebase_uid: string; // Firebase user identifier - single source of truth
@@ -27,7 +28,7 @@ export interface UserClub {
     membership_id?: string;
     user: User;
     club: Club;
-    role: string;
+    role: UserRole;
 }
 
 export interface Club {
@@ -36,13 +37,34 @@ export interface Club {
     website?: string;
 }
 
+export interface CachedUserData {
+    firebase_uid: string;
+    email: string;
+    username: string;
+    display_name?: string;
+    roles: string[];
+    club_memberships: ClubMembership[];
+    cached_at: string;
+    expires_at: string;
+}
+
+export interface ClubMembership {
+    club_id: string;
+    club_name: string;
+    role: string;
+    is_admin: boolean;
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class UserService {
     private apiUrl = `${environment.quarkusApiUrl}/users`;
 
-    constructor(private http: HttpClient) {}
+    constructor(
+        private http: HttpClient,
+        private errorHandlerService: ErrorHandlerService
+    ) {}
 
     /**
      * Get all active users
@@ -323,12 +345,49 @@ export class UserService {
     }
 
     /**
+     * Get cached user authentication data (roles and club memberships)
+     */
+    getCachedUserAuthData(firebaseUid: string): Observable<CachedUserData> {
+        return this.http.get<CachedUserData>(`${this.apiUrl}/firebase/${firebaseUid}/auth-data`).pipe(
+            catchError(this.handleError<CachedUserData>('getCachedUserAuthData'))
+        );
+    }
+
+    /**
+     * Invalidate user cache
+     */
+    invalidateUserCache(firebaseUid: string): Observable<string> {
+        return this.http.delete(`${this.apiUrl}/firebase/${firebaseUid}/cache`, { responseType: 'text' }).pipe(
+            catchError(this.handleError<string>('invalidateUserCache', 'Cache invalidation failed'))
+        );
+    }
+
+    /**
+     * Get user's admin clubs
+     */
+    getUserAdminClubs(firebaseUid: string): Observable<ClubMembership[]> {
+        return this.http.get<ClubMembership[]>(`${this.apiUrl}/firebase/${firebaseUid}/admin-clubs`).pipe(
+            catchError(this.handleError<ClubMembership[]>('getUserAdminClubs', []))
+        );
+    }
+
+    /**
      * Handle HTTP errors
      */
     private handleError<T>(operation = 'operation', result?: T) {
         return (error: any): Observable<T> => {
-            console.error(`${operation} failed:`, error);
-            return of(result as T);
+            // Notify user of the error
+            this.errorHandlerService.handleApiError(error, operation);
+            
+            // For read-only operations, return default value
+            // For write operations, rethrow the error
+            const isReadOperation = operation.includes('get') || operation.includes('search') || operation.includes('health');
+            
+            if (isReadOperation && result !== undefined) {
+                return of(result as T);
+            } else {
+                return throwError(() => error);
+            }
         };
     }
 } 

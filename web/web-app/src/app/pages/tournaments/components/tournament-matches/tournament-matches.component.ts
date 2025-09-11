@@ -18,6 +18,7 @@ import { TableModule } from 'primeng/table';
 
 // Services
 import { Tournament, TournamentService, TournamentMatch, TournamentGroup, TournamentTeam, TournamentPlayer } from '../../../../services/tournament.service';
+import { MatchScoreDialogComponent } from '../shared/match-score-dialog/match-score-dialog.component';
 import { VenueService, Venue } from '../../../../services/venue.service';
 import { MatchScoreDisplayComponent } from '../match-score-display/match-score-display.component';
 
@@ -49,10 +50,12 @@ interface MatchGenerationStatus {
         TooltipModule,
         SelectModule,
         TableModule,
-        MatchScoreDisplayComponent
+        MatchScoreDisplayComponent,
+        MatchScoreDialogComponent
     ],
     providers: [MessageService],
-    templateUrl: './tournament-matches.component.html'
+    templateUrl: './tournament-matches.component.html',
+    styleUrls: ['./tournament-matches.component.scss']
 })
 export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges {
     @Input() tournament: Tournament | undefined;
@@ -81,6 +84,9 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     // Schedule editing
     showScheduleDialog: boolean = false;
     scheduleForm!: FormGroup;
+    
+    // Shared score dialog
+    showScoreDialog: boolean = false;
 
     // Responsive view
     isMobileView: boolean = false;
@@ -286,11 +292,11 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         // Check if groups exist and tournament is configured
         const hasValidConfiguration = this.groups.length > 0 && this.tournament?.maxParticipants! > 0 && this.getNoOfGroups()! > 0;
 
-        // Check if matches have already been generated
-        const hasExistingMatches = this.matches.length > 0;
+        // Check if group stage matches have already been generated
+        const hasExistingGroupMatches = this.matches.some(match => match.phase === 'group' || !match.phase);
 
-        // Can generate if configuration is valid AND no matches exist yet
-        return hasValidConfiguration && !hasExistingMatches;
+        // Can generate if configuration is valid AND no group stage matches exist yet
+        return hasValidConfiguration && !hasExistingGroupMatches;
     }
 
     generateAllMatches(): void {
@@ -346,7 +352,8 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     hasMatchesInDatabase(): boolean {
-        return this.matches.length > 0;
+        // Check if there are any group stage matches in the database
+        return this.matches.some(match => match.phase === 'group' || !match.phase);
     }
 
     private getNoOfGroups(): number | undefined {
@@ -391,7 +398,11 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
 
     // Filtering methods
     getFilteredMatches(): TournamentMatch[] {
-        let filtered = [...this.matches];
+        // First filter out knockout matches - only show group stage matches
+        let filtered = this.matches.filter(match => {
+            // Only include matches that are in the group phase
+            return match.phase === 'group' || !match.phase;
+        });
 
         // Filter by round
         if (this.filterRound && this.filterRound.trim() !== '') {
@@ -456,15 +467,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     startEditMatch(event: any): void {
         const match = event.data || event;
         this.editingMatch = { ...match };
-        this.matchForm.patchValue({
-            team1Set1: match.team1Set1 || null,
-            team2Set1: match.team2Set1 || null,
-            team1Set2: match.team1Set2 || null,
-            team2Set2: match.team2Set2 || null,
-            team1Set3: match.team1Set3 || null,
-            team2Set3: match.team2Set3 || null
-        });
-        this.showEditDialog = true;
+        this.showScoreDialog = true;
     }
 
     startEditSchedule(match: TournamentMatch, event: Event): void {
@@ -495,13 +498,15 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         if (this.editingMatch) {
             const formValue = this.scheduleForm.value;
 
-            // Convert the datetime-local string to a proper Date object
-            let scheduledTime: Date | undefined = undefined;
+            // Convert the datetime-local string to a date-time string to avoid timezone issues
+            let scheduledTime: string | undefined = undefined;
             if (formValue.scheduledTime) {
-                scheduledTime = new Date(formValue.scheduledTime);
+                // Format as YYYY-MM-DDTHH:mm to avoid timezone conversion
+                const date = new Date(formValue.scheduledTime);
+                scheduledTime = this.formatDateTimeOnly(date);
             }
 
-            const matchData = {
+            const matchData: any = {
                 scheduledTime: scheduledTime
             };
 
@@ -537,6 +542,35 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         this.editingMatch = null;
         this.matchForm.reset();
         this.showEditDialog = false;
+    }
+
+    onScoreDialogSave(event: any): void {
+        this.tournamentService.updateMatchScore(event.matchId, event.updates).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Match score updated successfully'
+                });
+                this.editingMatch = null;
+                this.showScoreDialog = false;
+                this.loadMatches();
+                this.matchesUpdated.emit();
+                this.cdr.detectChanges();
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to update match score'
+                });
+            }
+        });
+    }
+
+    onScoreDialogCancel(): void {
+        this.editingMatch = null;
+        this.showScoreDialog = false;
     }
 
     saveMatch(): void {
@@ -1073,5 +1107,16 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         };
     }
 
+    /**
+     * Format a Date object to YYYY-MM-DDTHH:mm string to avoid timezone issues
+     */
+    private formatDateTimeOnly(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 
 } 

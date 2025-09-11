@@ -99,6 +99,16 @@ export class LayoutService {
     }
   }
 
+  toggleMenuMode() {
+    const currentMode = this.layoutConfig().menuMode;
+    const newMode = currentMode === 'static' ? 'overlay' : 'static';
+    
+    this.layoutConfig.update((prev) => ({
+      ...prev,
+      menuMode: newMode
+    }));
+  }
+
   isDesktop() {
     return window.innerWidth > 991;
   }

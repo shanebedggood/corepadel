@@ -26,7 +26,7 @@
     @if (!loading && !errorMessage && tournament) {
         <div class="space-y-6">
         <!-- Page Header -->
-        <app-page-header [title]="'Edit Tournament: ' + tournament.name" [breadcrumbs]="breadcrumbs">
+        <app-page-header [title]="'Tournament: ' + tournament.name" [breadcrumbs]="breadcrumbs">
             <div header-actions>
                 <button pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined mr-4"
                     (click)="goBack()">
@@ -43,6 +43,7 @@
                     <p-tab value="2">Groups</p-tab>
                     <p-tab value="3">Matches</p-tab>
                     <p-tab value="4">Standings</p-tab>
+                    <p-tab value="5">Knockout</p-tab>
                 </p-tablist>
                 <p-tabpanels>
                     <!-- Tournament Details Tab -->
@@ -74,6 +75,18 @@
                             <app-tournament-matches [tournament]="tournament" [groups]="groups"
                                 [teams]="teams" [matches]="matches" [venues]="venues" (matchesUpdated)="onMatchesUpdated()">
                             </app-tournament-matches>
+                        }
+                    </p-tabpanel>
+                    <!-- Bracket Tab -->
+                    <p-tabpanel value="5" disabled="!tournament">
+                        @if (tournament) {
+                            <app-knockout-bracket 
+                                [tournament]="tournament" 
+                                [teams]="teams"
+                                [venues]="venues"
+                                [matches]="matches"
+                                (matchesUpdated)="onMatchesUpdated()">
+                            </app-knockout-bracket>
                         }
                     </p-tabpanel>
                     <!-- Standings Tab -->

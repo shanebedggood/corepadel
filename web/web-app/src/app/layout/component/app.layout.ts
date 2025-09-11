@@ -50,12 +50,6 @@ export class AppLayout implements OnDestroy {
         public renderer: Renderer2,
         public router: Router
     ) {
-        // Store previous menuMode to restore later
-        this.previousMenuMode = this.layoutService.layoutConfig().menuMode;
-        this.layoutService.layoutConfig.set({
-            ...this.layoutService.layoutConfig(),
-            menuMode: 'overlay'
-        });
         this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
             if (!this.menuOutsideClickListener) {
                 this.menuOutsideClickListener = this.renderer.listen('document', 'click', (event) => {

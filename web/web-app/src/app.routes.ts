@@ -9,7 +9,6 @@ import { Dashboard } from './app/pages/dashboard/dashboard';
 import { Landing } from './app/pages/landing/landing';
 import { NotfoundComponent } from './app/pages/notfound/notfound';
 import { Rules } from './app/pages/rules/rules';
-import { ZaDestComponent } from './app/pages/dest/za/zadest';
 import { AuthGuard } from './app/guards/auth.guard';
 import { AdminGuard } from './app/guards/admin.guard';
 import { TestRolesComponent } from './app/pages/test-roles/test-roles.component';
@@ -23,19 +22,20 @@ import { AdminComponent } from './app/pages/admin/admin.component';
 import { AdminSetupComponent } from './app/pages/admin/admin-setup.component';
 import { ProfileComponent } from './app/pages/profile/profile.component';
 import { ProfileUpdateComponent } from './app/pages/profile/profile-update.component';
+import { ClubsComponent } from './app/pages/clubs/clubs.component';
+import { RunBookingComponent } from './app/pages/run-booking/run-booking.component';
 import { ProfileCompletionGuard } from './app/guards/profile-completion.guard';
+import { DevAuthPreserveGuard } from './app/guards/dev-auth-preserve.guard';
 import authRoutes from './app/pages/auth/auth.routes';
 
 export const appRoutes: Routes = [
     // Public routes (no authentication required)
-    { path: '', component: Landing },
-    { path: 'landing', component: Landing },
-    { path: 'auth', children: authRoutes },
+    { path: '', component: Landing, canActivate: [DevAuthPreserveGuard] },
+    { path: 'landing', component: Landing, canActivate: [DevAuthPreserveGuard] },
+    { path: 'auth', children: authRoutes, canActivate: [DevAuthPreserveGuard] },
     
     // Protected routes (authentication required)
     { path: 'choose-role', component: RoleSwitcherComponent, canActivate: [AuthGuard] },
-    { path: 'rules', component: Rules, canActivate: [AuthGuard] },
-    { path: 'dest/za', component: ZaDestComponent, canActivate: [AuthGuard] },
     {
         path: 'player',
         component: PlayerLayoutComponent,
@@ -45,16 +45,12 @@ export const appRoutes: Routes = [
             { path: 'standings/:tournamentId', component: StandingsComponent, data: { title: 'Tournament Standings' }, canActivate: [ProfileCompletionGuard] },
             { path: 'rules', component: Rules, canActivate: [ProfileCompletionGuard] },
             { path: 'tournaments', component: TournamentsComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'clubs', component: ClubsComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'run-booking', component: RunBookingComponent, canActivate: [ProfileCompletionGuard] },
             { path: 'matches', component: Dashboard, canActivate: [ProfileCompletionGuard] }, // Placeholder for player matches
             { path: 'teams', component: Dashboard, canActivate: [ProfileCompletionGuard] }, // Placeholder for player teams
             { path: 'profile', component: ProfileComponent, canActivate: [ProfileCompletionGuard] },
-            { path: 'profile/update', component: ProfileUpdateComponent },
-            { path: 'destinations', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
-            { path: 'destinations/clubs', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
-            { path: 'destinations/events/kids', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
-            { path: 'destinations/events/social', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] },
-            { path: 'destinations/events/corporate', component: ZaDestComponent, canActivate: [ProfileCompletionGuard] }
-        ]
+            { path: 'profile/update', component: ProfileUpdateComponent },        ]
     },
     {
         path: 'admin',

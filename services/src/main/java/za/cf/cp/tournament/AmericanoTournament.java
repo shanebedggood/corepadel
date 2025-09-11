@@ -3,7 +3,6 @@ package za.cf.cp.tournament;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * AmericanoTournament entity representing Americano format tournaments.
@@ -37,8 +36,8 @@ public class AmericanoTournament extends Tournament {
     
     // Constructor with essential fields
     public AmericanoTournament(String name, String description, LocalDateTime startDate, LocalDateTime endDate, 
-                              Integer maxParticipants, String clubId, String firebaseUid) {
-        super(name, description, startDate, endDate, maxParticipants, clubId, firebaseUid);
+                              Integer maxParticipants, za.cf.cp.club.Club club, String firebaseUid) {
+        super(name, description, startDate, endDate, maxParticipants, club, firebaseUid);
     }
     
     @Override

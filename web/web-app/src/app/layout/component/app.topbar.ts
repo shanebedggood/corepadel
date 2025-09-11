@@ -20,7 +20,7 @@ import { Observable, map, Subscription } from 'rxjs';
             </button>
 
             <div class="layout-topbar-logo" (click)="onLogoClick()">
-                <img [src]="'assets/logo.svg'" alt="Logo" height="40px" />
+                <img [src]="'assets/logo.png'" alt="Logo" height="40px" />
                 <span>STRIDE & SERVE</span>
             </div>
 

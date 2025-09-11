@@ -27,16 +27,39 @@ export class ErrorHandlerService {
     constructor(private messageService: MessageService) { }
 
     /**
-     * Show a toast notification (sticky - requires manual dismissal)
-     * Use for temporary success/error messages that don't require user action
+     * Show a toast notification with appropriate lifetime based on severity
+     * Use for temporary messages that don't require user action
      */
     showToast(message: ToastMessage): void {
+        const lifetime = this.getToastLifetime(message.severity, message.life);
         this.messageService.add({
             severity: message.severity,
             summary: message.summary,
             detail: message.detail,
-            life: 0 // Set to 0 to make toasts sticky (no auto-dismiss)
+            life: lifetime
         });
+    }
+
+    /**
+     * Get appropriate toast lifetime based on severity
+     */
+    private getToastLifetime(severity: string, customLife?: number): number {
+        if (customLife !== undefined) {
+            return customLife;
+        }
+
+        switch (severity) {
+            case 'success':
+                return 4000; // 4 seconds - quick confirmation
+            case 'info':
+                return 5000; // 5 seconds - informational
+            case 'warn':
+                return 8000; // 8 seconds - important but not critical
+            case 'error':
+                return 0; // Sticky - requires user attention
+            default:
+                return 5000;
+        }
     }
 
     /**

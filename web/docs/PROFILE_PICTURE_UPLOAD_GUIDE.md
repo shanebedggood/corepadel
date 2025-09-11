@@ -74,7 +74,6 @@ async uploadProfilePicture(file: File, userId: string) {
       .uploadProfilePicture(file, userId)
       .toPromise();
     
-    console.log('Upload successful:', downloadURL);
     return downloadURL;
   } catch (error) {
     console.error('Upload failed:', error);

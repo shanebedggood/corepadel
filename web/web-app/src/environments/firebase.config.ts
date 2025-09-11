@@ -35,9 +35,4 @@ const actionCodeSettings = {
   dynamicLinkDomain: 'corepadel.page.link'
 };
 
-console.log('🚀 Using production Firebase services');
-console.log('  - Auth Domain:', firebaseConfig.authDomain);
-console.log('  - Storage Bucket:', firebaseConfig.storageBucket);
-console.log('  - Project ID:', firebaseConfig.projectId);
-
 export { app, auth, storage, actionCodeSettings };

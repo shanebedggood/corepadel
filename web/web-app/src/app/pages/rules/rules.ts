@@ -6,15 +6,8 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { AccordionModule } from 'primeng/accordion';
 import { BadgeModule } from 'primeng/badge';
-import { QuarkusRulesService, PadelRule } from '../../services/quarkus-rules.service';
-import { PageHeaderComponent, BreadcrumbItem } from '../../layout/component/page-header.component';
+import { QuarkusRulesService, PadelRule, RuleSection } from '../../services/quarkus-rules.service';
 
-interface RuleSection {
-    title: string;
-    content: string;
-    icon: string;
-    color: string;
-}
 
 @Component({
     selector: 'rules-page',
@@ -26,35 +19,16 @@ interface RuleSection {
         ButtonModule,
         DividerModule,
         AccordionModule,
-        BadgeModule,
-        PageHeaderComponent
+        BadgeModule
     ],
     templateUrl: './rules.component.html',
-    styles: [`
-        .prose {
-            line-height: 1.6;
-        }
-        .prose p {
-            margin-bottom: 1rem;
-        }
-        .prose ul {
-            list-style-type: disc;
-            margin-left: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .prose li {
-            margin-bottom: 0.5rem;
-        }
-    `]
+    styleUrls: ['./rules.component.scss']
 })
 export class Rules implements OnInit {
     padelRules: PadelRule[] = [];
     selectedRuleIndex: number | null = null;
-
-    // Page header configuration
-    breadcrumbs: BreadcrumbItem[] = [
-        { label: 'Rules', icon: 'pi pi-book' }
-    ];
+    loading = true;
+    error = false;
 
     constructor(private padelRulesService: QuarkusRulesService) { }
 
@@ -63,25 +37,93 @@ export class Rules implements OnInit {
     }
 
     loadPadelRules() {
+        this.loading = true;
+        this.error = false;
+        
         this.padelRulesService.getPadelRules().subscribe({
             next: (rules) => {
-                this.padelRules = rules;
-                
-
+                this.padelRules = rules || [];
+                this.loading = false;
             },
             error: (error) => {
-                // Remove all console.error statements
+                console.error('Error loading padel rules:', error);
+                console.error('Error details:', error.status, error.message);
+                this.error = true;
+                this.loading = false;
+                this.padelRules = [];
             }
         });
     }
 
     openRuleModal(index: number) {
-        this.selectedRuleIndex = index;
+        if (index >= 0 && index < this.padelRules.length) {
+            this.selectedRuleIndex = index;
+        } else {
+            this.selectedRuleIndex = null;
+        }
     }
 
     closeRuleModal() {
         this.selectedRuleIndex = null;
     }
 
+    getRulePreview(sections: RuleSection[]): string {
+        if (!sections || sections.length === 0) {
+            return 'No description available';
+        }
+        
+        // Get the first section content and clean it up for preview
+        let firstSection = sections[0];
+        
+        if (!firstSection || !firstSection.content) {
+            return 'No content available';
+        }
+        
+        let content = firstSection.content;
+        
+        // Remove any extra whitespace and newlines
+        content = content.replace(/\s+/g, ' ').trim();
+        
+        if (content.length <= 120) {
+            return content;
+        }
+        
+        return content.substring(0, 120) + '...';
+    }
 
+    trackByRule(index: number, rule: PadelRule): string {
+        return rule.ruleId || rule.title || index.toString();
+    }
+
+    /**
+     * Check if a section should display a number/title
+     * @param section The rule section to check
+     * @returns true if the section has a meaningful title that should be displayed
+     */
+    shouldDisplaySectionNumber(section: RuleSection): boolean {
+        return section.sectionTitle !== null && 
+               section.sectionTitle !== undefined && 
+               section.sectionTitle.trim() !== '';
+    }
+
+    getSelectedRuleSections(): RuleSection[] {
+        if (this.selectedRuleIndex === null || this.selectedRuleIndex < 0 || this.selectedRuleIndex >= this.padelRules.length) {
+            return [];
+        }
+        return this.padelRules[this.selectedRuleIndex].sections;
+    }
+
+    getSelectedRuleOrderNumber(): number {
+        if (this.selectedRuleIndex === null || this.selectedRuleIndex < 0 || this.selectedRuleIndex >= this.padelRules.length) {
+            return this.selectedRuleIndex !== null ? this.selectedRuleIndex + 1 : 1;
+        }
+        return this.padelRules[this.selectedRuleIndex].order_number || (this.selectedRuleIndex + 1);
+    }
+
+    getSelectedRuleTitle(): string {
+        if (this.selectedRuleIndex === null || this.selectedRuleIndex < 0 || this.selectedRuleIndex >= this.padelRules.length) {
+            return 'Untitled Rule';
+        }
+        return this.padelRules[this.selectedRuleIndex].title || 'Untitled Rule';
+    }
 }

@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { RippleModule } from 'primeng/ripple';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../service/layout.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   // eslint-disable-next-line @angular-eslint/component-selector
@@ -29,7 +30,11 @@ import { LayoutService } from '../service/layout.service';
           tabindex="0"
           pRipple
         >
-          <i [ngClass]="item.icon" class="layout-menuitem-icon"></i>
+          @if (isMaterialIcon()) {
+            <span class="material-icons layout-menuitem-icon">{{getMaterialIconName()}}</span>
+          } @else {
+            <i [ngClass]="getIconClasses()" class="layout-menuitem-icon"></i>
+          }
           <span class="layout-menuitem-text">{{ item.label }}</span>
           @if (item.items) {
             <i class="pi pi-fw pi-angle-down layout-submenu-toggler"></i>
@@ -54,7 +59,11 @@ import { LayoutService } from '../service/layout.service';
           tabindex="0"
           pRipple
         >
-          <i [ngClass]="item.icon" class="layout-menuitem-icon"></i>
+          @if (isMaterialIcon()) {
+            <span class="material-icons layout-menuitem-icon">{{getMaterialIconName()}}</span>
+          } @else {
+            <i [ngClass]="getIconClasses()" class="layout-menuitem-icon"></i>
+          }
           <span class="layout-menuitem-text">{{ item.label }}</span>
           @if (item.items) {
             <i class="pi pi-fw pi-angle-down layout-submenu-toggler"></i>
@@ -165,6 +174,46 @@ export class AppMenuitem implements OnInit, OnDestroy {
   @HostBinding('class.active-menuitem')
   get activeClass() {
     return this.active && !this.root;
+  }
+
+  /**
+   * Check if this menu item should use a Material Icon
+   */
+  isMaterialIcon(): boolean {
+    const itemAny = this.item as any;
+    return itemAny.iconClass === 'material-icons';
+  }
+
+  /**
+   * Get the Material Icon name (the actual icon to display)
+   */
+  getMaterialIconName(): string {
+    return this.item.icon || '';
+  }
+
+  /**
+   * Get the appropriate icon classes for the menu item
+   * Handles both PrimeNG icons and Material Icons
+   */
+  getIconClasses(): string {
+    // Check if this is a Material Icon (using any to bypass TypeScript interface limitation)
+    const itemAny = this.item as any;
+    
+    // Handle Material Icons - check both ways
+    if (this.item.icon === 'material-icons' && itemAny.iconClass) {
+      // For Material Icons, combine the base class with the specific icon
+      const result = `${this.item.icon} ${itemAny.iconClass}`;
+      return result;
+    }
+    
+    if (itemAny.iconClass === 'material-icons' && this.item.icon) {
+      // For Material Icons, combine the specific icon with the base class
+      const result = `${itemAny.iconClass} ${this.item.icon}`;
+      return result;
+    }
+    
+    // For PrimeNG icons or other cases, return the icon as-is
+    return this.item.icon || '';
   }
 
   ngOnDestroy() {

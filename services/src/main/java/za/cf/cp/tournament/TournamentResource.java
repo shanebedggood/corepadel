@@ -2,6 +2,8 @@ package za.cf.cp.tournament;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import za.cf.cp.tournament.dto.TournamentDto;
@@ -15,8 +17,9 @@ import za.cf.cp.tournament.dto.TournamentStatusDto;
 import za.cf.cp.tournament.dto.TournamentProgressionOptionDto;
 import za.cf.cp.tournament.service.TournamentService;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Map;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,9 +42,7 @@ public class TournamentResource {
     @GET
     public Response getAllTournaments() {
         try {
-            System.out.println("=== GET ALL TOURNAMENTS API CALLED ===");
             List<TournamentDto> tournaments = tournamentService.getAllTournaments();
-            System.out.println("Returning " + tournaments.size() + " tournaments");
             return Response.ok(tournaments).build();
         } catch (Exception e) {
             System.err.println("=== GET ALL TOURNAMENTS API ERROR ===");
@@ -79,41 +80,25 @@ public class TournamentResource {
      * Create a new tournament.
      */
     @POST
-    public Response createTournament(jakarta.json.JsonObject jsonData) {
+    public Response createTournament(jakarta.json.JsonObject jsonData, @Context HttpHeaders headers) {
         try {
-            System.out.println("=== TOURNAMENT CREATION STARTED ===");
-            System.out.println("Received tournament JSON data: " + jsonData);
-            
             // Extract tournament type
             String tournamentType = jsonData.getString("tournamentType", "ROUND_ROBIN");
-            System.out.println("Tournament type: " + tournamentType);
             
             // Create the appropriate DTO based on tournament type
             TournamentDto tournamentDto;
             if ("ROUND_ROBIN".equals(tournamentType)) {
-                System.out.println("Creating RoundRobinTournamentDto");
                 tournamentDto = new RoundRobinTournamentDto();
             } else if ("AMERICANO".equals(tournamentType)) {
-                System.out.println("Creating AmericanoTournamentDto");
                 tournamentDto = new AmericanoTournamentDto();
             } else {
                 // Default to Round Robin
-                System.out.println("Creating default RoundRobinTournamentDto");
                 tournamentDto = new RoundRobinTournamentDto();
             }
             
-            System.out.println("DTO created successfully: " + tournamentDto.getClass().getSimpleName());
-            
-            // Populate the DTO with JSON data
-            System.out.println("Starting to populate DTO from JSON...");
-            populateDtoFromJson(tournamentDto, jsonData);
-            System.out.println("DTO populated successfully");
-            
-            System.out.println("Created DTO: " + tournamentDto);
-            System.out.println("Calling tournamentService.createTournament...");
-            String tournamentId = tournamentService.createTournament(tournamentDto);
-            System.out.println("Tournament created with ID: " + tournamentId);
-            
+            // Populate the DTO with JSON data (including firebaseUid validation)
+            populateDtoFromJson(tournamentDto, jsonData);            
+            String tournamentId = tournamentService.createTournament(tournamentDto);            
             return Response.status(Response.Status.CREATED)
                     .entity("{\"id\": \"" + tournamentId + "\"}")
                     .build();
@@ -132,8 +117,25 @@ public class TournamentResource {
      */
     @PUT
     @Path("/{id}")
-    public Response updateTournament(@PathParam("id") String id, TournamentDto tournamentDto) {
+    public Response updateTournament(@PathParam("id") String id, jakarta.json.JsonObject jsonData, @Context HttpHeaders headers) {
         try {
+            // Extract tournament type
+            String tournamentType = jsonData.getString("tournamentType", "ROUND_ROBIN");
+            
+            // Create the appropriate DTO based on tournament type
+            TournamentDto tournamentDto;
+            if ("ROUND_ROBIN".equals(tournamentType)) {
+                tournamentDto = new RoundRobinTournamentDto();
+            } else if ("AMERICANO".equals(tournamentType)) {
+                tournamentDto = new AmericanoTournamentDto();
+            } else {
+                // Default to Round Robin
+                tournamentDto = new RoundRobinTournamentDto();
+            }
+            
+            // Populate the DTO with JSON data (including firebaseUid validation)
+            populateDtoFromJson(tournamentDto, jsonData);
+            
             boolean updated = tournamentService.updateTournament(id, tournamentDto);
             if (updated) {
                 return Response.ok().build();
@@ -143,6 +145,9 @@ public class TournamentResource {
                         .build();
             }
         } catch (Exception e) {
+            System.err.println("=== TOURNAMENT UPDATE ERROR ===");
+            System.err.println("Error updating tournament: " + e.getMessage());
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error updating tournament: " + e.getMessage())
                     .build();
@@ -221,10 +226,7 @@ public class TournamentResource {
     @Path("/{tournamentId}/participants")
     public Response getTournamentParticipants(@PathParam("tournamentId") String tournamentId) {
         try {
-            System.out.println("=== GET TOURNAMENT PARTICIPANTS API CALLED ===");
-            System.out.println("Tournament ID: " + tournamentId);
             List<Object> participants = tournamentService.getTournamentParticipants(tournamentId);
-            System.out.println("Returning " + participants.size() + " participants");
             return Response.ok(participants).build();
         } catch (Exception e) {
             System.err.println("=== GET TOURNAMENT PARTICIPANTS API ERROR ===");
@@ -463,13 +465,8 @@ public class TournamentResource {
     @PUT
     @Path("/matches/{matchId}")
     public Response updateMatchScore(@PathParam("matchId") String matchId, Object matchData) {
-        System.out.println("=== MATCH UPDATE API CALLED ===");
-        System.out.println("Match ID: " + matchId);
-        System.out.println("Match Data: " + matchData);
-        
         try {
             tournamentService.updateMatchScore(matchId, matchData);
-            System.out.println("Match update successful");
             return Response.ok().build();
         } catch (Exception e) {
             System.err.println("=== MATCH UPDATE API ERROR ===");
@@ -505,14 +502,8 @@ public class TournamentResource {
     @GET
     @Path("/{tournamentId}/groups/{groupId}/standings")
     public Response getTournamentStandings(@PathParam("tournamentId") String tournamentId, @PathParam("groupId") String groupId) {
-        System.out.println("=== STANDINGS API CALLED ===");
-        System.out.println("Tournament ID: " + tournamentId);
-        System.out.println("Group ID: " + groupId);
-        
         try {
-            System.out.println("Getting standings for tournament: " + tournamentId + ", group: " + groupId);
             List<Object> standings = tournamentService.getTournamentStandings(tournamentId, groupId);
-            System.out.println("Found " + standings.size() + " standings records");
             return Response.ok(standings).build();
         } catch (Exception e) {
             System.err.println("=== STANDINGS API ERROR ===");
@@ -561,63 +552,120 @@ public class TournamentResource {
      */
     private void populateDtoFromJson(TournamentDto dto, jakarta.json.JsonObject jsonData) {
         try {
-            System.out.println("=== POPULATING DTO FROM JSON ===");
-            System.out.println("DTO type: " + dto.getClass().getSimpleName());
-            
             // Set basic fields
-            System.out.println("Setting basic fields...");
             if (jsonData.containsKey("name")) {
-                dto.setName(jsonData.getString("name"));
-                System.out.println("Set name: " + jsonData.getString("name"));
+                if (jsonData.get("name").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    dto.setName(jsonData.getString("name"));
+                } else {
+                    System.err.println("WARNING: name is not a string, skipping");
+                }
             }
             if (jsonData.containsKey("description")) {
-                dto.setDescription(jsonData.getString("description"));
+                if (jsonData.get("description").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    dto.setDescription(jsonData.getString("description"));
+                } else {
+                    System.err.println("WARNING: description is not a string, skipping");
+                }
             }
             if (jsonData.containsKey("startDate")) {
-                String startDateStr = jsonData.getString("startDate");
-                dto.setStartDate(LocalDateTime.parse(startDateStr.replace("Z", "")));
+                if (jsonData.get("startDate").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    String startDateStr = jsonData.getString("startDate");
+                    dto.setStartDate(parseDateString(startDateStr));
+                } else {
+                    System.err.println("WARNING: startDate is not a string, skipping");
+                }
             }
             if (jsonData.containsKey("endDate")) {
-                String endDateStr = jsonData.getString("endDate");
-                dto.setEndDate(LocalDateTime.parse(endDateStr.replace("Z", "")));
+                if (jsonData.get("endDate").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    String endDateStr = jsonData.getString("endDate");
+                    dto.setEndDate(parseDateString(endDateStr));
+                } else {
+                    System.err.println("WARNING: endDate is not a string, skipping");
+                }
             }
             if (jsonData.containsKey("registrationStartDate")) {
-                String regStartDateStr = jsonData.getString("registrationStartDate");
-                dto.setRegistrationStartDate(LocalDateTime.parse(regStartDateStr.replace("Z", "")));
+                if (jsonData.get("registrationStartDate").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    String regStartDateStr = jsonData.getString("registrationStartDate");
+                    dto.setRegistrationStartDate(parseDateString(regStartDateStr));
+                } else {
+                    System.err.println("WARNING: registrationStartDate is not a string, skipping");
+                }
             }
             if (jsonData.containsKey("registrationEndDate")) {
-                String regEndDateStr = jsonData.getString("registrationEndDate");
-                dto.setRegistrationEndDate(LocalDateTime.parse(regEndDateStr.replace("Z", "")));
+                if (jsonData.get("registrationEndDate").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    String regEndDateStr = jsonData.getString("registrationEndDate");
+                    dto.setRegistrationEndDate(parseDateString(regEndDateStr));
+                } else {
+                    System.err.println("WARNING: registrationEndDate is not a string, skipping");
+                }
             }
             if (jsonData.containsKey("maxParticipants")) {
                 if (jsonData.get("maxParticipants").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
                     dto.setMaxParticipants(jsonData.getInt("maxParticipants"));
-                } else {
+                } else if (jsonData.get("maxParticipants").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
                     dto.setMaxParticipants(Integer.parseInt(jsonData.getString("maxParticipants")));
+                } else {
+                    System.err.println("WARNING: maxParticipants is not a number or string, skipping");
                 }
             }
             if (jsonData.containsKey("currentParticipants")) {
                 if (jsonData.get("currentParticipants").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
                     dto.setCurrentParticipants(jsonData.getInt("currentParticipants"));
-                } else {
+                } else if (jsonData.get("currentParticipants").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
                     dto.setCurrentParticipants(Integer.parseInt(jsonData.getString("currentParticipants")));
+                } else {
+                    System.err.println("WARNING: currentParticipants is not a number or string, skipping");
                 }
             }
             if (jsonData.containsKey("entryFee")) {
                 if (jsonData.get("entryFee").getValueType() == jakarta.json.JsonValue.ValueType.NUMBER) {
                     dto.setEntryFee(new BigDecimal(jsonData.getJsonNumber("entryFee").toString()));
-                } else {
+                } else if (jsonData.get("entryFee").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
                     dto.setEntryFee(new BigDecimal(jsonData.getString("entryFee")));
+                } else {
+                    System.err.println("WARNING: entryFee is not a number or string, skipping");
                 }
             }
             if (jsonData.containsKey("clubId")) {
-                dto.setClubId(jsonData.getString("clubId"));
+                if (jsonData.get("clubId").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    String clubId = jsonData.getString("clubId");
+                    dto.setClubId(clubId);
+                } else {
+                    System.err.println("WARNING: clubId is not a string, skipping");
+                }
+            } else {
+                System.err.println("WARNING: clubId not found in JSON data");
             }
             if (jsonData.containsKey("firebaseUid")) {
-                dto.setFirebaseUid(jsonData.getString("firebaseUid"));
+                if (jsonData.get("firebaseUid").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    String jsonFirebaseUid = jsonData.getString("firebaseUid");
+                    if (jsonFirebaseUid != null && !jsonFirebaseUid.trim().isEmpty()) {
+                        dto.setFirebaseUid(jsonFirebaseUid);
+                    } else {
+                        System.err.println("ERROR: firebaseUid in JSON is null or empty");
+                        throw new RuntimeException("Invalid firebaseUid in request body");
+                    }
+                } else {
+                    System.err.println("ERROR: firebaseUid is not a string");
+                    throw new RuntimeException("Invalid firebaseUid format in request body");
+                }
+            } else {
+                System.err.println("ERROR: firebaseUid not found in request body");
+                throw new RuntimeException("firebaseUid is required in request body");
             }
             if (jsonData.containsKey("venueId")) {
-                dto.setVenueId(jsonData.getString("venueId"));
+                if (jsonData.get("venueId").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    dto.setVenueId(jsonData.getString("venueId"));
+                } else {
+                    System.err.println("WARNING: venueId is not a string, skipping");
+                }
+            }
+            if (jsonData.containsKey("accessType")) {
+                if (jsonData.get("accessType").getValueType() == jakarta.json.JsonValue.ValueType.STRING) {
+                    dto.setAccessType(jsonData.getString("accessType"));
+                } else {
+                    System.err.println("WARNING: accessType is not a string, skipping");
+                }
             }
             
             // Set nested objects (simplified - just ID and name)
@@ -714,6 +762,111 @@ public class TournamentResource {
         } catch (Exception e) {
             System.err.println("Error populating DTO from JSON: " + e.getMessage());
             throw new RuntimeException("Error populating DTO from JSON", e);
+        }
+    }
+    
+    /**
+     * Parse date string that can be either YYYY-MM-DD or ISO datetime format
+     * Converts to LocalDateTime at midnight to avoid timezone issues
+     */
+    private LocalDateTime parseDateString(String dateStr) {
+        try {
+            // Handle date-only format (YYYY-MM-DD)
+            if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                return LocalDate.parse(dateStr).atStartOfDay();
+            }
+            // Handle ISO datetime format (with or without Z)
+            else if (dateStr.contains("T")) {
+                String cleanDateStr = dateStr.replace("Z", "");
+                if (cleanDateStr.contains(".")) {
+                    // Remove milliseconds if present
+                    cleanDateStr = cleanDateStr.substring(0, cleanDateStr.indexOf("."));
+                }
+                return LocalDateTime.parse(cleanDateStr);
+            }
+            // Fallback - try to parse as LocalDate and convert to LocalDateTime
+            else {
+                return LocalDate.parse(dateStr).atStartOfDay();
+            }
+        } catch (Exception e) {
+            System.err.println("Error parsing date string: " + dateStr + " - " + e.getMessage());
+            throw new RuntimeException("Invalid date format: " + dateStr, e);
+        }
+    }
+
+    // ==================== KNOCKOUT BRACKET ENDPOINTS ====================
+
+    /**
+     * Generate knockout bracket matches based on round robin standings
+     */
+    @POST
+    @Path("/{tournamentId}/knockout/generate")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response generateKnockoutBracket(@PathParam("tournamentId") String tournamentId) {
+        try {
+            List<Object> knockoutMatches = tournamentService.generateKnockoutBracket(tournamentId);            
+            return Response.ok(knockoutMatches).build();
+        } catch (Exception e) {
+            System.err.println("=== KNOCKOUT BRACKET API ERROR ===");
+            System.err.println("Error generating knockout bracket: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Failed to generate knockout bracket: " + e.getMessage()))
+                    .build();
+        }
+    }
+
+    /**
+     * Get knockout bracket matches for a tournament
+     */
+    @GET
+    @Path("/{tournamentId}/knockout/matches")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getKnockoutMatches(@PathParam("tournamentId") String tournamentId) {
+        try {
+            List<Object> knockoutMatches = tournamentService.getKnockoutMatches(tournamentId);
+            return Response.ok(knockoutMatches).build();
+        } catch (Exception e) {
+            System.err.println("Error getting knockout matches: " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Failed to get knockout matches: " + e.getMessage()))
+                    .build();
+        }
+    }
+
+    /**
+     * Check if all group matches are completed
+     */
+    @GET
+    @Path("/{tournamentId}/groups/completion-status")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response checkGroupMatchCompletion(@PathParam("tournamentId") String tournamentId) {
+        try {
+            boolean allCompleted = tournamentService.areAllGroupMatchesCompleted(tournamentId);
+            return Response.ok(Map.of("allCompleted", allCompleted)).build();
+        } catch (Exception e) {
+            System.err.println("Error checking group match completion: " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Failed to check group match completion: " + e.getMessage()))
+                    .build();
+        }
+    }
+
+    /**
+     * Generate next round of knockout matches
+     */
+    @POST
+    @Path("/{tournamentId}/knockout/next-round")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response generateNextKnockoutRound(@PathParam("tournamentId") String tournamentId) {
+        try {
+            List<Object> newMatches = tournamentService.generateNextKnockoutRound(tournamentId);
+            return Response.ok(newMatches).build();
+        } catch (Exception e) {
+            System.err.println("Error generating next knockout round: " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Failed to generate next knockout round: " + e.getMessage()))
+                    .build();
         }
     }
 } 

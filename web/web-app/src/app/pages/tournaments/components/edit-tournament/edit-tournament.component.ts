@@ -18,6 +18,7 @@ import { TournamentDetailsComponent } from '../tournament-details/tournament-det
 import { TournamentGroupsComponent } from '../tournament-groups/tournament-groups.component';
 import { TournamentMatchesComponent } from '../tournament-matches/tournament-matches.component';
 import { TournamentStandingsComponent } from '../tournament-standings/tournament-standings.component';
+import { KnockoutBracketComponent } from '../knockout-bracket/knockout-bracket.component';
 
 import { TabsModule } from "primeng/tabs";
 
@@ -132,7 +133,8 @@ interface BreadcrumbItem {
     TournamentDetailsComponent,
     TournamentGroupsComponent,
     TournamentMatchesComponent,
-    TournamentStandingsComponent
+    TournamentStandingsComponent,
+    KnockoutBracketComponent
 ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './edit-tournament.component.html',
@@ -155,7 +157,7 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
     // Breadcrumbs
     breadcrumbs: BreadcrumbItem[] = [
         { label: 'Tournaments', routerLink: '/admin/tournaments' },
-        { label: 'Edit Tournament', route: 'current' }
+        { label: 'Manage Tournament', route: 'current' }
     ];
 
     // Groups data (for coordination between components)
@@ -198,7 +200,7 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
         ).subscribe((profile: any) => {
             if (!profile) {
                 console.error('User not authenticated');
-                this.errorMessage = 'You must be logged in to edit tournaments';
+                this.errorMessage = 'You must be logged in to manage tournaments';
                 return;
             }
             
@@ -209,7 +211,7 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
                 this.isAdmin = profile?.roles.includes('admin') || false;
                 if (!this.isAdmin) {
                     console.error('User is not an admin');
-                    this.errorMessage = 'You must be an admin to edit tournaments';
+                    this.errorMessage = 'You must be an admin to manage tournaments';
                     return;
                 }
 

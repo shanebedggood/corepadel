@@ -16,6 +16,7 @@ import { Subject, takeUntil } from 'rxjs';
 // Import interfaces from tournament service
 import { TournamentService, Tournament, RoundType } from '../../../../services/tournament.service';
 import { VenueService, Venue } from '../../../../services/venue.service';
+import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
 
 // Define interfaces locally (same as in edit-tournament)
 interface TournamentFormat {
@@ -151,6 +152,7 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
     progressionTypes: TournamentProgressionOption[] = [];
     advancementModels: any[] = [];
     eliminationBracketSizes: any[] = [];
+    adminClubs: any[] = []; // Clubs where user is admin
     
     // Group options for Round Robin format
     groupOptions: number[] = [2, 3, 4, 5, 6, 7, 8];
@@ -161,7 +163,8 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
     constructor(
         private fb: FormBuilder,
         private tournamentService: TournamentService,
-        private venueService: VenueService
+        private venueService: VenueService,
+        private authService: FirebaseAuthService
     ) {
         this.tournamentForm = this.fb.group({
             name: ['', Validators.required],
@@ -175,6 +178,8 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             registrationType: [null, Validators.required],
             venueType: [null, Validators.required],
             venue: [null],
+            club: [null, Validators.required], // Club selection - required
+            accessType: ['open', Validators.required], // Tournament access type - default to open
             progressionOption: [null],
             roundType: [null],
             advancementModel: [null],
@@ -186,8 +191,33 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
         });
     }
 
+    /**
+     * Load admin clubs for the current user
+     */
+    private loadAdminClubs(): void {
+        this.authService.currentUser$.pipe(
+            takeUntil(this.destroy$)
+        ).subscribe(user => {
+            if (user) {
+                this.authService.getCachedUserAuthData(user.uid).pipe(
+                    takeUntil(this.destroy$)
+                ).subscribe({
+                    next: (cachedData: any) => {
+                        this.adminClubs = (cachedData.club_memberships?.filter((membership: any) => membership.is_admin) || [])
+                            .sort((a: any, b: any) => a.club_name.localeCompare(b.club_name));
+                    },
+                    error: (error) => {
+                        console.error('Error loading admin clubs:', error);
+                        this.adminClubs = [];
+                    }
+                });
+            }
+        });
+    }
+
     ngOnInit(): void {
         this.setupFormSubscriptions();
+        this.loadAdminClubs();
         
         // Add a timeout to ensure form is populated after all data is loaded
         setTimeout(() => {
@@ -314,6 +344,8 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             registrationType: this.tournament.registrationType?.id,
             venueType: this.tournament.venueType?.id,
             venue: matchingVenue?.id,
+            club: this.tournament.clubId, // Set the club ID
+            accessType: (this.tournament as any).accessType || 'open', // Set access type, default to open
             maxParticipants: this.tournament.maxParticipants,
             entryFee: this.tournament.entryFee,
             // Round Robin specific fields
@@ -368,14 +400,21 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
                 return;
             }
 
+            // Get current user for firebaseUid
+            const currentUser = this.authService.getCurrentUser();
+            if (!currentUser) {
+                this.errorMessage = 'User not authenticated. Please log in again.';
+                return;
+            }
+
             const baseTournamentData = {
                 ...this.tournament!,
                 name: formValue.name,
                 description: formValue.description,
-                startDate: formValue.startDate,
-                endDate: formValue.endDate,
-                registrationStartDate: formValue.registrationStartDate,
-                registrationEndDate: formValue.registrationEndDate,
+                startDate: formValue.startDate ? this.formatDateOnly(formValue.startDate) : formValue.startDate,
+                endDate: formValue.endDate ? this.formatDateOnly(formValue.endDate) : formValue.endDate,
+                registrationStartDate: formValue.registrationStartDate ? this.formatDateOnly(formValue.registrationStartDate) : formValue.registrationStartDate,
+                registrationEndDate: formValue.registrationEndDate ? this.formatDateOnly(formValue.registrationEndDate) : formValue.registrationEndDate,
                 format: format,
                 category: category,
                 registrationType: registrationType,
@@ -383,7 +422,8 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
                 venue: venue,
                 maxParticipants: Number(formValue.maxParticipants),
                 entryFee: Number(formValue.entryFee),
-                tournamentType: this.isRoundRobinTournament() ? 'ROUND_ROBIN' : 'AMERICANO'
+                tournamentType: this.isRoundRobinTournament() ? 'ROUND_ROBIN' : 'AMERICANO',
+                firebaseUid: currentUser.uid
             };
 
             // Add Round Robin specific fields if applicable
@@ -628,6 +668,16 @@ export class TournamentDetailsComponent implements OnInit, OnDestroy, OnChanges 
             }
             return null;
         };
+    }
+
+    /**
+     * Format a Date object to YYYY-MM-DD string to avoid timezone issues
+     */
+    private formatDateOnly(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
 } 

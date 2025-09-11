@@ -1,0 +1,501 @@
+// Tournament Knockout Matches Component Styles
+
+.space-y-6 > * + * {
+    margin-top: 1.5rem;
+}
+
+// Match Statistics Cards
+.grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+    .sm\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    .sm\:grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .lg\:grid-cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    
+    .lg\:grid-cols-5 {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+// Status Badge Colors
+.bg-blue-100 {
+    background-color: #dbeafe;
+}
+
+.text-blue-800 {
+    color: #1e40af;
+}
+
+.bg-yellow-100 {
+    background-color: #fef3c7;
+}
+
+.text-yellow-800 {
+    color: #92400e;
+}
+
+.bg-green-100 {
+    background-color: #dcfce7;
+}
+
+.text-green-800 {
+    color: #166534;
+}
+
+.bg-red-100 {
+    background-color: #fee2e2;
+}
+
+.text-red-800 {
+    color: #991b1b;
+}
+
+.bg-gray-100 {
+    background-color: #f3f4f6;
+}
+
+.text-gray-800 {
+    color: #1f2937;
+}
+
+.bg-purple-100 {
+    background-color: #e9d5ff;
+}
+
+.text-purple-800 {
+    color: #6b21a8;
+}
+
+// Match Card Styles
+.bg-white {
+    background-color: #ffffff;
+}
+
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+.border {
+    border-width: 1px;
+}
+
+.border-gray-200 {
+    border-color: #e5e7eb;
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.hover\:shadow-md:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.transition-shadow {
+    transition-property: box-shadow;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+// Winner highlighting
+.bg-green-50 {
+    background-color: #f0fdf4;
+}
+
+.border-green-200 {
+    border-color: #bbf7d0;
+}
+
+.text-green-800 {
+    color: #166534;
+}
+
+.bg-green-600 {
+    background-color: #16a34a;
+}
+
+// Table styles
+:host ::ng-deep .p-datatable {
+    .p-datatable-header {
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .p-datatable-thead > tr > th {
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        color: #374151;
+        font-weight: 600;
+    }
+    
+    .p-datatable-tbody > tr {
+        border-bottom: 1px solid #e5e7eb;
+        
+        &:hover {
+            background-color: #f9fafb;
+        }
+        
+        &.bg-green-50 {
+            background-color: #f0fdf4;
+        }
+        
+        &.bg-yellow-50 {
+            background-color: #fffbeb;
+        }
+        
+        &.bg-red-50 {
+            background-color: #fef2f2;
+        }
+    }
+    
+    .p-datatable-tbody > tr > td {
+        border-bottom: 1px solid #e5e7eb;
+    }
+}
+
+// Dialog styles
+:host ::ng-deep .p-dialog {
+    .p-dialog-header {
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .p-dialog-content {
+        background: #ffffff;
+        padding: 0;
+    }
+}
+
+// Form styles
+input[type="number"] {
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    &[type="number"] {
+        -moz-appearance: textfield;
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .space-y-6 > * + * {
+        margin-top: 1rem;
+    }
+    
+    .grid {
+        gap: 0.75rem;
+    }
+}
+
+// Loading and empty states
+.min-h-32 {
+    min-height: 8rem;
+}
+
+.min-h-64 {
+    min-height: 16rem;
+}
+
+.flex {
+    display: flex;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-gray-400 {
+    color: #9ca3af;
+}
+
+.text-gray-600 {
+    color: #4b5563;
+}
+
+.text-gray-900 {
+    color: #111827;
+}
+
+// Typography
+.text-xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+}
+
+.text-md {
+    font-size: 1rem;
+    line-height: 1.5rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+// Spacing
+.p-4 {
+    padding: 1rem;
+}
+
+.p-5 {
+    padding: 1.25rem;
+}
+
+.p-6 {
+    padding: 1.5rem;
+}
+
+.p-3 {
+    padding: 0.75rem;
+}
+
+.p-2 {
+    padding: 0.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.mt-3 {
+    margin-top: 0.75rem;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+
+.mr-1 {
+    margin-right: 0.25rem;
+}
+
+.ml-2 {
+    margin-left: 0.5rem;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+// Flexbox utilities
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.flex-1 {
+    flex: 1 1 0%;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.items-start {
+    align-items: flex-start;
+}
+
+// Width utilities
+.w-full {
+    width: 100%;
+}
+
+.w-32 {
+    width: 8rem;
+}
+
+.w-16 {
+    width: 4rem;
+}
+
+.w-8 {
+    width: 2rem;
+}
+
+// Height utilities
+.h-8 {
+    height: 2rem;
+}
+
+// Border radius
+.rounded-full {
+    border-radius: 9999px;
+}
+
+// Position utilities
+.block {
+    display: block;
+}
+
+// Text utilities
+.italic {
+    font-style: italic;
+}
+
+// Background colors
+.bg-gray-50 {
+    background-color: #f9fafb;
+}
+
+.bg-blue-50 {
+    background-color: #eff6ff;
+}
+
+.bg-blue-100 {
+    background-color: #dbeafe;
+}
+
+.text-blue-800 {
+    color: #1e40af;
+}
+
+.border-blue-200 {
+    border-color: #bfdbfe;
+}
+
+.bg-yellow-50 {
+    background-color: #fffbeb;
+}
+
+.bg-green-50 {
+    background-color: #f0fdf4;
+}
+
+.bg-red-50 {
+    background-color: #fef2f2;
+}
+
+// Text colors
+.text-blue-600 {
+    color: #2563eb;
+}
+
+.text-yellow-600 {
+    color: #d97706;
+}
+
+.text-green-600 {
+    color: #16a34a;
+}
+
+.text-red-600 {
+    color: #dc2626;
+}
+
+.text-gray-600 {
+    color: #4b5563;
+}
+
+.text-gray-900 {
+    color: #111827;
+}
+
+// Border colors
+.border-gray-300 {
+    border-color: #d1d5db;
+}
+
+.border-red-200 {
+    border-color: #fecaca;
+}
+
+// Cursor
+.cursor-pointer {
+    cursor: pointer;
+}
+
+// Transition
+.transition-colors {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}

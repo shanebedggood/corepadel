@@ -24,7 +24,6 @@ export class ImageUploadService {
   };
 
   constructor(private storage: Storage, private injector: Injector) {
-    console.log('ImageUploadService initialized with storage:', storage);
     this.verifyStorageConnection();
   }
 
@@ -37,12 +36,6 @@ export class ImageUploadService {
         console.error('❌ Firebase Storage is not available');
         return;
       }
-
-      console.log('🔍 Storage connection details:');
-      console.log('  - Storage instance:', this.storage);
-      console.log('  - App:', this.storage.app);
-      console.log('  - Project ID:', this.storage.app.options.projectId);
-      console.log('  - Using production Firebase Storage');
     } catch (error) {
       console.error('❌ Error verifying storage connection:', error);
     }
@@ -60,15 +53,10 @@ export class ImageUploadService {
     userId: string, 
     options: ImageUploadOptions = {}
   ): Observable<string> {
-    console.log('Starting profile picture upload for user:', userId);
-    console.log('File details:', { name: file.name, size: file.size, type: file.type });
-    
     const uploadOptions = { ...this.DEFAULT_OPTIONS, ...options };
-    console.log('Upload options:', uploadOptions);
     
     return from(this.processImage(file, uploadOptions)).pipe(
       switchMap(processedFile => {
-        console.log('Image processed, uploading to Firebase...');
         return from(this.uploadToFirebase(processedFile, userId, uploadOptions));
       }),
       catchError(error => {
@@ -181,7 +169,6 @@ export class ImageUploadService {
 
       // Try to create a test reference
       const testRef = ref(this.storage, 'test-connection.txt');
-      console.log('✅ Storage connection test successful:', testRef);
       return true;
     } catch (error: any) {
       console.error('❌ Storage connection test failed:', error);
@@ -212,29 +199,17 @@ export class ImageUploadService {
       const fileName = options.fileName || `profile.${options.format}`;
       const filePath = `profile-pictures/${userId}/${fileName}`;
       
-      console.log('Creating storage reference for path:', filePath);
-      console.log('Storage instance:', this.storage);
-      
       // Try to create storage reference
       let fileRef;
       try {
         fileRef = ref(this.storage, filePath);
-        console.log('Storage reference created successfully:', fileRef);
       } catch (refError: any) {
         console.error('Failed to create storage reference:', refError);
         throw new Error(`Storage reference creation failed: ${refError.message}`);
       }
-
-      console.log('Storage reference created:', fileRef);
-      console.log('Uploading file to Firebase Storage...');
       
       const snapshot = await uploadBytes(fileRef, file);
-      console.log('Upload snapshot:', snapshot);
-      
-      console.log('File uploaded successfully, getting download URL...');
       const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      console.log('Download URL obtained:', downloadURL);
       return downloadURL;
     } catch (error: any) {
       console.error('Error uploading to Firebase:', error);

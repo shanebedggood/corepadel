@@ -1,13 +1,15 @@
-import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { MessageService } from 'primeng/api';
 import { TournamentService, TournamentStanding } from '../../../../services/tournament.service';
 import { Tournament, TournamentGroup, TournamentTeam, TournamentMatch } from '../../../../services/tournament.service';
 
 @Component({
     selector: 'app-tournament-standings',
     standalone: true,
-    imports: [CommonModule, TableModule],
+    imports: [CommonModule, TableModule, ButtonModule],
     templateUrl: './tournament-standings.component.html',
     styleUrls: ['./tournament-standings.component.scss']
 })
@@ -20,16 +22,22 @@ export class TournamentStandingsComponent implements OnInit, OnChanges {
     standings: { [groupId: string]: TournamentStanding[] } = {};
     loading: boolean = false;
     error: string | null = null;
+    allGroupMatchesCompleted: boolean = false;
 
-    constructor(private tournamentService: TournamentService) {}
+    constructor(
+        private tournamentService: TournamentService,
+        private messageService: MessageService
+    ) {}
 
     ngOnInit(): void {
         this.loadStandings();
+        this.checkGroupMatchCompletion();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes['teams'] || changes['matches']) && this.teams && this.matches) {
             this.loadStandings();
+            this.checkGroupMatchCompletion();
         }
     }
 
@@ -123,6 +131,24 @@ export class TournamentStandingsComponent implements OnInit, OnChanges {
 
     getGoalDifferenceClass(goalDifference: number): string {
         return goalDifference > 0 ? 'positive' : goalDifference < 0 ? 'negative' : 'neutral';
+    }
+
+    private checkGroupMatchCompletion(): void {
+        if (!this.tournament?.id) return;
+
+        this.tournamentService.areAllGroupMatchesCompleted(this.tournament.id).subscribe({
+            next: (completed) => {
+                this.allGroupMatchesCompleted = completed;
+            },
+            error: (error) => {
+                this.allGroupMatchesCompleted = false;
+            }
+        });
+    }
+
+
+    getProgressionOptionId(): string {
+        return (this.tournament as any)?.progressionOption?.id || 'Not set';
     }
 
 } 

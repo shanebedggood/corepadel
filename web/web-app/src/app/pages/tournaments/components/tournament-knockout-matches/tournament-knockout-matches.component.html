@@ -1,0 +1,477 @@
+<div class="space-y-6">
+    <!-- Knockout Bracket Generation Section -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">Knockout Bracket</h2>
+            <div class="flex flex-wrap gap-2">
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Generate Knockout Bracket" 
+                    icon="pi pi-sitemap"
+                    class="p-button-success" 
+                    [loading]="generatingBracket"
+                    [disabled]="!canGenerateKnockoutBracket()" 
+                    (click)="generateKnockoutBracket()"
+                    pTooltip="Generate knockout bracket from group stage results">
+                </button>
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Generate Next Round" 
+                    icon="pi pi-arrow-right"
+                    class="p-button-warning" 
+                    [loading]="generatingNextRound"
+                    [disabled]="!canGenerateNextRound()" 
+                    (click)="generateNextRound()"
+                    pTooltip="Generate next round after current round is completed">
+                </button>
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Refresh Matches" 
+                    icon="pi pi-refresh"
+                    class="p-button-outlined p-button-sm" 
+                    (click)="loadKnockoutMatches()"
+                    pTooltip="Refresh knockout matches from database">
+                </button>
+            </div>
+        </div>
+
+        <!-- Generation Status -->
+        @if (!canGenerateKnockoutBracket() && knockoutMatches.length === 0) {
+            <div class="mt-4">
+                <div class="flex items-center gap-2 p-3 rounded-lg text-sm font-medium bg-yellow-50 text-yellow-800 border border-yellow-200">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span>Complete all group stage matches to generate knockout bracket</span>
+                </div>
+                <!-- Debug info -->
+                <div class="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
+                    <div>Group matches: {{ getAllGroupMatches().length }}</div>
+                    <div>Completed group matches: {{ getCompletedGroupMatchesCount() }}</div>
+                    <div>Knockout matches: {{ knockoutMatches.length }}</div>
+                </div>
+            </div>
+        }
+        
+        @if (canGenerateNextRound()) {
+            <div class="mt-4">
+                <div class="flex items-center gap-2 p-3 rounded-lg text-sm font-medium bg-blue-50 text-blue-800 border border-blue-200">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Round {{ getCurrentRound() }} completed! Generate the next round to continue.</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Match Statistics -->
+    @if (knockoutMatches.length > 0) {
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Knockout Match Statistics</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <div class="text-2xl font-bold text-gray-900">{{ getMatchStats().total }}</div>
+                    <div class="text-sm font-medium text-gray-600">Total Matches</div>
+                </div>
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600">{{ getMatchStats().scheduled }}</div>
+                    <div class="text-sm font-medium text-gray-600">Scheduled</div>
+                </div>
+                <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                    <div class="text-2xl font-bold text-yellow-600">{{ getMatchStats().inProgress }}</div>
+                    <div class="text-sm font-medium text-gray-600">In Progress</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600">{{ getMatchStats().completed }}</div>
+                    <div class="text-sm font-medium text-gray-600">Completed</div>
+                </div>
+                <div class="text-center p-4 bg-red-50 rounded-lg">
+                    <div class="text-2xl font-bold text-red-600">{{ getMatchStats().cancelled }}</div>
+                    <div class="text-sm font-medium text-gray-600">Cancelled</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Filters -->
+    @if (!isMobileView && !loading && knockoutMatches.length > 0) {
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">Phase:</label>
+                    <input type="text" pInputText [(ngModel)]="filterPhase" placeholder="Filter by phase" class="w-full">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">Status:</label>
+                    <select pInputText [(ngModel)]="filterStatus" class="w-full">
+                        <option value="">All Statuses</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">Date:</label>
+                    <input type="date" pInputText [(ngModel)]="filterDate" class="w-full">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">&nbsp;</label>
+                    <button pButton type="button" label="Clear Filters" icon="pi pi-times" 
+                            class="p-button-outlined p-button-sm w-full" (click)="clearFilters()">
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Desktop Table View -->
+    @if (!isMobileView && !loading && knockoutMatches.length > 0) {
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <p-table [value]="getFilteredMatches()" 
+                    [dataKey]="'id'"
+                    [tableStyle]="{'min-width': '50rem'}"
+                    styleClass="p-datatable-sm"
+                    [rowHover]="true"
+                    (onRowClick)="startEditMatch($event)">
+                
+                <ng-template pTemplate="header">
+                    <tr class="bg-gray-50">
+                        <th pSortableColumn="phase" class="text-left p-3 font-semibold text-gray-700">
+                            Phase
+                            <p-sortIcon field="phase"></p-sortIcon>
+                        </th>
+                        <th pSortableColumn="round" class="text-left p-3 font-semibold text-gray-700">
+                            Round
+                            <p-sortIcon field="round"></p-sortIcon>
+                        </th>
+                        <th class="text-left p-3 font-semibold text-gray-700">Match</th>
+                        <th class="text-center p-3 font-semibold text-gray-700">Score</th>
+                        <th pSortableColumn="venueId" class="text-left p-3 font-semibold text-gray-700">
+                            Venue
+                            <p-sortIcon field="venueId"></p-sortIcon>
+                        </th>
+                        <th pSortableColumn="scheduledTime" class="text-left p-3 font-semibold text-gray-700">
+                            Date & Time
+                            <p-sortIcon field="scheduledTime"></p-sortIcon>
+                        </th>
+                        <th pSortableColumn="status" class="text-left p-3 font-semibold text-gray-700">
+                            Status
+                            <p-sortIcon field="status"></p-sortIcon>
+                        </th>
+                        <th class="text-center p-3 font-semibold text-gray-700">Actions</th>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="body" let-match>
+                    <tr [ngClass]="getMatchRowClass(match)" class="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <td class="p-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                {{ getPhaseTitle(match.phase) }}
+                            </span>
+                        </td>
+                        <td class="p-3">{{ match.round }}</td>
+                        <td class="p-3">
+                            <div class="space-y-1">
+                                <div class="font-semibold text-gray-900">{{ getTeamName(match.team1Id) }}</div>
+                                <div class="text-sm text-gray-500">{{ getTeamPlayerNames(match.team1Id) }}</div>
+                                <div class="text-xs text-gray-400 font-medium">vs</div>
+                                <div class="font-semibold text-gray-900">{{ getTeamName(match.team2Id) }}</div>
+                                <div class="text-sm text-gray-500">{{ getTeamPlayerNames(match.team2Id) }}</div>
+                            </div>
+                        </td>
+                        <td class="p-3 text-center">
+                            <app-match-score-display [match]="match"></app-match-score-display>
+                        </td>
+                        <td class="p-3">{{ getVenueName(match.venueId || null, match.groupId || null) }}</td>
+                        <td class="p-3">
+                            @if (match.scheduledTime) {
+                                <div class="text-sm">
+                                    <div class="font-medium text-gray-900">{{ match.scheduledTime | date:'mediumDate' }}</div>
+                                    <div class="text-gray-500">{{ match.scheduledTime | date:'HH:mm' }}</div>
+                                </div>
+                            }
+                            @if (!match.scheduledTime) {
+                                <div class="text-sm text-gray-400 italic">Not scheduled</div>
+                            }
+                        </td>
+                        <td class="p-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium" 
+                                  [ngClass]="getStatusBadgeClass(match.status)">
+                                {{ getStatusLabel(match.status) }}
+                            </span>
+                        </td>
+                        <td class="p-3">
+                            <div class="flex justify-center gap-2">
+                                <button 
+                                    pButton 
+                                    type="button" 
+                                    icon="pi pi-pencil" 
+                                    class="p-button-lg p-button-outlined"
+                                    (click)="startEditMatch(match)"
+                                    pTooltip="Enter/Edit Match Score">
+                                </button>
+                                <button 
+                                    pButton 
+                                    type="button" 
+                                    icon="pi pi-calendar" 
+                                    class="p-button-lg p-button-outlined"
+                                    (click)="startEditSchedule(match, $event)"
+                                    pTooltip="Edit Match Schedule">
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    }
+
+    <!-- Mobile/Tablet Card View -->
+    @if (isMobileView && !loading && knockoutMatches.length > 0) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @for (match of getFilteredMatches(); track match.id) {
+                <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow" 
+                     [ngClass]="getMatchCardClass(match)">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-1">
+                            <div class="text-sm font-semibold text-gray-900">{{ getPhaseTitle(match.phase) }}</div>
+                            <div class="text-sm text-gray-600">Round {{ match.round }}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                                  [ngClass]="getStatusBadgeClass(match.status)">
+                                {{ getStatusLabel(match.status) }}
+                            </span>
+                            @if (match.scheduledTime) {
+                                <div class="text-xs text-gray-500 mt-1">
+                                    {{ formatDate(match.scheduledTime) }}
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center justify-between p-2 rounded-lg" 
+                             [ngClass]="isWinner(match, match.team1Id) ? 'bg-green-50 border border-green-200' : 'bg-gray-50'">
+                            <div class="text-center flex-1">
+                                <div class="font-semibold text-gray-900" 
+                                     [ngClass]="isWinner(match, match.team1Id) ? 'text-green-800' : ''">
+                                    {{ getTeamName(match.team1Id) }}
+                                </div>
+                                <div class="text-xs text-gray-500">{{ getTeamPlayerNames(match.team1Id) }}</div>
+                            </div>
+                            @if (match.team1Score !== undefined && match.team1Score !== null) {
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white ml-2"
+                                     [ngClass]="isWinner(match, match.team1Id) ? 'bg-green-600' : 'bg-gray-600'">
+                                    {{ match.team1Score }}
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="text-center">
+                            <span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded-full">vs</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-2 rounded-lg" 
+                             [ngClass]="isWinner(match, match.team2Id) ? 'bg-green-50 border border-green-200' : 'bg-gray-50'">
+                            <div class="text-center flex-1">
+                                <div class="font-semibold text-gray-900" 
+                                     [ngClass]="isWinner(match, match.team2Id) ? 'text-green-800' : ''">
+                                    {{ getTeamName(match.team2Id) }}
+                                </div>
+                                <div class="text-xs text-gray-500">{{ getTeamPlayerNames(match.team2Id) }}</div>
+                            </div>
+                            @if (match.team2Score !== undefined && match.team2Score !== null) {
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white ml-2"
+                                     [ngClass]="isWinner(match, match.team2Id) ? 'bg-green-600' : 'bg-gray-600'">
+                                    {{ match.team2Score }}
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="pi pi-map-marker mr-1"></i>
+                            {{ getVenueName(match.venueId || null, match.groupId || null) }}
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button 
+                                pButton 
+                                type="button" 
+                                icon="pi pi-pencil" 
+                                class="p-button-sm p-button-outlined"
+                                (click)="startEditMatch(match)"
+                                pTooltip="Enter/Edit Match Score">
+                            </button>
+                            <button 
+                                pButton 
+                                type="button" 
+                                icon="pi pi-calendar" 
+                                class="p-button-sm p-button-outlined"
+                                (click)="startEditSchedule(match, $event)"
+                                pTooltip="Edit Match Schedule">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Empty State -->
+    @if (knockoutMatches.length === 0 && !loading) {
+        <div class="flex items-center justify-center min-h-64">
+            <div class="text-center max-w-md">
+                <i class="pi pi-sitemap text-6xl mb-4 block text-gray-400"></i>
+                <h5 class="text-xl font-medium text-gray-600 mb-2">No knockout matches</h5>
+                <p class="text-sm text-gray-500 mb-4">
+                    Complete all group stage matches to generate the knockout bracket.
+                </p>
+                <button 
+                    pButton 
+                    type="button" 
+                    label="Generate Knockout Bracket" 
+                    icon="pi pi-sitemap"
+                    class="p-button-sm" 
+                    (click)="generateKnockoutBracket()"
+                    [disabled]="!canGenerateKnockoutBracket()">
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- Loading State -->
+    @if (loading) {
+        <div class="flex items-center justify-center min-h-32">
+            <p class="text-gray-500">Loading knockout matches...</p>
+        </div>
+    }
+
+    <!-- Match Edit Dialog -->
+    <p-dialog 
+        [(visible)]="showEditDialog" 
+        [modal]="true" 
+        [closable]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [style]="{width: '90vw', maxWidth: '450px'}"
+        (onHide)="cancelEditMatch()">
+        
+        @if (editingMatch) {
+            <div class="p-0">
+                <div class="border-b border-gray-200 p-5 pb-4">
+                    <h4 class="text-xl font-semibold text-gray-900 mb-3">Enter Match Score</h4>
+                    <div class="space-y-1">
+                        <div class="text-md text-gray-600">{{ getPhaseTitle(editingMatch.phase) }} • {{ getVenueName(editingMatch.venueId || null, editingMatch.groupId || null) }}</div>
+                        <div class="text-lg font-semibold text-gray-900">{{ getTeamName(editingMatch.team1Id) }} vs {{ getTeamName(editingMatch.team2Id) }}</div>
+                    </div>
+                </div>
+                
+                <form [formGroup]="matchForm" (ngSubmit)="saveMatch()" class="p-5 pt-4">
+                    <div class="mb-5">
+                        <label class="block text-md font-semibold text-gray-700 mb-3">Score</label>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-32 text-xs font-semibold text-gray-500"></div>
+                                <div class="w-16 text-center text-md font-semibold text-gray-500">Set 1</div>
+                                <div class="w-16 text-center text-md font-semibold text-gray-500">Set 2</div>
+                                <div class="w-16 text-center text-md font-semibold text-gray-500">Set 3</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-32">
+                                    <div class="text-md font-semibold text-gray-900 mb-1">{{ getTeamName(editingMatch.team1Id) }}</div>
+                                    <div class="text-sm text-gray-500">{{ getTeamPlayerNames(editingMatch.team1Id) }}</div>
+                                </div>
+                                <input type="number" pInputText formControlName="team1Set1" placeholder="0" min="0" max="7" 
+                                       class="w-16 text-center p-2 border border-gray-300 rounded text-sm font-semibold">
+                                <input type="number" pInputText formControlName="team1Set2" placeholder="0" min="0" max="7" 
+                                       class="w-16 text-center p-2 border border-gray-300 rounded text-sm font-semibold">
+                                <input type="number" pInputText formControlName="team1Set3" placeholder="0" min="0" max="7" 
+                                       class="w-16 text-center p-2 border border-gray-300 rounded text-sm font-semibold">
+                                @if (getFormWinner() === getTeamName(editingMatch.team1Id)) {
+                                    <span class="bg-yellow-400 text-surface-600 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                                        <i class="pi pi-trophy text-md"></i>
+                                    </span>
+                                }
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-32">
+                                    <div class="text-md font-semibold text-gray-900 mb-1">{{ getTeamName(editingMatch.team2Id) }}</div>
+                                    <div class="text-sm text-gray-500">{{ getTeamPlayerNames(editingMatch.team2Id) }}</div>
+                                </div>
+                                <input type="number" pInputText formControlName="team2Set1" placeholder="0" min="0" max="7" 
+                                       class="w-16 text-center p-2 border border-gray-300 rounded text-sm font-semibold">
+                                <input type="number" pInputText formControlName="team2Set2" placeholder="0" min="0" max="7" 
+                                       class="w-16 text-center p-2 border border-gray-300 rounded text-sm font-semibold">
+                                <input type="number" pInputText formControlName="team2Set3" placeholder="0" min="0" max="7" 
+                                       class="w-16 text-center p-2 border border-gray-300 rounded text-sm font-semibold">
+                                @if (getFormWinner() === getTeamName(editingMatch.team2Id)) {
+                                    <span class="bg-yellow-400 text-surface-600 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                                        <i class="pi pi-trophy text-md"></i>
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        
+                        <!-- Score validation errors -->
+                        @if (matchForm.errors && matchForm.errors['scoreValidation']) {
+                            <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                @for (error of matchForm.errors['scoreValidation']; track $index) {
+                                    <div class="flex items-center gap-2 text-red-800 text-sm mb-1 last:mb-0">
+                                        <i class="pi pi-exclamation-triangle text-red-600"></i>
+                                        {{ error }}
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="flex justify-end gap-2">
+                        <button pButton type="button" label="Cancel" class="p-button-text" (click)="cancelEditMatch()"></button>
+                        <button pButton type="submit" label="Save" class="p-button-sm" [disabled]="!matchForm.valid"></button>
+                    </div>
+                </form>
+            </div>
+        }
+    </p-dialog>
+
+    <!-- Schedule Edit Dialog -->
+    <p-dialog 
+        [(visible)]="showScheduleDialog" 
+        [modal]="true" 
+        [closable]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [style]="{width: '90vw', maxWidth: '400px'}"
+        (onHide)="cancelEditSchedule()">
+        
+        @if (editingMatch) {
+            <div class="p-0">
+                <div class="border-b border-gray-200 p-5 pb-4">
+                    <h4 class="text-xl font-semibold text-gray-900 mb-3">Edit Match Schedule</h4>
+                    <div class="space-y-1">
+                        <div class="text-lg font-semibold text-gray-900">{{ getTeamName(editingMatch.team1Id) }} vs {{ getTeamName(editingMatch.team2Id) }}</div>
+                        <div class="text-sm text-gray-600">{{ getTeamPlayerNames(editingMatch.team1Id) }} vs {{ getTeamPlayerNames(editingMatch.team2Id) }}</div>
+                        <div class="text-sm text-gray-600">{{ getPhaseTitle(editingMatch.phase) }} • {{ getVenueName(editingMatch.venueId || null, editingMatch.groupId || null) }}</div>
+                    </div>
+                </div>
+                
+                <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule()" class="p-5 pt-4">
+                    <div class="mb-5">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Scheduled Date & Time</label>
+                        <input type="datetime-local" pInputText formControlName="scheduledTime" class="w-full p-2 border border-gray-300 rounded">
+                        <small class="block mt-1 text-xs text-gray-500">Leave empty to remove scheduling</small>
+                    </div>
+
+                    <div class="flex justify-end gap-2">
+                        <button pButton type="button" label="Cancel" class="p-button-text" (click)="cancelEditSchedule()"></button>
+                        <button pButton type="button" label="Save Schedule" class="p-button-sm" (click)="saveSchedule()" [disabled]="!scheduleForm.valid"></button>
+                    </div>
+                </form>
+            </div>
+        }
+    </p-dialog>
+</div>

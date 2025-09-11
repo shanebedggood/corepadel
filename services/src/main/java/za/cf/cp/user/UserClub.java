@@ -29,17 +29,27 @@ public class UserClub extends PanacheEntityBase {
     @JoinColumn(name = "club_id", nullable = false)
     public Club club;
     
-    @Column(name = "role")
-    public String role = "member"; // 'member', 'admin', 'owner'
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    @JsonProperty("role")
+    public Role role;
     
     // Default constructor required by JPA
     public UserClub() {}
     
     // Constructor with fields
-    public UserClub(User user, Club club, String role) {
+    public UserClub(User user, Club club, Role role) {
         this.user = user;
         this.club = club;
-        this.role = role != null ? role : "member";
+        this.role = role;
+    }
+    
+    // Constructor with role name (for backward compatibility)
+    public UserClub(User user, Club club, String roleName) {
+        this.user = user;
+        this.club = club;
+        // Find the role by name
+        this.role = Role.find("roleName", roleName).firstResult();
     }
     
     // Getters and setters
@@ -67,12 +77,17 @@ public class UserClub extends PanacheEntityBase {
         this.club = club;
     }
     
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
     
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
+    }
+    
+    // Convenience method to get role name
+    public String getRoleName() {
+        return role != null ? role.roleName : null;
     }
     
     @Override

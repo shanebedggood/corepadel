@@ -45,7 +45,19 @@
                         "development": {
                             "optimization": false,
                             "extractLicenses": false,
-                            "sourceMap": true
+                            "sourceMap": true,
+                            "preserveSymlinks": true
+                        },
+                        "local": {
+                            "optimization": false,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environments/environment.ts",
+                                    "with": "src/environments/environment.local.ts"
+                                }
+                            ]
                         }
                     },
                     "defaultConfiguration": "production"
@@ -58,6 +70,9 @@
                         },
                         "development": {
                             "buildTarget": "sakai-ng:build:development"
+                        },
+                        "local": {
+                            "buildTarget": "sakai-ng:build:local"
                         }
                     },
                     "defaultConfiguration": "development"

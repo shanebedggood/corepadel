@@ -3,6 +3,7 @@ package za.cf.cp.club.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import za.cf.cp.club.Club;
+import za.cf.cp.club.ClubType;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,14 @@ public class ClubService {
     @Transactional
     public List<Club> getAllClubs() {
         return Club.listAll();
+    }
+    
+    /**
+     * Get clubs by type.
+     */
+    @Transactional
+    public List<Club> getClubsByType(ClubType type) {
+        return Club.find("type", type).list();
     }
 
     /**

@@ -20,6 +20,7 @@ import { Observable, map, Subscription, switchMap } from 'rxjs';
                 <button class="layout-menu-button layout-topbar-action !text-lg" (click)="onMenuToggle()">
                     <i class="pi pi-bars text-white"></i>
                 </button>
+                
                 <a class="layout-topbar-logo flex items-center gap-2" routerLink="/player">
                     <span class="text-white">STRIDE & SERVE</span>
                     <span class="bg-yellow-400 text-green-900 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">Player</span>

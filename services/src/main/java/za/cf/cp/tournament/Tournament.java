@@ -3,6 +3,7 @@ package za.cf.cp.tournament;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
+import za.cf.cp.club.Club;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -58,13 +59,20 @@ public abstract class Tournament extends PanacheEntityBase {
     @JsonProperty("entry_fee")
     public BigDecimal entryFee = BigDecimal.ZERO;
     
-    @Column(name = "club_id", nullable = false)
-    @JsonProperty("club_id")
-    public String clubId;
-    
     @Column(name = "firebase_uid", nullable = false)
     @JsonProperty("firebase_uid")
     public String firebaseUid;
+    
+    // Club relationships
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_id", nullable = false)
+    @JsonProperty("club")
+    public Club club;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "venue_club_id")
+    @JsonProperty("venue_club")
+    public Club venueClub;
     
     // Foreign key relationships
     @ManyToOne(fetch = FetchType.LAZY)
@@ -89,22 +97,23 @@ public abstract class Tournament extends PanacheEntityBase {
     @JsonProperty("venue_type")
     public VenueType venueType;
     
-    @Column(name = "venue_id")
-    @JsonProperty("venue_id")
-    public String venueId;
+    @Column(name = "access_type")
+    @JsonProperty("access_type")
+    public String accessType = "open"; // 'open' (anyone can compete) or 'closed' (club only)
+    
     
     // Default constructor required by JPA
     public Tournament() {}
     
     // Constructor with essential fields
     public Tournament(String name, String description, LocalDateTime startDate, LocalDateTime endDate, 
-                     Integer maxParticipants, String clubId, String firebaseUid) {
+                     Integer maxParticipants, Club club, String firebaseUid) {
         this.name = name;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
         this.maxParticipants = maxParticipants;
-        this.clubId = clubId;
+        this.club = club;
         this.firebaseUid = firebaseUid;
     }
     
@@ -192,12 +201,25 @@ public abstract class Tournament extends PanacheEntityBase {
         this.entryFee = entryFee;
     }
     
-    public String getClubId() {
-        return clubId;
+    public Club getClub() {
+        return club;
     }
     
-    public void setClubId(String clubId) {
-        this.clubId = clubId;
+    public void setClub(Club club) {
+        this.club = club;
+    }
+    
+    public Club getVenueClub() {
+        return venueClub;
+    }
+    
+    public void setVenueClub(Club venueClub) {
+        this.venueClub = venueClub;
+    }
+    
+    // Helper method for backward compatibility
+    public String getClubId() {
+        return club != null ? club.getClubId().toString() : null;
     }
     
     public String getFirebaseUid() {
@@ -248,12 +270,17 @@ public abstract class Tournament extends PanacheEntityBase {
         this.venueType = venueType;
     }
     
-    public String getVenueId() {
-        return venueId;
+    public String getAccessType() {
+        return accessType;
     }
     
-    public void setVenueId(String venueId) {
-        this.venueId = venueId;
+    public void setAccessType(String accessType) {
+        this.accessType = accessType;
+    }
+    
+    // Helper method for backward compatibility
+    public String getVenueId() {
+        return venueClub != null ? venueClub.getClubId().toString() : null;
     }
     
     @Override
@@ -266,7 +293,8 @@ public abstract class Tournament extends PanacheEntityBase {
                 ", endDate=" + endDate +
                 ", maxParticipants=" + maxParticipants +
                 ", currentParticipants=" + currentParticipants +
-                ", clubId='" + clubId + '\'' +
+                ", club=" + (club != null ? club.getName() : "null") +
+                ", venueClub=" + (venueClub != null ? venueClub.getName() : "null") +
                 ", firebaseUid='" + firebaseUid + '\'' +
                 ", tournamentType='" + getTournamentType() + '\'' +
                 '}';

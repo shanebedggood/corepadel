@@ -28,7 +28,7 @@ VALUES (
     'The Serve',
     3,
     ARRAY[
-        'The serve must be carried out in the following way.'
+        'The serve must be carried out in the following way.',
         'a) The player who serves (the server) must have both feet behind the service line between the central service line and the side wall. The ball is served over the net diagonally into the opposite service area, the ball must bounce inside or on the line which limits the service box. The first serve being from the right hand side after which the ball is served from alternate sides.',
         'b) The server must bounce the ball behind the service line and in the area between the central line and the side wall.',
         'c) A disabled player with only one arm may bounce the ball using the racket.',

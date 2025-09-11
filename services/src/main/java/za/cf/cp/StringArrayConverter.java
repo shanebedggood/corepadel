@@ -3,7 +3,6 @@ package za.cf.cp;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,36 +37,44 @@ public class StringArrayConverter implements AttributeConverter<List<String>, St
     
     @Override
     public List<String> convertToEntityAttribute(String dbData) {
-        if (dbData == null || dbData.trim().isEmpty() || dbData.equals("{}")) {
-            return new ArrayList<>();
-        }
-        
-        // Remove outer braces and split by comma
-        String content = dbData.trim();
-        if (content.startsWith("{") && content.endsWith("}")) {
-            content = content.substring(1, content.length() - 1);
-        }
-        
-        if (content.isEmpty()) {
-            return new ArrayList<>();
-        }
-        
-        // Split by comma and remove quotes
-        String[] items = content.split(",");
-        List<String> result = new ArrayList<>();
-        
-        for (String item : items) {
-            String trimmed = item.trim();
-            if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-                // Remove quotes and unescape
-                String unquoted = trimmed.substring(1, trimmed.length() - 1);
-                String unescaped = unquoted.replace("\\\"", "\"");
-                result.add(unescaped);
-            } else {
-                result.add(trimmed);
+        try {
+            if (dbData == null || dbData.trim().isEmpty() || dbData.equals("{}")) {
+                return new ArrayList<>();
             }
+            
+            // Remove outer braces and split by comma
+            String content = dbData.trim();
+            if (content.startsWith("{") && content.endsWith("}") && content.length() >= 2) {
+                content = content.substring(1, content.length() - 1);
+            }
+            
+            if (content.isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            // Split by comma and remove quotes
+            String[] items = content.split(",");
+            List<String> result = new ArrayList<>();
+            
+            for (String item : items) {
+                String trimmed = item.trim();
+                if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() >= 2) {
+                    // Remove quotes and unescape
+                    String unquoted = trimmed.substring(1, trimmed.length() - 1);
+                    String unescaped = unquoted.replace("\\\"", "\"");
+                    result.add(unescaped);
+                } else if (!trimmed.isEmpty()) {
+                    result.add(trimmed);
+                }
+            }
+            
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error converting database TEXT[] to List<String>: " + dbData);
+            System.err.println("Exception: " + e.getMessage());
+            e.printStackTrace();
+            // Return empty list as fallback to prevent application crash
+            return new ArrayList<>();
         }
-        
-        return result;
     }
 } 

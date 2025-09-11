@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, throwError, of, timeout } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 // Tournament Types - matching the existing interface structure
@@ -156,6 +156,7 @@ export interface Tournament {
     clubId: string;
     userId: string;
     tournamentType: string;
+    accessType?: string; // 'open' (all players) or 'closed' (club members only)
 }
 
 // Round Robin specific interface
@@ -537,13 +538,18 @@ export class QuarkusTournamentService {
         return this.getTournamentMatches(tournamentId);
     }
 
-    /**
-     * Update match score
-     */
     updateMatchScore(matchId: string, updates: Partial<TournamentMatch>): Observable<void> {
-        return this.http.put<void>(`${this.apiUrl}/tournaments/matches/${matchId}`, updates).pipe(
+        const url = `${this.apiUrl}/tournaments/matches/${matchId}`;
+        
+        const request = this.http.put<void>(url, updates, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        return request.pipe(
+            timeout(30000), // 30 second timeout
             catchError(error => {
-                console.error('Error updating match score in Quarkus:', error);
                 return throwError(() => error);
             })
         );
@@ -639,6 +645,61 @@ export class QuarkusTournamentService {
                 catchError(error => {
                     console.error('Error calculating standings:', error);
                     return throwError(() => new Error('Failed to calculate standings'));
+                })
+            );
+    }
+
+    // ==================== KNOCKOUT BRACKET ====================
+
+    /**
+     * Generate knockout bracket matches based on round robin standings
+     */
+    generateKnockoutBracket(tournamentId: string): Observable<TournamentMatch[]> {
+        return this.http.post<TournamentMatch[]>(`${this.apiUrl}/tournaments/${tournamentId}/knockout/generate`, {})
+            .pipe(
+                map(response => response),
+                catchError(error => {
+                    console.error('Error generating knockout bracket:', error);
+                    return throwError(() => new Error('Failed to generate knockout bracket'));
+                })
+            );
+    }
+
+    /**
+     * Get knockout bracket matches for a tournament
+     */
+    getKnockoutMatches(tournamentId: string): Observable<TournamentMatch[]> {
+        return this.http.get<TournamentMatch[]>(`${this.apiUrl}/tournaments/${tournamentId}/knockout/matches`)
+            .pipe(
+                map(response => response),
+                catchError(error => {
+                    console.error('Error getting knockout matches:', error);
+                    return throwError(() => new Error('Failed to get knockout matches'));
+                })
+            );
+    }
+
+    generateNextKnockoutRound(tournamentId: string): Observable<TournamentMatch[]> {
+        return this.http.post<TournamentMatch[]>(`${this.apiUrl}/tournaments/${tournamentId}/knockout/next-round`, {})
+            .pipe(
+                map(response => response),
+                catchError(error => {
+                    console.error('Error generating next knockout round:', error);
+                    return throwError(() => new Error('Failed to generate next knockout round'));
+                })
+            );
+    }
+
+    /**
+     * Check if all group matches are completed
+     */
+    areAllGroupMatchesCompleted(tournamentId: string): Observable<boolean> {
+        return this.http.get<{allCompleted: boolean}>(`${this.apiUrl}/tournaments/${tournamentId}/groups/completion-status`)
+            .pipe(
+                map(response => response.allCompleted),
+                catchError(error => {
+                    console.error('Error checking group match completion:', error);
+                    return throwError(() => new Error('Failed to check group match completion'));
                 })
             );
     }

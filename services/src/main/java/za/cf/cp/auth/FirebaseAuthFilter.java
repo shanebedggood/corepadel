@@ -30,6 +30,9 @@ public class FirebaseAuthFilter {
     // List of paths that don't require authentication
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
         "/api/health",
+        "/api/rules",
+        "/api/clubs",
+        "/api/facilities",
         "/swagger-ui",
         "/swagger-ui/",
         "/q/swagger-ui",
@@ -41,18 +44,13 @@ public class FirebaseAuthFilter {
         String method = requestContext.getMethod();
         String path = uriInfo.getPath();
         
-        System.out.println("Firebase Auth filter processing path: " + path);
-        System.out.println("Firebase Auth filter - HTTP method: " + method);
-        
         // If this is a CORS preflight request, skip auth so that browser can proceed
         if ("OPTIONS".equalsIgnoreCase(method)) {
-            System.out.println("CORS preflight detected (OPTIONS) - skipping authentication for path: " + path);
             return null;
         }
         
         // Skip authentication for public paths
         if (isPublicPath(path)) {
-            System.out.println("Skipping authentication for public path: " + path);
             return null;
         }
 
@@ -84,8 +82,6 @@ public class FirebaseAuthFilter {
 
         // Extract the token
         String token = authHeader.substring("Bearer ".length());
-        System.out.println("Firebase Auth filter - Token length: " + token.length());
-        System.out.println("Firebase Auth filter - Token preview: " + token.substring(0, Math.min(50, token.length())) + "...");
         
         // For now, just check if token exists (basic validation)
         if (token == null || token.isEmpty()) {
@@ -97,9 +93,12 @@ public class FirebaseAuthFilter {
         }
 
         // TODO: In production, validate the Firebase ID token here
-        // For now, we'll just accept any non-empty token
+        // For development, we'll accept any non-empty token for testing
+        if (isDevelopmentMode()) {
+            return null;
+        }
         
-        System.out.println("Firebase Authentication successful for path: " + path);
+        // TODO: Add proper Firebase token validation here for production
         return null;
     }
 
@@ -107,13 +106,18 @@ public class FirebaseAuthFilter {
      * Check if the path is public (doesn't require authentication)
      */
     private boolean isPublicPath(String path) {
-        System.out.println("Checking if path is public: " + path);
         boolean isPublic = PUBLIC_PATHS.stream().anyMatch(publicPath -> {
             boolean matches = path.startsWith(publicPath);
-            System.out.println("  Checking against public path: " + publicPath + " -> " + matches);
             return matches;
         });
-        System.out.println("Path " + path + " is public: " + isPublic);
         return isPublic;
+    }
+
+    /**
+     * Check if we're running in development mode
+     */
+    private boolean isDevelopmentMode() {
+        String profile = System.getProperty("quarkus.profile");
+        return "dev".equals(profile) || profile == null;
     }
 }

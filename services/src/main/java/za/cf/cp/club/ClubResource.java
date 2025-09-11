@@ -21,16 +21,37 @@ public class ClubResource {
     ClubService clubService;
     
     /**
-     * Get all clubs
+     * Get all clubs (optionally filtered by type)
      */
     @GET
-    public Response getAllClubs() {
+    public Response getAllClubs(@QueryParam("type") String type) {
         try {
-            List<Club> clubs = clubService.getAllClubs();
+            List<Club> clubs;
+            if (type != null && !type.isEmpty()) {
+                clubs = clubService.getClubsByType(ClubType.valueOf(type.toUpperCase()));
+            } else {
+                clubs = clubService.getAllClubs();
+            }
             return Response.ok(clubs).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving clubs: " + e.getMessage())
+                    .build();
+        }
+    }
+    
+    /**
+     * Get all venues (for backward compatibility)
+     */
+    @GET
+    @Path("/venues")
+    public Response getAllVenues() {
+        try {
+            List<Club> venues = clubService.getClubsByType(ClubType.VENUE);
+            return Response.ok(venues).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error retrieving venues: " + e.getMessage())
                     .build();
         }
     }

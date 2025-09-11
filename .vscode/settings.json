@@ -1,4 +1,5 @@
 {
     "scm.inputFontSize": 12,
-    "markdown.preview.fontSize": 12
+    "markdown.preview.fontSize": 12,
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

@@ -8,7 +8,7 @@ import { VenueService, Venue } from '../../../../services/venue.service';
 import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { take } from 'rxjs/operators';
-import { combineLatest, catchError, of, map, switchMap } from 'rxjs';
+import { combineLatest, catchError, of, map, switchMap, Observable } from 'rxjs';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -19,7 +19,7 @@ import { InputNumberModule } from "primeng/inputnumber";
 import { AutoFocusModule } from 'primeng/autofocus';
 import { BadgeModule } from 'primeng/badge';
 import { MessageModule } from 'primeng/message';
-import { MessageService } from 'primeng/api';
+import { ErrorHandlerService } from '../../../../services/error-handler.service';
 import { BreadcrumbItem, PageHeaderComponent } from "../../../../layout/component/page-header.component";
 
 
@@ -155,6 +155,7 @@ export class CreateTournamentComponent implements OnInit {
     venueTypes: TournamentVenueType[] = [];
     progressionTypes: TournamentProgressionOption[] = [];
     venues: Venue[] = [];
+    adminClubs: any[] = []; // Clubs where user is admin
 
     // Group advancement settings
     advancementModels: any[] = [];
@@ -176,7 +177,7 @@ export class CreateTournamentComponent implements OnInit {
         private fb: FormBuilder,
         private router: Router,
         private injector: Injector,
-        private messageService: MessageService
+        private errorHandlerService: ErrorHandlerService
     ) {
         this.tournamentForm = this.fb.group({
             name: ['', Validators.required],
@@ -190,6 +191,8 @@ export class CreateTournamentComponent implements OnInit {
             registrationType: [null, Validators.required],
             venueType: [null, Validators.required],
             venue: [null, Validators.required],
+            club: [null, Validators.required], // Club selection - required
+            accessType: ['open', Validators.required], // Tournament access type - default to open
             progressionOption: [null], // Will be conditionally required
             teamsToAdvance: [null], // Will be conditionally required for combined elimination
             eliminationBracketSize: [null], // Will be conditionally required
@@ -235,16 +238,45 @@ export class CreateTournamentComponent implements OnInit {
         });
     }
 
+    /**
+     * Load admin clubs for the current user
+     */
+    private loadAdminClubs(): Observable<any[]> {
+        return this.authService.currentUser$.pipe(
+            switchMap(user => {
+                if (user) {
+                    return this.authService.getCachedUserAuthData(user.uid).pipe(
+                        map((cachedData: any) => {
+                            const adminClubs = cachedData.club_memberships?.filter((membership: any) => membership.is_admin) || [];
+                            if (adminClubs.length === 0) {
+                                throw new Error('You must be an admin of at least one club to create tournaments.');
+                            }
+                            return adminClubs;
+                        })
+                    );
+                } else {
+                    throw new Error('User not authenticated');
+                }
+            }),
+            catchError(error => {
+                console.error('Error loading admin clubs:', error);
+                this.errorMessage = error.message || 'Failed to load your club information.';
+                return of([]);
+            })
+        );
+    }
+
     ngOnInit(): void {
         // Load all data in a single Observable chain within injection context
         runInInjectionContext(this.injector, () => {
             this.loading = true;
-            // Load tournament config and venues in parallel
+            // Load tournament config, venues, and admin clubs in parallel
             const configObs = this.tournamentConfigService.getTournamentConfig();
             const venuesObs = this.venueService.getVenues();
+            const adminClubsObs = this.loadAdminClubs();
 
-            combineLatest({ config: configObs, venues: venuesObs }).pipe(
-                map(({ config, venues }) => {
+            combineLatest({ config: configObs, venues: venuesObs, adminClubs: adminClubsObs }).pipe(
+                map(({ config, venues, adminClubs }) => {
                     // Set the data in the component
                     this.tournamentConfig = config as TournamentConfig;
                     const configData = config as TournamentConfig;
@@ -255,6 +287,7 @@ export class CreateTournamentComponent implements OnInit {
                     this.registrationTypes = configData.registrationTypes.filter((r: TournamentRegistrationType) => r.isActive).sort((a: TournamentRegistrationType, b: TournamentRegistrationType) => a.name.localeCompare(b.name));
                     this.progressionTypes = []; // Initialize as empty - will be loaded conditionally
                     this.venues = venues.sort((a: Venue, b: Venue) => a.name.localeCompare(b.name));
+                    this.adminClubs = (adminClubs as any[]).sort((a: any, b: any) => a.club_name.localeCompare(b.club_name));
                     
                     this.loading = false;
                     return true;
@@ -277,16 +310,16 @@ export class CreateTournamentComponent implements OnInit {
 
             const formValue = this.tournamentForm.value;
             // Ensure numeric values are properly converted
-            // Convert dates to ISO strings for backend compatibility
+            // Convert dates to date-only strings to avoid timezone issues
             const processedFormValue = {
                 ...formValue,
                 maxParticipants: formValue.maxParticipants ? Number(formValue.maxParticipants) : null,
                 noOfGroups: formValue.noOfGroups ? Number(formValue.noOfGroups) : null,
                 entryFee: formValue.entryFee ? Number(formValue.entryFee) : null,
-                startDate: formValue.startDate ? formValue.startDate.toISOString() : null,
-                endDate: formValue.endDate ? formValue.endDate.toISOString() : null,
-                registrationStartDate: formValue.registrationStartDate ? formValue.registrationStartDate.toISOString() : null,
-                registrationEndDate: formValue.registrationEndDate ? formValue.registrationEndDate.toISOString() : null
+                startDate: formValue.startDate ? this.formatDateOnly(formValue.startDate) : null,
+                endDate: formValue.endDate ? this.formatDateOnly(formValue.endDate) : null,
+                registrationStartDate: formValue.registrationStartDate ? this.formatDateOnly(formValue.registrationStartDate) : null,
+                registrationEndDate: formValue.registrationEndDate ? this.formatDateOnly(formValue.registrationEndDate) : null
             };
 
             // Use Firebase function to validate tournament and calculate status
@@ -320,6 +353,15 @@ export class CreateTournamentComponent implements OnInit {
 
 
 
+                        // Get the selected club from the form
+                        const selectedClub = this.adminClubs.find(club => club.club_id === processedFormValue.club);
+                        
+                        if (!selectedClub) {
+                            this.errorMessage = 'Please select a club for the tournament.';
+                            this.saving = false;
+                            return;
+                        }
+
                         const tournamentData = {
                             ...processedFormValue,
                             tournamentType: 'ROUND_ROBIN', // Specify the tournament type
@@ -328,13 +370,11 @@ export class CreateTournamentComponent implements OnInit {
                             registrationType: registrationType ? { id: registrationType.id, name: registrationType.name } : null,
                             venueType: venueType ? { id: venueType.id, name: venueType.name } : null,
                             progressionOption: progressionOption ? { id: progressionOption.id, name: progressionOption.name } : null,
-                            clubId: 'default-club-id', // For now, use a default club ID
-                            userId: currentUser.uid,
+                            clubId: selectedClub.club_id, // Use the selected club ID
+                            firebaseUid: currentUser.uid,
                             status: status ? { id: status.id, name: status.name } : null,
                         };
 
-
-                        
                         // Only add venue data if a venue is selected
                         if (processedFormValue.venue && selectedVenue) {
                             tournamentData.venueId = processedFormValue.venue;
@@ -342,62 +382,27 @@ export class CreateTournamentComponent implements OnInit {
                         }
 
                         (this.tournamentService as any).createTournament(tournamentData).subscribe({
-                            next: (tournamentId: any) => {
-                                // Create groups for the tournament
-                                const maxParticipants = processedFormValue.maxParticipants;
-                                const noOfGroups = processedFormValue.noOfGroups;
-                                const tournamentVenue = processedFormValue.venue;
-
-                                (this.tournamentService as any).createTournamentGroups(tournamentId, maxParticipants, noOfGroups, tournamentVenue).subscribe({
-                                    next: (groups: any) => {
-                                        this.saving = false;
-                                        const groupCount = groups && Array.isArray(groups) ? groups.length : 0;
-                                        this.successMessage = `Tournament created successfully with ${groupCount} groups!`;
-                                        this.errorMessage = '';
-                                        this.messageService.add({
-                                            life: 3000, // Show toast for 3 seconds
-                                            severity: 'success',
-                                            summary: 'Success',
-                                            detail: `Tournament created successfully with ${groupCount} groups!`
-                                        });
-                                        // Navigate back to tournament list after successful creation
-                                        setTimeout(() => {
-                                            this.router.navigate(['/admin/tournaments']).then(() => {
-                                            }).catch((error) => {
-                                                console.error('Navigation failed:', error);
-                                            });
-                                        }, 1000); // Small delay to ensure toast is shown
-                                    },
-                                    error: (groupError: any) => {
-                                        console.error('Error creating groups:', groupError);
-                                        this.saving = false;
-                                        this.errorMessage = `Tournament created but failed to create groups: ${groupError.message}`;
-                                        this.messageService.add({
-                                            life: 3000, // Show toast for 3 seconds
-                                            severity: 'warn',
-                                            summary: 'Partial Success',
-                                            detail: 'Tournament created but groups creation failed. You can create groups manually.'
-                                        });
-                                        // Navigate back to tournament list even if groups creation failed
-                                        setTimeout(() => {
-                                            this.router.navigate(['/admin/tournaments']).then(() => {
-                                            }).catch((error) => {
-                                                console.error('Navigation failed (partial success):', error);
-                                            });
-                                        }, 1000); // Small delay to ensure toast is shown
-                                    }
-                                });
+                            next: (response: any) => {
+                                this.saving = false;
+                                this.successMessage = 'Tournament created successfully!';
+                                this.errorMessage = '';
+                                
+                                // Show success message
+                                this.errorHandlerService.handleSuccess('Tournament created successfully!');
+                                
+                                // Navigate to tournaments list after a short delay
+                                setTimeout(() => {
+                                    this.router.navigate(['/admin/tournaments']);
+                                }, 1500);
                             },
                             error: (error: any) => {
-                                console.error('Error creating tournament:', error);
                                 this.saving = false;
-                                this.errorMessage = error.message || 'Failed to create tournament';
-                                this.messageService.add({
-                                    life: 0, // Make toast sticky
-                                    severity: 'error',
-                                    summary: 'Error',
-                                    detail: error.message || 'Failed to create tournament'
-                                });
+                                console.error('Error creating tournament:', error);
+                                this.errorMessage = error.error?.message || 'Failed to create tournament. Please try again.';
+                                this.successMessage = '';
+                                
+                                // Show error message
+                                this.errorHandlerService.handleApiError(error, 'Tournament Creation');
                             }
                         });
                     } else {
@@ -405,12 +410,7 @@ export class CreateTournamentComponent implements OnInit {
                         this.errorMessage = validationResult.errors && Array.isArray(validationResult.errors) ? validationResult.errors.join(', ') : 'Validation failed';
                         // Show warnings if any (keep these as toasts since they're informational)
                         if (validationResult.warnings && Array.isArray(validationResult.warnings) && validationResult.warnings.length > 0) {
-                            this.messageService.add({
-                                severity: 'warn',
-                                summary: 'Warning',
-                                detail: validationResult.warnings.join(', '),
-                                life: 0 // Make toast sticky
-                            });
+                            this.errorHandlerService.handleWarning(validationResult.warnings.join(', '));
                         }
                     }
                 },
@@ -719,5 +719,15 @@ export class CreateTournamentComponent implements OnInit {
         
         noOfGroupsControl?.updateValueAndValidity();
         teamsToAdvancePerGroupControl?.updateValueAndValidity();
+    }
+
+    /**
+     * Format a Date object to YYYY-MM-DD string to avoid timezone issues
+     */
+    private formatDateOnly(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 }

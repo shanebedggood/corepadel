@@ -74,6 +74,9 @@ public abstract class TournamentDto {
     @JsonProperty("venueType")
     public TournamentVenueTypeDto venueType;
     
+    @JsonProperty("accessType")
+    public String accessType;
+    
     @JsonProperty("venueId")
     public String venueId;
     
@@ -199,7 +202,6 @@ public abstract class TournamentDto {
     }
     
     public void setFirebaseUid(String firebaseUid) {
-        System.out.println("Setting firebaseUid in DTO: " + firebaseUid);
         this.firebaseUid = firebaseUid;
     }
     
@@ -241,6 +243,14 @@ public abstract class TournamentDto {
     
     public void setVenueType(TournamentVenueTypeDto venueType) {
         this.venueType = venueType;
+    }
+    
+    public String getAccessType() {
+        return accessType;
+    }
+    
+    public void setAccessType(String accessType) {
+        this.accessType = accessType;
     }
     
     public String getVenueId() {

@@ -6,7 +6,8 @@ import {
   isSignInWithEmailLink,
   signOut,
   onAuthStateChanged,
-  User
+  User,
+  updateProfile
 } from '@angular/fire/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -29,6 +30,14 @@ export interface UserProfile {
   profile_picture?: string;
   interests?: string[];
   profile_completed?: boolean;
+  club_memberships?: ClubMembership[];
+}
+
+export interface ClubMembership {
+  club_id: string;
+  club_name: string;
+  role: string;
+  is_admin: boolean;
 }
 
 @Injectable({
@@ -56,19 +65,53 @@ export class FirebaseAuthService {
         this.currentUserSubject.next(user);
         
         if (user) {
+          // Set up token refresh listener to prevent expiry during development
+          this.setupTokenRefresh(user);
+          
           // Add a small delay to ensure user is fully authenticated
           setTimeout(async () => {
             try {
-              await this.loadUserProfile();
+              // Check if this is a new user with signup data
+              const hasSignupData = localStorage.getItem('signupData') !== null;
+              
+              if (hasSignupData) {
+                // Only sync to database if this is a new user (has signup data)
+                await this.syncUserToDatabase();
+              }
+              
+              // Always load profile (existing users need this, new users get it after sync)
+              await this.loadUserProfileWithRetry();
             } catch (error: any) {
               console.error('User profile not yet available, will retry later:', error.message);
             }
-          }, 1000);
+          }, 500);
         } else {
           this.userProfileSubject.next(null);
         }
       });
     });
+  }
+
+  // ---- Retry helpers ----
+  private wait(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private async loadUserProfileWithRetry(maxRetries = 3, delayMs = 300): Promise<void> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.loadUserProfile();
+        const profile = this.getCurrentUserProfile();
+        if (profile && Array.isArray(profile.roles) && profile.roles.length > 0) {
+          return; // roles are present
+        }
+      } catch {}
+      if (attempt < maxRetries) {
+        await this.wait(delayMs);
+      }
+    }
+    // Final attempt without enforcing roles; best-effort
+    await this.loadUserProfile();
   }
 
   /**
@@ -99,41 +142,31 @@ export class FirebaseAuthService {
         if (!this.isSignInLink()) {
           throw new Error('Invalid sign-in link');
         }
-
-        // Try to get email from multiple sources
-        let email = window.localStorage.getItem('emailForSignIn');
         
-        // If not in localStorage, try to get from URL parameters
+        // Get email from local storage
+        const email = window.localStorage.getItem('emailForSignIn');
         if (!email) {
-          const urlParams = new URLSearchParams(window.location.search);
-          email = urlParams.get('email');
+          throw new Error('Missing email for sign-in');
         }
         
-        // If still not found, try to extract from the URL itself
-        if (!email) {
-          const url = new URL(window.location.href);
-          email = url.searchParams.get('email');
-        }
-        
-        if (!email) {
-          throw new Error('Email not found. Please try signing in again.');
-        }
-        // Complete sign-in
+        // Complete sign in
         const result = await signInWithEmailLink(this.auth, email, window.location.href);
-        
-        // Clear email from localStorage
         window.localStorage.removeItem('emailForSignIn');
-
-        // Wait a moment for auth state to update
-        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Sync user to database
-        await this.syncUserToDatabase();
+        // Check if this is a new user with signup data
+        const hasSignupData = localStorage.getItem('signupData') !== null;
+        
+        if (hasSignupData) {
+          // Only sync to database if this is a new user (has signup data)
+          await this.syncUserToDatabase();
+        }
+        
+        // Always load profile (existing users need this, new users get it after sync)
+        await this.loadUserProfileWithRetry();
         
         return result.user;
-        
       } catch (error) {
-        console.error('Error completing sign-in:', error);
+        console.error('❌ Error completing sign-in:', error);
         throw error;
       }
     });
@@ -151,13 +184,32 @@ export class FirebaseAuthService {
           throw new Error('User not authenticated');
         }
         
+        // Retrieve sign-up data from localStorage if this is a new user
+        let signupData = null;
+        try {
+          const storedData = localStorage.getItem('signupData');
+          if (storedData) {
+            signupData = JSON.parse(storedData);
+          } else {
+            return; // Exit early if no signup data
+          }
+        } catch (error) {
+          console.warn('Could not retrieve sign-up data:', error);
+          return; // Exit early if there's an error parsing signup data
+        }
+        
         // Create user data for the backend
         const userData = {
-          firebaseUid: currentUser.uid,
+          firebase_uid: currentUser.uid,
           email: currentUser.email,
           username: currentUser.email?.split('@')[0] || 'user',
-          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
-          emailVerified: currentUser.emailVerified
+          display_name: signupData?.name && signupData?.surname 
+            ? `${signupData.name} ${signupData.surname}` 
+            : (currentUser.displayName || currentUser.email?.split('@')[0] || 'User'),
+          first_name: signupData?.name || null,
+          last_name: signupData?.surname || null,
+          mobile: signupData?.mobile || null,
+          email_verified: currentUser.emailVerified
         };
         
         // Get the Firebase ID token for authentication
@@ -169,18 +221,13 @@ export class FirebaseAuthService {
           'Content-Type': 'application/json'
         };
         
-        const response: any = await this.http.post(`${environment.quarkusApiUrl}/users`, userData, { headers }).toPromise();
+        await this.http.post(`${environment.quarkusApiUrl}/users`, userData, { headers }).toPromise();
         
-        console.log('✅ User synced to database successfully');
+        // Clear the stored signup data after successful sync
+        localStorage.removeItem('signupData');
         
-        // Reload user profile after a short delay
-        setTimeout(async () => {
-          try {
-            await this.loadUserProfile();
-          } catch (error: any) {
-            console.error('User profile not yet available:', error.message);
-          }
-        }, 2000);
+        // Proactively refresh profile with retries so roles are present before navigation
+        await this.loadUserProfileWithRetry(3, 200);
         
       } catch (error) {
         console.error('Error syncing user to database:', error);
@@ -212,7 +259,35 @@ export class FirebaseAuthService {
         const response: any = await this.http.get(`${environment.quarkusApiUrl}/users/firebase/${currentUser.uid}`, { headers }).toPromise();
         
         if (response) {
-          this.userProfileSubject.next(response);
+          // Fetch roles separately since User entity doesn't include them
+          let roles: string[] = [];
+          try {
+            const rolesResponse: any = await this.http.get(`${environment.quarkusApiUrl}/users/firebase/${currentUser.uid}/roles`, { headers }).toPromise();
+            if (rolesResponse && Array.isArray(rolesResponse)) {
+              roles = rolesResponse.map((userRole: any) => userRole.role?.role_name || userRole.role_name || 'unknown');
+            }
+          } catch (rolesError) {
+            console.warn('Could not fetch user roles:', rolesError);
+          }
+          
+          // Transform the response to match the expected UserProfile interface
+          const userProfile: UserProfile = {
+            firebaseUid: response.firebase_uid,
+            email: response.email,
+            username: response.username,
+            first_name: response.first_name,
+            last_name: response.last_name,
+            display_name: response.display_name,
+            email_verified: response.email_verified,
+            mobile: response.mobile,
+            rating: response.rating,
+            profile_picture: response.profile_picture,
+            interests: response.interests,
+            profile_completed: response.profile_completed,
+            roles: roles
+          };
+          
+          this.userProfileSubject.next(userProfile);
         } else {
           console.error('Failed to load user profile: User not found');
         }
@@ -245,9 +320,10 @@ export class FirebaseAuthService {
         };
         
         const roleData = { roleName: role };
-        const response: any = await this.http.post(`${environment.quarkusApiUrl}/users/firebase/${targetUserId}/roles`, roleData, { headers }).toPromise();
+        await this.http.post(`${environment.quarkusApiUrl}/users/firebase/${targetUserId}/roles`, roleData, { headers }).toPromise();
         
-        console.log('✅ Role assigned successfully');
+        // Refresh profile after role change
+        await this.loadUserProfileWithRetry();
         
       } catch (error) {
         console.error('Error assigning role:', error);
@@ -256,9 +332,6 @@ export class FirebaseAuthService {
     });
   }
 
-  /**
-   * Sign out user
-   */
   async signOut(): Promise<void> {
     return runInInjectionContext(this.injector, async () => {
       try {
@@ -331,10 +404,54 @@ export class FirebaseAuthService {
       // Get the underlying Firebase Auth instance
       const firebaseAuth = this.auth;
       await setPersistence(firebaseAuth, browserLocalPersistence);
-      console.log('✅ Firebase auth persistence set to local');
     } catch (error) {
       console.warn('⚠️ Failed to set Firebase auth persistence:', error);
     }
+  }
+
+  /**
+   * Set up automatic token refresh to prevent expiry during development
+   */
+  private setupTokenRefresh(user: User): void {
+    // Firebase tokens expire every hour, refresh every 30 minutes for development
+    const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
+    
+    const refreshToken = async () => {
+      try {
+        const token = await user.getIdToken(true); // Force refresh
+        
+        // Store the refreshed token timestamp
+        localStorage.setItem('lastTokenRefresh', Date.now().toString());
+        
+        // Also store the user's auth state more aggressively
+        localStorage.setItem('firebaseAuthUser', JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          lastRefresh: Date.now()
+        }));
+      } catch (error) {
+        console.warn('⚠️ Failed to refresh Firebase token:', error);
+      }
+    };
+
+    // Refresh immediately if token is old
+    const lastRefresh = localStorage.getItem('lastTokenRefresh');
+    if (!lastRefresh || (Date.now() - parseInt(lastRefresh)) > REFRESH_INTERVAL) {
+      refreshToken();
+    }
+
+    // Set up periodic refresh
+    const intervalId = setInterval(refreshToken, REFRESH_INTERVAL);
+    
+    // Store interval ID to clear it later if needed
+    localStorage.setItem('tokenRefreshIntervalId', intervalId.toString());
+    
+    // Clean up interval when user signs out
+    this.auth.onIdTokenChanged(() => {
+      // This will be called when user signs out
+      clearInterval(intervalId);
+      localStorage.removeItem('tokenRefreshIntervalId');
+    });
   }
 
   /**
@@ -347,7 +464,6 @@ export class FirebaseAuthService {
       if (currentUser) {
         // Force token refresh to ensure validity
         await currentUser.getIdToken(true);
-        console.log('✅ Authentication recovered successfully');
         return true;
       }
       
@@ -356,5 +472,64 @@ export class FirebaseAuthService {
       console.warn('⚠️ Authentication recovery failed:', error);
       return false;
     }
+  }
+
+  /**
+   * Update Firebase user profile
+   */
+  async updateUserProfile(profileData: { displayName?: string; photoURL?: string }): Promise<void> {
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    await updateProfile(currentUser, profileData);
+  }
+
+  /**
+   * Force authentication state restoration during development
+   */
+  public forceAuthRestore(): void {
+    if (!environment.development) return;
+    
+    // Check if we have a stored user
+    const storedAuth = localStorage.getItem('firebaseAuthUser');
+    if (storedAuth) {
+      // Trigger a token refresh
+      const currentUser = this.getCurrentUser();
+      if (currentUser) {
+        currentUser.getIdToken(true).then(() => {
+          console.log('✅ Development: Auth state force restored');
+        }).catch(error => {
+          console.warn('⚠️ Development: Failed to force restore auth state:', error);
+        });
+      }
+    }
+  }
+
+  /**
+   * Get cached user authentication data including roles and club memberships
+   */
+  public getCachedUserAuthData(firebaseUid: string): Observable<any> {
+    return this.http.get(`${environment.quarkusApiUrl}/users/firebase/${firebaseUid}/auth-data`);
+  }
+
+  /**
+   * Load user profile with cached authentication data
+   */
+  public loadUserProfileWithCache(firebaseUid: string): Observable<UserProfile> {
+    return this.getCachedUserAuthData(firebaseUid).pipe(
+      map((cachedData: any) => {
+        return {
+          firebaseUid: cachedData.firebase_uid,
+          email: cachedData.email,
+          username: cachedData.username,
+          display_name: cachedData.display_name,
+          email_verified: true, // Assume verified if we have cached data
+          roles: cachedData.roles || [],
+          club_memberships: cachedData.club_memberships || []
+        } as UserProfile;
+      })
+    );
   }
 }

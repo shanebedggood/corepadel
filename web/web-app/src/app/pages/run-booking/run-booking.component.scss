@@ -1,0 +1,347 @@
+.run-booking-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.calendar-navigation {
+  .p-button {
+    min-width: 40px;
+    height: 40px;
+  }
+}
+
+.calendar-grid {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.calendar-navigation {
+  h2 {
+    font-size: 1.25rem; // text-xl
+    font-weight: 600; // font-semibold
+  }
+}
+
+.calendar-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.calendar-day {
+  min-height: 80px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 4px;
+
+  &:hover {
+    background-color: #f1f5f9;
+  }
+
+  &.other-month {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+    
+    &:hover {
+      background-color: #f8fafc;
+    }
+  }
+
+  &.weekend {
+    background-color: #fef2f2;
+    color: #dc2626;
+    cursor: not-allowed;
+    
+    &:hover {
+      background-color: #fef2f2;
+    }
+  }
+
+  &.bookable {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+    
+    &:hover {
+      background-color: #f8fafc;
+      border-color: #cbd5e1;
+    }
+  }
+
+  &.today {
+    background-color: #f0fdf4;
+    border-color: #22c55e;
+    font-weight: 600;
+    
+    &.bookable {
+      background-color: #dcfce7;
+      border-color: #16a34a;
+    }
+  }
+
+  &.selected {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #1d4ed8;
+  }
+
+  .booking-events {
+    width: 100%;
+    margin-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+
+    .booking-event {
+      width: 100%;
+      height: 16px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 500;
+
+      &.user-booking {
+        background-color: #10b981;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      &.runner-count {
+        background-color: #3b82f6;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .event-text {
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .runner-count-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+
+    .p-badge {
+      font-size: 10px;
+      min-width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.day-number {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+
+.legend {
+  .p-badge {
+    font-size: 10px;
+    min-width: 16px;
+    height: 16px;
+  }
+  
+  i {
+    font-size: 14px;
+    color: #10b981;
+    background: white;
+    border-radius: 50%;
+    padding: 1px;
+  }
+
+  .booking-event-legend {
+    width: 60px;
+    height: 16px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.user-booking {
+      background-color: #10b981;
+    }
+
+    &.runner-count {
+      background-color: #3b82f6;
+    }
+
+    .event-text {
+      color: white;
+      font-size: 9px;
+      font-weight: 500;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+
+.booking-modal-content {
+  .runners-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px;
+    
+    /* Custom scrollbar styling */
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #94a3b8;
+      }
+    }
+  }
+
+  .booking-form {
+    input {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .run-booking-container {
+    padding: 0.5rem;
+  }
+  
+  .calendar-navigation {
+    margin-bottom: 1rem; // mb-4
+    
+    h2 {
+      font-size: 1.125rem; // text-lg
+    }
+  }
+
+  .calendar-header {
+    font-size: 11px;
+  }
+  
+  .calendar-days {
+    gap: 2px;
+  }
+  
+  .calendar-day {
+    min-height: 70px;
+    padding: 6px 3px;
+  }
+  
+  .day-number {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  
+  .booking-events {
+    .booking-event {
+      height: 14px;
+
+      .event-text {
+        font-size: 10px;
+      }
+    }
+  }
+
+  .runner-count-badge {
+    bottom: 3px;
+    right: 3px;
+
+    .p-badge {
+      font-size: 8px;
+      min-width: 14px;
+      height: 14px;
+    }
+  }
+  
+  .legend {
+    .flex {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .run-booking-container {
+    padding: 0.25rem;
+  }
+  
+  .calendar-navigation {
+    margin-bottom: 0.75rem; // mb-3
+    
+    h2 {
+      font-size: 1rem; // text-base
+    }
+  }
+
+  .calendar-header {
+    font-size: 10px;
+  }
+  
+  .calendar-days {
+    gap: 1px;
+  }
+  
+  .calendar-day {
+    min-height: 65px;
+    padding: 4px 2px;
+  }
+  
+  .day-number {
+    font-size: 12px;
+    margin-bottom: 1px;
+  }
+  
+  .booking-events {
+    .booking-event {
+      height: 12px;
+
+      .event-text {
+        font-size: 9px;
+      }
+    }
+  }
+
+  .runner-count-badge {
+    bottom: 2px;
+    right: 2px;
+
+    .p-badge {
+      font-size: 7px;
+      min-width: 12px;
+      height: 12px;
+    }
+  }
+}

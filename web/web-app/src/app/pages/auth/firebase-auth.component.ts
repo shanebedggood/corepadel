@@ -2,13 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { ErrorHandlerService } from '../../services/error-handler.service';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { ToastModule } from 'primeng/toast';
 
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 
@@ -24,11 +23,8 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
     CardModule,
     DividerModule,
     ProgressSpinnerModule,
-    ToastModule
   ],
-  providers: [MessageService],
   template: `
-    <p-toast></p-toast>
     <div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-[100vw] overflow-hidden relative">
       <!-- Background Image -->
       <div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
@@ -37,7 +33,7 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
       <div class="flex flex-col items-center justify-center relative z-10 w-full px-4 sm:px-6 opacity-100">
         <div class="w-full max-w-md sm:max-w-lg lg:max-w-xl bg-surface-0/90 dark:bg-surface-900/90 py-12 sm:py-16 lg:py-20 px-6 sm:px-12 lg:px-20 relative" style="border-radius: 50px">
           <div class="text-center mb-8">
-            <img src="assets/logo.svg" alt="STRIDE & SERVE Logo" class="mb-8 w-32 shrink-0 mx-auto" />
+            <img src="assets/logo.png" alt="STRIDE & SERVE Logo" class="mb-8 w-32 shrink-0 mx-auto" />
             <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">
               {{ getTitleText() }}
             </div>
@@ -227,7 +223,7 @@ export class FirebaseAuthComponent implements OnInit {
   constructor(
     private firebaseAuth: FirebaseAuthService,
     private router: Router,
-    private messageService: MessageService
+    private errorHandlerService: ErrorHandlerService
   ) { }
 
   ngOnInit() {
@@ -266,22 +262,14 @@ export class FirebaseAuthComponent implements OnInit {
 
   async sendSignInLink() {
     if (!this.email) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Please enter your email address'
-      });
+      this.errorHandlerService.handleValidationError('Email', 'Please enter your email address');
       return;
     }
 
     // Validate sign-up fields if in sign-up mode
     if (this.isSignUpMode) {
       if (!this.name || !this.surname || !this.mobile) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Please fill in all required fields'
-        });
+        this.errorHandlerService.handleValidationError('Registration', 'Please fill in all required fields');
         return;
       }
     }
@@ -298,22 +286,28 @@ export class FirebaseAuthComponent implements OnInit {
           mobile: this.mobile,
           email: this.email
         }));
+        
+        // Also update Firebase user profile if user exists (for returning users)
+        try {
+          const currentUser = this.firebaseAuth.getCurrentUser();
+          if (currentUser) {
+            await this.firebaseAuth.updateUserProfile({
+              displayName: `${this.name} ${this.surname}`
+            });
+          }
+        } catch (error) {
+          console.warn('Could not update Firebase profile:', error);
+        }
       }
 
       await this.firebaseAuth.sendSignInLink(this.email);
       this.emailSent = true;
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: this.isSignUpMode ? 'Sign-up link sent to your email' : 'Sign-in link sent to your email'
-      });
+      this.errorHandlerService.handleSuccess(
+        this.isSignUpMode ? 'Sign-up link sent to your email' : 'Sign-in link sent to your email'
+      );
     } catch (error: any) {
       console.error('Error sending link:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error.message || `Failed to send ${this.isSignUpMode ? 'sign-up' : 'sign-in'} link`
-      });
+      this.errorHandlerService.handleApiError(error, 'Sign-in Link');
     } finally {
       this.loading = false;
     }
@@ -326,11 +320,7 @@ export class FirebaseAuthComponent implements OnInit {
       const user = await this.firebaseAuth.completeSignInWithEmailLink();
 
       if (user) {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Successfully signed in!'
-        });
+        this.errorHandlerService.handleSuccess('Successfully signed in!');
 
         // Wait for user profile to be loaded
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -340,11 +330,7 @@ export class FirebaseAuthComponent implements OnInit {
       }
     } catch (error: any) {
       console.error('Error completing sign-in:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error.message || 'Failed to complete sign-in'
-      });
+      this.errorHandlerService.handleApiError(error, 'Sign-in Completion');
 
       // Navigate back to sign-in page
       this.router.navigate(['/auth']);
@@ -358,7 +344,6 @@ export class FirebaseAuthComponent implements OnInit {
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     const profile = this.firebaseAuth.getCurrentUserProfile();
-
     if (!profile) {
       this.router.navigate(['/choose-role']);
       return;
