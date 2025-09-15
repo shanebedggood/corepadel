@@ -7,7 +7,8 @@ import { AvatarModule } from 'primeng/avatar';
 import { PageHeaderComponent } from '../../layout/component/page-header.component';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { UserProfile } from '../../services/firebase-auth.service';
-import { Observable } from 'rxjs';
+import { ImageUploadService } from '../../services/image-upload.service';
+import { Observable, map, switchMap } from 'rxjs';
 
 @Component({
     selector: 'app-profile',
@@ -29,8 +30,8 @@ import { Observable } from 'rxjs';
                             <!-- Profile Photo -->
                             <div class="profile-photo-section text-center mb-6">
                                 <p-avatar 
-                                    [image]="profile.profile_picture" 
-                                    [label]="!profile.profile_picture ? getUserInitials(profile) : undefined"
+                                    [image]="cachedProfileImage$ | async" 
+                                    [label]="!(cachedProfileImage$ | async) ? getUserInitials(profile) : undefined"
                                     size="xlarge" 
                                     shape="circle"
                                     class="large-profile-avatar">
@@ -206,6 +207,7 @@ import { Observable } from 'rxjs';
 })
 export class ProfileComponent implements OnInit {
     userProfile$: Observable<UserProfile | null>;
+    cachedProfileImage$: Observable<string | null>;
     
     // Page header configuration
     breadcrumbs = [
@@ -215,9 +217,23 @@ export class ProfileComponent implements OnInit {
 
     constructor(
         private authService: FirebaseAuthService,
+        private imageUploadService: ImageUploadService,
         private router: Router
     ) {
         this.userProfile$ = this.authService.userProfile$;
+        
+        // Create cached image observable
+        this.cachedProfileImage$ = this.userProfile$.pipe(
+            switchMap(profile => {
+                if (profile) {
+                    return this.imageUploadService.getCachedProfileImage(profile.firebaseUid, profile.profile_picture);
+                }
+                return new Observable<string | null>(observer => {
+                    observer.next(null);
+                    observer.complete();
+                });
+            })
+        );
     }
 
     ngOnInit() {

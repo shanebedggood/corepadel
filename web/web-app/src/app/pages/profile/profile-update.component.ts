@@ -14,7 +14,7 @@ import { UserService } from '../../services/user.service';
 import { ImageUploadService } from '../../services/image-upload.service';
 import { ErrorHandlerService } from '../../services/error-handler.service';
 import { UserProfile } from '../../services/firebase-auth.service';
-import { Observable, Subscription, firstValueFrom } from 'rxjs';
+import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
 
 @Component({
     selector: 'app-profile-update',
@@ -34,8 +34,8 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
         <div class="card">
             <!-- Page Header -->
             <app-page-header 
-                title="Complete Your Profile"
-                subtitle="Please provide your information to get started"
+                title="Update My Profile"
+                subtitle=""
                 [breadcrumbs]="breadcrumbs">
             </app-page-header>
             
@@ -47,8 +47,8 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
                         <div class="text-center">
                             <div class="relative inline-block">
                                 <p-avatar 
-                                    [image]="profileImageUrl || profile.profile_picture" 
-                                    [label]="!(profileImageUrl || profile.profile_picture) ? getUserInitials(profile) : undefined"
+                                    [image]="profileImageUrl || (cachedProfileImage$ | async) || undefined" 
+                                    [label]="!(profileImageUrl || (cachedProfileImage$ | async)) ? getUserInitials(profile) : undefined"
                                     size="xlarge" 
                                     shape="circle"
                                     class="large-profile-avatar">
@@ -169,8 +169,15 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
                             }
                         </div>
 
-                        <!-- Submit Button -->
-                        <div class="flex justify-end">
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-3">
+                            <button 
+                                type="button"
+                                pButton 
+                                label="Cancel" 
+                                severity="secondary"
+                                (click)="cancelEdit()">
+                            </button>
                             <button 
                                 type="submit"
                                 pButton 
@@ -221,6 +228,7 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
 })
 export class ProfileUpdateComponent implements OnInit, OnDestroy {
     userProfile$: Observable<UserProfile | null>;
+    cachedProfileImage$: Observable<string | null>;
     profileForm: FormGroup;
     profileImageUrl: string | null = null;
     isSubmitting = false;
@@ -242,6 +250,19 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
         private router: Router
     ) {
         this.userProfile$ = this.authService.userProfile$;
+        
+        // Create cached image observable
+        this.cachedProfileImage$ = this.userProfile$.pipe(
+            switchMap(profile => {
+                if (profile) {
+                    return this.imageUploadService.getCachedProfileImage(profile.firebaseUid, profile.profile_picture);
+                }
+                return new Observable<string | null>(observer => {
+                    observer.next(null);
+                    observer.complete();
+                });
+            })
+        );
         
         this.profileForm = this.fb.group({
             firstName: ['', Validators.required],
@@ -296,6 +317,9 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
             
             const imageUrl = await firstValueFrom(this.imageUploadService.uploadProfilePicture(file, profile.firebaseUid));
             this.profileImageUrl = imageUrl;
+            
+            // Clear the cache for this user since we have a new image
+            this.imageUploadService.clearUserImageCache(profile.firebaseUid);
             
             // Update the profile immediately with the new image URL
             const profileData = {
@@ -365,6 +389,10 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
                 this.isSubmitting = false;
             }
         }
+    }
+
+    cancelEdit() {
+        this.router.navigate(['/player/profile']);
     }
 
     getUserInitials(profile: any): string {

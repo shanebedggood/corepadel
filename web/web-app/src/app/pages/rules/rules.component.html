@@ -7,46 +7,44 @@
 
   <!-- Loading State -->
   @if (loading) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (item of [1,2,3,4,5,6]; track item) {
-        <div class="bg-white rounded-lg shadow-sm border p-4">
-          <div class="animate-pulse">
-            <div class="h-8 bg-gray-200 rounded mb-4"></div>
-            <div class="h-4 bg-gray-200 rounded mb-2"></div>
-            <div class="h-4 bg-gray-200 rounded mb-2"></div>
-            <div class="h-4 bg-gray-200 rounded mb-4"></div>
-            <div class="h-8 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      }
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (item of [1,2,3,4,5,6]; track item) {
+    <div class="bg-white rounded-lg shadow-sm border p-4">
+      <div class="animate-pulse">
+        <div class="h-8 bg-gray-200 rounded mb-4"></div>
+        <div class="h-4 bg-gray-200 rounded mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded mb-4"></div>
+        <div class="h-8 bg-gray-200 rounded"></div>
+      </div>
     </div>
+    }
+  </div>
   }
 
   <!-- Error State -->
   @if (error && !loading) {
-    <div class="text-center py-12">
-      <div class="text-red-400 mb-4">
-        <i class="pi pi-exclamation-triangle text-6xl"></i>
-      </div>
-      <h3 class="text-xl font-semibold text-red-600 mb-2">Failed to load rules</h3>
-      <p class="text-red-500">
-        There was an error loading the padel rules. Please try again later.
-      </p>
-      <button 
-        (click)="loadPadelRules()" 
-        class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        Retry
-      </button>
+  <div class="text-center py-12">
+    <div class="text-red-400 mb-4">
+      <i class="pi pi-exclamation-triangle text-6xl"></i>
     </div>
+    <h3 class="text-xl font-semibold text-red-600 mb-2">Failed to load rules</h3>
+    <p class="text-red-500">
+      There was an error loading the padel rules. Please try again later.
+    </p>
+    <button (click)="loadPadelRules()"
+      class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+      Retry
+    </button>
+  </div>
   }
 
   <!-- Rules Grid -->
   @if (!loading && !error && padelRules && padelRules.length > 0) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (rule of padelRules; track trackByRule($index, rule); let i = $index) {
-        <div class="rule-card">
-      <p-card [style]="{ width: '100%' }" styleClass="h-full">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (rule of padelRules; track trackByRule($index, rule); let i = $index) {
+    <div class="rule-card">
+      <p-card [style]="{ width: '100%' }" class="h-full">
         <ng-template pTemplate="header">
           <div class="rule-header p-4 bg-gradient-to-r from-green-50 to-emerald-50">
             <div class="flex items-center justify-between">
@@ -65,7 +63,7 @@
           <div class="rule-content space-y-4">
             <!-- Rule Preview -->
             <div class="rule-preview">
-              <p class="text-gray-600 text-sm leading-relaxed">
+              <p class="text-gray-600 text-md leading-relaxed">
                 {{ getRulePreview(rule?.sections || []) }}
               </p>
             </div>
@@ -84,42 +82,36 @@
 
             <!-- View Details Button -->
             <div class="pt-2">
-              <p-button
-                label="View Details"
-                icon="pi pi-eye"
-                severity="secondary"
-                size="small"
-                (onClick)="openRuleModal(i)"
-                class="w-full"
-                [disabled]="!rule?.sections || rule.sections.length === 0"
-              ></p-button>
+              <p-button label="View Details" icon="pi pi-eye" severity="secondary" size="small"
+                (onClick)="openRuleModal(i)" class="w-full"
+                [disabled]="!rule?.sections || rule.sections.length === 0"></p-button>
             </div>
           </div>
         </ng-template>
       </p-card>
-        </div>
-      }
     </div>
+    }
+  </div>
   }
 
   <!-- No Rules State -->
   @if (!loading && !error && (!padelRules || padelRules.length === 0)) {
-    <div class="text-center py-12">
-      <div class="text-gray-400 mb-4">
-        <i class="pi pi-book text-6xl"></i>
-      </div>
-      <h3 class="text-xl font-semibold text-gray-600 mb-2">No rules available</h3>
-      <p class="text-gray-500">
-        No padel rules are currently available.
-      </p>
+  <div class="text-center py-12">
+    <div class="text-gray-400 mb-4">
+      <i class="pi pi-book text-6xl"></i>
     </div>
+    <h3 class="text-xl font-semibold text-gray-600 mb-2">No rules available</h3>
+    <p class="text-gray-500">
+      No padel rules are currently available.
+    </p>
+  </div>
   }
 </div>
 
 <!-- Modal Dialog for Rule Details -->
 @if (selectedRuleIndex !== null && padelRules && padelRules[selectedRuleIndex]) {
-  <div class="modal-overlay" (click)="closeRuleModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+<div class="modal-overlay" (click)="closeRuleModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
@@ -139,31 +131,27 @@
     <div class="modal-body">
       <div class="rule-description space-y-4">
         @for (section of getSelectedRuleSections(); track $index) {
-          <div class="rule-point p-4 bg-gray-50 rounded-lg border-l-4 border-green-500">
-            <div class="flex items-start space-x-3">
-              <!-- Only show number if section has a meaningful title -->
-              @if (shouldDisplaySectionNumber(section)) {
-                <div class="point-number text-green-600 font-semibold text-sm min-w-[2rem]">
-                  {{ section.sectionTitle }}
-                </div>
-              }
-              <div class="flex-1" [class.ml-0]="!shouldDisplaySectionNumber(section)" [class.ml-3]="shouldDisplaySectionNumber(section)">
-                <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ section.content }}</p>
-              </div>
+        <div class="rule-point p-4 bg-gray-50 rounded-lg border-l-4 border-green-500">
+          <div class="flex items-start space-x-3">
+            <!-- Only show number if section has a meaningful title -->
+            @if (shouldDisplaySectionNumber(section)) {
+            <div class="point-number text-green-600 font-semibold text-sm min-w-[2rem]">
+              {{ section.sectionTitle }}
+            </div>
+            }
+            <div class="flex-1" [class.ml-0]="!shouldDisplaySectionNumber(section)"
+              [class.ml-3]="shouldDisplaySectionNumber(section)">
+              <p class="text-lg text-gray-700 leading-relaxed whitespace-pre-line">{{ section.content }}</p>
             </div>
           </div>
+        </div>
         }
       </div>
     </div>
 
     <div class="modal-footer">
-      <p-button
-        label="Close"
-        icon="pi pi-times"
-        severity="secondary"
-        (onClick)="closeRuleModal()"
-      ></p-button>
+      <p-button label="Close" icon="pi pi-times" severity="secondary" (onClick)="closeRuleModal()"></p-button>
     </div>
   </div>
-  </div>
+</div>
 }

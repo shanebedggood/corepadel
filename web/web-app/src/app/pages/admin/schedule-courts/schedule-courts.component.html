@@ -1,0 +1,198 @@
+<div class="card">
+    <app-page-header 
+        [title]="'Schedule Courts'"
+        [breadcrumbs]="breadcrumbs">
+    </app-page-header>
+    
+    <p-card [header]="isEditMode ? 'Edit Court Schedule' : 'Create Court Schedule'" styleClass="schedule-card">
+            <form [formGroup]="scheduleForm" (ngSubmit)="onSubmit()">
+                
+                <!-- Error Message -->
+                @if (errorMessage) {
+                    <div class="p-message p-message-error">
+                        <p-message severity="error" [text]="errorMessage"></p-message>
+                    </div>
+                }
+                
+                <!-- Success Message -->
+                @if (successMessage) {
+                    <div class="p-message p-message-success">
+                        <p-message severity="success" [text]="successMessage"></p-message>
+                    </div>
+                }
+
+
+                <!-- Venue Selection -->
+                <div class="field">
+                    <label for="venueId">Venue *</label>
+                    <p-select 
+                        id="venueId"
+                        formControlName="venueId" 
+                        [options]="availableVenues" 
+                        optionLabel="name" 
+                        optionValue="id"
+                        placeholder="Select venue for this schedule"
+                        [showClear]="true"
+                        class="w-full">
+                    </p-select>
+                    @if (scheduleForm.get('venueId')?.invalid && scheduleForm.get('venueId')?.touched) {
+                        <small class="p-error">Please select a venue.</small>
+                    }
+                </div>
+
+                <!-- Date Range -->
+                <div class="date-range-container">
+                    <div class="field">
+                        <label for="startDate">Start Date *</label>
+                        <p-datepicker 
+                            id="startDate" 
+                            formControlName="startDate" 
+                            placeholder="Select start date"
+                            [showIcon]="true"
+                            [minDate]="today"
+                            dateFormat="dd/mm/yy">
+                        </p-datepicker>
+                        @if (scheduleForm.get('startDate')?.invalid && scheduleForm.get('startDate')?.touched) {
+                            <small class="p-error">Please select a start date.</small>
+                        }
+                    </div>
+
+                    <div class="field">
+                        <label for="endDate">End Date *</label>
+                        <p-datepicker 
+                            id="endDate" 
+                            formControlName="endDate" 
+                            placeholder="Select end date"
+                            [showIcon]="true"
+                            [minDate]="scheduleForm.get('startDate')?.value || today"
+                            dateFormat="dd/mm/yy">
+                        </p-datepicker>
+                        @if (scheduleForm.get('endDate')?.invalid && scheduleForm.get('endDate')?.touched) {
+                            <small class="p-error">Please select an end date.</small>
+                        }
+                    </div>
+                </div>
+
+                <!-- Days of Week Selection -->
+                <div class="field">
+                    <label>Days of Week *</label>
+                    <div class="days-selection">
+                        @for (day of daysOfWeek; track day.value) {
+                            <div class="day-checkbox">
+                                <input 
+                                    type="checkbox" 
+                                    [id]="'day-' + day.value"
+                                    [checked]="isDaySelected(day.value)"
+                                    (change)="onDaySelectionChange(day.value, $event)"
+                                    class="day-checkbox-input">
+                                <label [for]="'day-' + day.value" class="day-label">{{ day.label }}</label>
+                            </div>
+                        }
+                    </div>
+                    @if (scheduleDaysArray.length === 0 && scheduleForm.get('scheduleDays')?.touched) {
+                        <small class="p-error">Please select at least one day of the week.</small>
+                    }
+                </div>
+
+                <!-- Schedule Days Configuration -->
+                @if (scheduleDaysArray.length > 0) {
+                    <div class="schedule-days-container" formArrayName="scheduleDays">
+                        <h3>Configure Schedule for Selected Days</h3>
+                        
+                        @for (dayControl of scheduleDaysArray.controls; track $index; let i = $index) {
+                            <div class="schedule-day-card" [formGroupName]="i">
+                                <div class="day-header">
+                                    <h4>{{ dayControl.get('dayName')?.value }}</h4>
+                                    <button 
+                                        type="button" 
+                                        pButton 
+                                        icon="pi pi-trash" 
+                                        size="small" 
+                                        severity="danger"
+                                        pTooltip="Remove this day from schedule"
+                                        (click)="removeScheduleDayByIndex(i)"
+                                        class="p-button-text p-button-sm">
+                                    </button>
+                                </div>
+                                
+                                <div class="day-configuration">
+                                    <!-- Time Slot -->
+                                    <div class="field">
+                                        <label [for]="'time-' + i">Time *</label>
+                                        <p-select 
+                                            [id]="'time-' + i"
+                                            formControlName="timeSlot" 
+                                            [options]="timeSlots" 
+                                            optionLabel="label" 
+                                            optionValue="value"
+                                            placeholder="Select time slot"
+                                            [showClear]="true"
+                                            class="w-full">
+                                        </p-select>
+                                        @if (dayControl.get('timeSlot')?.invalid && dayControl.get('timeSlot')?.touched) {
+                                            <small class="p-error">Please select a time slot.</small>
+                                        }
+                                    </div>
+
+                                    <!-- Game Duration -->
+                                    <div class="field">
+                                        <label>Game Duration *</label>
+                                        <div class="duration-radio-group">
+                                            <div class="radio-option">
+                                                <input 
+                                                    type="radio" 
+                                                    [id]="'duration-60-' + i"
+                                                    formControlName="gameDuration" 
+                                                    [value]="60"
+                                                    class="duration-radio">
+                                                <label [for]="'duration-60-' + i" class="radio-label">60 min</label>
+                                            </div>
+                                            <div class="radio-option">
+                                                <input 
+                                                    type="radio" 
+                                                    [id]="'duration-90-' + i"
+                                                    formControlName="gameDuration" 
+                                                    [value]="90"
+                                                    class="duration-radio">
+                                                <label [for]="'duration-90-' + i" class="radio-label">90 min</label>
+                                            </div>
+                                            <div class="radio-option">
+                                                <input 
+                                                    type="radio" 
+                                                    [id]="'duration-120-' + i"
+                                                    formControlName="gameDuration" 
+                                                    [value]="120"
+                                                    class="duration-radio">
+                                                <label [for]="'duration-120-' + i" class="radio-label">120 min</label>
+                                            </div>
+                                        </div>
+                                        @if (dayControl.get('gameDuration')?.invalid && dayControl.get('gameDuration')?.touched) {
+                                            <small class="p-error">Please select a game duration.</small>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <p-button 
+                        type="button" 
+                        label="Cancel" 
+                        severity="secondary" 
+                        (onClick)="onCancel()"
+                        [disabled]="saving">
+                    </p-button>
+                    
+                    <p-button 
+                        type="submit" 
+                        [label]="isEditMode ? 'Update Schedule' : 'Create Schedule'" 
+                        [loading]="saving"
+                        [disabled]="!scheduleForm.valid || scheduleDaysArray.length === 0">
+                    </p-button>
+                </div>
+            </form>
+        </p-card>
+</div>

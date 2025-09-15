@@ -1,0 +1,117 @@
+<div class="card">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Page Header -->
+  <app-page-header title="Court Schedules" subtitle="Manage court scheduling for your venues">
+    <div header-actions class="flex gap-2 pr-2">
+      <button pButton type="button" icon="pi pi-refresh" [disabled]="loading" (click)="refreshSchedules()"
+        pTooltip="Refresh schedules" class="lg">
+      </button>
+      <button pButton type="button" icon="pi pi-plus" routerLink="/admin/schedule-courts" 
+        pTooltip="Create new court schedule" class="lg">
+      </button>
+    </div>
+  </app-page-header>
+
+  <!-- Error Message -->
+  @if (errorMessage) {
+    <p-message severity="error" [text]="errorMessage" styleClass="mb-3"></p-message>
+  }
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="flex justify-content-center align-items-center" style="height: 200px;">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading && courtSchedules.length === 0) {
+    <div class="empty-state">
+      <div class="empty-state-content">
+        <i class="pi pi-calendar-times empty-state-icon"></i>
+        <h3>No Court Schedules</h3>
+        <p>You haven't created any court schedules yet. Create your first schedule to allow players to book courts.</p>
+        <button pButton type="button" label="Create Court Schedule" icon="pi pi-plus" 
+          routerLink="/admin/schedule-courts" class="p-button-lg">
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Schedules Table -->
+  @if (!loading && courtSchedules.length > 0) {
+    <div class="table-container">
+      <p-table [value]="courtSchedules" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
+        [lazy]="false" [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schedules"
+        [rowsPerPageOptions]="[10, 25, 50]" styleClass="p-datatable-sm">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="startDate">
+              Start Date <p-sortIcon field="startDate"></p-sortIcon>
+            </th>
+            <th pSortableColumn="endDate">
+              End Date <p-sortIcon field="endDate"></p-sortIcon>
+            </th>
+            <th>Day of Week</th>
+            <th>Venue</th>
+            <th>Time Slot</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-schedule>
+          <tr>
+            <td>{{ formatDate(schedule.startDate) }}</td>
+            <td>{{ formatDate(schedule.endDate) }}</td>
+            <td>
+              <span class="days-badge">{{ formatDaysOfWeek(schedule.scheduleDays) }}</span>
+            </td>
+            <td>
+              <div class="venue-info">
+                @for (venueId of getUniqueVenues(schedule.scheduleDays); track venueId) {
+                  <span class="venue-badge">{{ getVenueName(venueId) }}</span>
+                }
+              </div>
+            </td>
+            <td>
+              <div class="time-slots">
+                @for (slot of getUniqueTimeSlots(schedule.scheduleDays); track slot.timeSlot + slot.gameDuration) {
+                  <span class="time-badge">{{ slot.timeSlot }} ({{ slot.gameDuration }}min)</span>
+                }
+              </div>
+            </td>
+            <td>
+              <p-badge [value]="getStatusLabel('active')" [severity]="getStatusBadge('active')"></p-badge>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button pButton type="button" icon="pi pi-pencil" size="small" 
+                  pTooltip="Edit Schedule" class="p-button-text p-button-sm" [routerLink]="['/admin/schedule-courts', schedule.id]">
+                </button>
+                <button pButton type="button" icon="pi pi-trash" size="small" 
+                  pTooltip="Delete Schedule" class="p-button-text p-button-sm p-button-danger"
+                  (click)="deleteSchedule(schedule)">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center">
+              <div class="empty-table-message">
+                <i class="pi pi-calendar-times"></i>
+                <p>No court schedules found</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+</div>

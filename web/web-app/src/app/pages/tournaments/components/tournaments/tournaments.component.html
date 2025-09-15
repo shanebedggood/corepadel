@@ -4,7 +4,7 @@
     <p-confirmDialog>
     </p-confirmDialog>
     <!-- Page Header -->
-    <app-page-header title="Tournaments" subtitle="Manage and view all tournaments for your club"
+    <app-page-header title="Tournaments" subtitle=""
         [breadcrumbs]="breadcrumbs">
         <div header-actions class="flex gap-2 pr-2">
             <button pButton type="button" icon="pi pi-refresh" [disabled]="loading" (click)="refreshTournaments()"
@@ -14,9 +14,8 @@
             </button>
         </div>
     </app-page-header>
-</div>
 
-@if (tournaments.length === 0 && !loading) {
+    @if (tournaments.length === 0 && !loading) {
     <div class="text-center py-8">
         <p-message severity="info" text="No tournaments found. Create your first tournament to get started."
             styleClass="w-full mb-4">
@@ -180,13 +179,14 @@
     </div>
 }
 
-@if (loading) {
-    <div class="text-center py-8">
-        <p-message severity="info" text="Loading tournaments..." styleClass="w-full">
-            <ng-template pTemplate="messageicon">
-                <i class="pi pi-spin pi-spinner text-2xl">
-                </i>
-            </ng-template>
-        </p-message>
-    </div>
-}
+    @if (loading) {
+        <div class="text-center py-8">
+            <p-message severity="info" text="Loading tournaments..." styleClass="w-full">
+                <ng-template pTemplate="messageicon">
+                    <i class="pi pi-spin pi-spinner text-2xl">
+                    </i>
+                </ng-template>
+            </p-message>
+        </div>
+    }
+</div>

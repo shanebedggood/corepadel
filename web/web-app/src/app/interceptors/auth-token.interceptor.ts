@@ -17,7 +17,6 @@ export const authTokenInterceptorFn: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   const firebaseAuthService = inject(FirebaseAuthService);
     
-  
   // Skip if request already has an Authorization header
   if (req.headers.has('Authorization')) {
     return next(req);

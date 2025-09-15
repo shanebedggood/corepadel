@@ -20,6 +20,8 @@ import { StandingsComponent } from './app/pages/tournaments/components/standings
 import { MatchScheduleComponent } from './app/pages/tournaments/components/match-schedule/match-schedule.component';
 import { AdminComponent } from './app/pages/admin/admin.component';
 import { AdminSetupComponent } from './app/pages/admin/admin-setup.component';
+import { ScheduleCourtsComponent } from './app/pages/admin/schedule-courts/schedule-courts.component';
+import { CourtSchedulesComponent } from './app/pages/admin/court-schedules/court-schedules.component';
 import { ProfileComponent } from './app/pages/profile/profile.component';
 import { ProfileUpdateComponent } from './app/pages/profile/profile-update.component';
 import { ClubsComponent } from './app/pages/clubs/clubs.component';
@@ -65,6 +67,9 @@ export const appRoutes: Routes = [
             { path: 'tournaments/:tournamentId/groups/:groupId/add-team', component: AddTeamComponent },
             { path: 'tournaments/:tournamentId/groups/:groupId/teams/:teamId/edit', component: AddTeamComponent },
             { path: 'match-schedule/:id', component: MatchScheduleComponent, data: { title: 'Match Schedule' } },
+            { path: 'court-schedules', component: CourtSchedulesComponent, data: { title: 'Court Schedules' } },
+            { path: 'schedule-courts', component: ScheduleCourtsComponent, data: { title: 'Create Court Schedule' } },
+            { path: 'schedule-courts/:id', component: ScheduleCourtsComponent, data: { title: 'Edit Court Schedule' } },
             { path: 'users', component: AdminComponent, data: { title: 'User Management' } },
             { path: 'roles', component: AdminComponent, data: { title: 'Role Management' } },
             { path: 'settings', component: AdminComponent, data: { title: 'Settings' } },

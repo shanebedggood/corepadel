@@ -54,14 +54,9 @@ export class AdminMenu implements OnInit {
                         routerLink: ['/admin/tournaments']
                     },
                     {
-                        label: 'Create Tournament',
-                        icon: 'pi pi-fw pi-plus',
-                        routerLink: ['/admin/create-tournament']
-                    },
-                    {
-                        label: 'Match Schedule',
-                        icon: 'pi pi-fw pi-calendar',
-                        routerLink: ['/admin/match-schedule']
+                        label: 'Court Schedules',
+                        icon: 'pi pi-fw pi-calendar-clock',
+                        routerLink: ['/admin/court-schedules']
                     }
                 ]
             },

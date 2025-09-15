@@ -10,84 +10,50 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Name Search -->
       <div class="search-field">
-        <label for="nameSearch" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="nameSearch" class="block text-md font-medium text-gray-700 mb-2">
           Club Name
         </label>
         <p-iconfield class="w-full">
           <p-inputicon class="pi pi-search" />
-          <input
-            id="nameSearch"
-            pInputText
-            type="text"
-            placeholder="Search by club name..."
-            [(ngModel)]="searchFilters.name"
-            (ngModelChange)="onSearchChange()"
-            class="w-full"
-          />
+          <input id="nameSearch" pInputText type="text" placeholder="Search by club name..."
+            [(ngModel)]="searchFilters.name" (ngModelChange)="onSearchChange()" class="w-full" />
         </p-iconfield>
       </div>
 
       <!-- Province Filter -->
       <div class="search-field">
-        <label for="provinceFilter" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="provinceFilter" class="block text-md font-medium text-gray-700 mb-2">
           Province
         </label>
-        <p-select
-          id="provinceFilter"
-          [options]="provinces"
-          [(ngModel)]="searchFilters.province"
-          placeholder="Select province..."
-          optionLabel="label"
-          optionValue="value"
-          (onChange)="onSearchChange()"
-          class="w-full"
-        ></p-select>
+        <p-select id="provinceFilter" [options]="provinces" [(ngModel)]="searchFilters.province"
+          placeholder="Select province..." optionLabel="label" optionValue="value" (onChange)="onSearchChange()"
+          class="w-full"></p-select>
       </div>
 
       <!-- City Filter -->
       <div class="search-field">
-        <label for="cityFilter" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="cityFilter" class="block text-md font-medium text-gray-700 mb-2">
           City
         </label>
-        <p-select
-          id="cityFilter"
-          [options]="cities"
-          [(ngModel)]="searchFilters.city"
-          placeholder="Select city..."
-          optionLabel="label"
-          optionValue="value"
-          (onChange)="onSearchChange()"
-          class="w-full"
-        ></p-select>
+        <p-select id="cityFilter" [options]="cities" [(ngModel)]="searchFilters.city" placeholder="Select city..."
+          optionLabel="label" optionValue="value" (onChange)="onSearchChange()" class="w-full"></p-select>
       </div>
 
       <!-- Suburb Filter -->
       <div class="search-field">
-        <label for="suburbFilter" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="suburbFilter" class="block text-md font-medium text-gray-700 mb-2">
           Suburb
         </label>
-        <p-select
-          id="suburbFilter"
-          [options]="suburbs"
-          [(ngModel)]="searchFilters.suburb"
-          placeholder="Select suburb..."
-          optionLabel="label"
-          optionValue="value"
-          (onChange)="onSearchChange()"
-          class="w-full"
-        ></p-select>
+        <p-select id="suburbFilter" [options]="suburbs" [(ngModel)]="searchFilters.suburb"
+          placeholder="Select suburb..." optionLabel="label" optionValue="value" (onChange)="onSearchChange()"
+          class="w-full"></p-select>
       </div>
     </div>
 
     <!-- Clear Filters Button -->
     <div class="mt-4 flex justify-end">
-      <p-button
-        label="Clear Filters"
-        icon="pi pi-times"
-        severity="secondary"
-        (onClick)="clearFilters()"
-        [disabled]="!hasActiveFilters"
-      ></p-button>
+      <p-button label="Clear Filters" icon="pi pi-times" severity="secondary" (onClick)="clearFilters()"
+        [disabled]="!hasActiveFilters"></p-button>
     </div>
   </div>
 
@@ -100,51 +66,48 @@
 
   <!-- Loading State -->
   @if (loading) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (item of [1,2,3,4,5,6]; track item) {
-        <div class="bg-white rounded-lg shadow-sm border p-4">
-          <p-skeleton height="2rem" class="mb-3"></p-skeleton>
-          <p-skeleton height="1rem" class="mb-2"></p-skeleton>
-          <p-skeleton height="1rem" class="mb-2"></p-skeleton>
-          <p-skeleton height="1rem" class="mb-3"></p-skeleton>
-          <p-skeleton height="2rem"></p-skeleton>
-        </div>
-      }
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (item of [1,2,3,4,5,6]; track item) {
+    <div class="bg-white rounded-lg shadow-sm border p-4">
+      <p-skeleton height="2rem" class="mb-3"></p-skeleton>
+      <p-skeleton height="1rem" class="mb-2"></p-skeleton>
+      <p-skeleton height="1rem" class="mb-2"></p-skeleton>
+      <p-skeleton height="1rem" class="mb-3"></p-skeleton>
+      <p-skeleton height="2rem"></p-skeleton>
     </div>
+    }
+  </div>
   }
 
   <!-- Error State -->
   @if (error && !loading) {
-    <div class="mb-6">
-      <p-message
-        severity="error"
-        text="Failed to load clubs. Please try again later."
-      ></p-message>
-    </div>
+  <div class="mb-6">
+    <p-message severity="error" text="Failed to load clubs. Please try again later."></p-message>
+  </div>
   }
 
   <!-- No Results -->
   @if (!loading && !error && filteredVenues.length === 0) {
-    <div class="text-center py-12">
-      <div class="text-gray-400 mb-4">
-        <i class="pi pi-search text-6xl"></i>
-      </div>
-      <h3 class="text-xl font-semibold text-gray-600 mb-2">No clubs found</h3>
-      <p class="text-gray-500">
-        Try adjusting your search criteria or filters to find more clubs.
-      </p>
+  <div class="text-center py-12">
+    <div class="text-gray-400 mb-4">
+      <i class="pi pi-search text-6xl"></i>
     </div>
+    <h3 class="text-xl font-semibold text-gray-600 mb-2">No clubs found</h3>
+    <p class="text-gray-500">
+      Try adjusting your search criteria or filters to find more clubs.
+    </p>
+  </div>
   }
 
   <!-- Clubs Grid -->
   @if (!loading && !error && filteredVenues.length > 0) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (venue of filteredVenues; track venue.id) {
-        <div class="club-card">
-      <p-card [style]="{ width: '100%' }" styleClass="h-full">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (venue of filteredVenues; track venue.id) {
+    <div class="club-card">
+      <p-card [style]="{ width: '100%' }" class="h-full">
         <ng-template pTemplate="header">
           <div class="club-header p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-            <h3 class="text-base font-semibold text-gray-800 mb-2">{{ venue.name }}</h3>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ venue.name }}</h3>
           </div>
         </ng-template>
 
@@ -152,22 +115,18 @@
           <div class="club-details space-y-6">
             <!-- Facilities Section -->
             @if (venue.facilities && venue.facilities.length > 0) {
-              <div class="facilities-section">
-                <div class="text-md font-semibold text-gray-700 mb-2 flex items-center">
-                  <i class="pi pi-star text-green-600 mr-2"></i>
-                  Available Facilities
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  @for (venueFacility of venue.facilities; track trackByFacility($index, venueFacility)) {
-                    <p-tag
-                      [value]="getFacilityDisplay(venueFacility)"
-                      [icon]="getFacilityIcon(venueFacility)"
-                      severity="info"
-                      class="text-xs"
-                    ></p-tag>
-                  }
-                </div>
+            <div class="facilities-section">
+              <div class="text-md font-semibold text-gray-700 mb-2 flex items-center">
+                <i class="pi pi-star text-green-600 mr-2"></i>
+                Available Facilities
               </div>
+              <div class="flex flex-wrap gap-2">
+                @for (venueFacility of venue.facilities; track trackByFacility($index, venueFacility)) {
+                <p-tag [value]="getFacilityDisplay(venueFacility)" [icon]="getFacilityIcon(venueFacility)"
+                  severity="info" class="text-xs"></p-tag>
+                }
+              </div>
+            </div>
             }
 
             <!-- Address Information -->
@@ -176,29 +135,29 @@
                 <i class="pi pi-map-marker text-green-600 mt-1"></i>
                 <div class="flex-1 space-y-0.5">
                   @if (venue.address.street) {
-                    <div class="text-gray-800 font-medium">
-                      {{ venue.address.street }}
-                    </div>
+                  <div class="text-gray-800 font-medium">
+                    {{ venue.address.street }}
+                  </div>
                   }
                   @if (venue.address.suburb) {
-                    <div class="text-gray-600">
-                      {{ venue.address.suburb }}
-                    </div>
+                  <div class="text-gray-600">
+                    {{ venue.address.suburb }}
+                  </div>
                   }
                   @if (venue.address.city) {
-                    <div class="text-gray-600">
-                      {{ venue.address.city }}
-                    </div>
+                  <div class="text-gray-600">
+                    {{ venue.address.city }}
+                  </div>
                   }
                   @if (venue.address.province) {
-                    <div class="text-gray-600">
-                      {{ venue.address.province }}
-                    </div>
+                  <div class="text-gray-600">
+                    {{ venue.address.province }}
+                  </div>
                   }
                   @if (venue.address.postalCode) {
-                    <div class="text-gray-500 text-sm">
-                      {{ venue.address.postalCode }}
-                    </div>
+                  <div class="text-gray-500 text-sm">
+                    {{ venue.address.postalCode }}
+                  </div>
                   }
                 </div>
               </div>
@@ -206,23 +165,19 @@
 
             <!-- Website Link -->
             @if (venue.website) {
-              <div class="website-link">
-                <a
-                  [href]="venue.website"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center space-x-2 text-green-600 hover:text-green-700 transition-colors"
-                >
-                  <i class="pi pi-external-link"></i>
-                  <span>Visit Website</span>
-                </a>
-              </div>
+            <div class="website-link">
+              <a [href]="venue.website" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center space-x-2 text-green-600 hover:text-green-700 transition-colors">
+                <i class="pi pi-external-link"></i>
+                <span>Visit Website</span>
+              </a>
+            </div>
             }
           </div>
         </ng-template>
       </p-card>
-        </div>
-      }
     </div>
+    }
+  </div>
   }
 </div>

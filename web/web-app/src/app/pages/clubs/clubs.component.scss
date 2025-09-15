@@ -59,6 +59,13 @@
 }
 
 :host ::ng-deep .p-card .p-card-header h3 {
-  font-size: 1rem !important;
-  line-height: 1.5rem !important;
+  font-size: 1.250rem !important; 
+  line-height: 1.75rem !important;
+}
+
+// Style the facilities pills to match the orange color from the top bar
+:host ::ng-deep .facilities-section .p-tag {
+  background-color: #fb923c !important;
+  color: white !important;
+  border: none !important;
 }

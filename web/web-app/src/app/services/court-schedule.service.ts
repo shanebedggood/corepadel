@@ -1,0 +1,256 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
+
+export interface CourtScheduleDay {
+    dayOfWeek: number; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    venueId: string;
+    timeSlot: string; // Format: "HH:MM"
+    gameDuration: number; // Duration in minutes (60, 90, or 120)
+}
+
+export interface CourtSchedule {
+    id?: string;
+    clubId: string;
+    startDate: string; // Changed to string to match backend expectation
+    endDate: string; // Changed to string to match backend expectation
+    scheduleDays: CourtScheduleDay[];
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface CourtScheduleResponse {
+    success: boolean;
+    message: string;
+    schedule?: CourtSchedule;
+}
+
+export interface CourtBooking {
+    id?: string;
+    scheduleId: string;
+    userId: string;
+    userName: string;
+    bookingDate: string; // YYYY-MM-DD format
+    timeSlot: string; // HH:MM format
+    gameDuration: number;
+    venueId: string;
+    courtNumber?: number;
+    status: 'confirmed' | 'cancelled' | 'completed';
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface AvailableSlot {
+    date: string; // YYYY-MM-DD format
+    timeSlot: string; // HH:MM format
+    gameDuration: number;
+    venueId: string;
+    venueName: string;
+    availableCourts: number;
+    totalCourts: number;
+    bookings: CourtBooking[];
+    isBookedByUser: boolean;
+    userBookingId?: string;
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class CourtScheduleService {
+    private readonly apiUrl = environment.quarkusApiUrl;
+
+    constructor(private http: HttpClient) {}
+
+    /**
+     * Create a new court schedule
+     */
+    createSchedule(schedule: CourtSchedule): Observable<CourtScheduleResponse> {
+        return this.http.post<CourtScheduleResponse>(`${this.apiUrl}/court-schedules`, schedule).pipe(
+            catchError(error => {
+                console.error('Error creating court schedule:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    getSchedules(): Observable<CourtSchedule[]> {
+        return this.http.get<CourtSchedule[]>(`${this.apiUrl}/court-schedules`).pipe(
+            catchError(error => {
+                console.error('Error fetching court schedules:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    getSchedule(id: string): Observable<CourtSchedule> {
+        return this.http.get<CourtSchedule>(`${this.apiUrl}/court-schedules/${id}`).pipe(
+            catchError(error => {
+                console.error('Error fetching court schedule:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Get all court schedules for a club
+     */
+    getSchedulesByClub(clubId: string): Observable<CourtSchedule[]> {
+        return this.http.get<CourtSchedule[]>(`${this.apiUrl}/court-schedules/club/${clubId}`).pipe(
+            catchError(error => {
+                console.error('Error fetching court schedules:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Get active court schedules for a club within a date range
+     */
+    getActiveSchedules(clubId: string, startDate: string, endDate: string): Observable<CourtSchedule[]> {
+        return this.http.get<CourtSchedule[]>(
+            `${this.apiUrl}/court-schedules/club/${clubId}/active?startDate=${startDate}&endDate=${endDate}`
+        ).pipe(
+            catchError(error => {
+                console.error('Error fetching active court schedules:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Get available booking slots for a specific date range
+     */
+    getAvailableSlots(clubId: string, startDate: string, endDate: string): Observable<AvailableSlot[]> {
+        return this.http.get<AvailableSlot[]>(
+            `${this.apiUrl}/court-schedules/club/${clubId}/available-slots?startDate=${startDate}&endDate=${endDate}`
+        ).pipe(
+            catchError(error => {
+                console.error('Error fetching available slots:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Create a court booking
+     */
+    createBooking(booking: Omit<CourtBooking, 'id' | 'createdAt' | 'updatedAt'>): Observable<{ success: boolean; message: string; booking?: CourtBooking }> {
+        return this.http.post<{ success: boolean; message: string; booking?: CourtBooking }>(
+            `${this.apiUrl}/court-bookings`, booking
+        ).pipe(
+            catchError(error => {
+                console.error('Error creating court booking:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Cancel a court booking
+     */
+    cancelBooking(bookingId: string, userId: string): Observable<{ success: boolean; message: string }> {
+        return this.http.delete<{ success: boolean; message: string }>(
+            `${this.apiUrl}/court-bookings/${bookingId}?userId=${userId}`
+        ).pipe(
+            catchError(error => {
+                console.error('Error cancelling court booking:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Get user's court bookings
+     */
+    getUserBookings(userId: string, startDate?: string, endDate?: string): Observable<CourtBooking[]> {
+        let url = `${this.apiUrl}/court-bookings/user/${userId}`;
+        if (startDate && endDate) {
+            url += `?startDate=${startDate}&endDate=${endDate}`;
+        }
+        
+        return this.http.get<CourtBooking[]>(url).pipe(
+            catchError(error => {
+                console.error('Error fetching user bookings:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Update a court schedule
+     */
+    updateSchedule(scheduleId: string, schedule: Partial<CourtSchedule>): Observable<CourtScheduleResponse> {
+        return this.http.put<CourtScheduleResponse>(`${this.apiUrl}/court-schedules/${scheduleId}`, schedule).pipe(
+            catchError(error => {
+                console.error('Error updating court schedule:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Delete a court schedule
+     */
+    deleteSchedule(scheduleId: string): Observable<{ success: boolean; message: string }> {
+        return this.http.delete<{ success: boolean; message: string }>(`${this.apiUrl}/court-schedules/${scheduleId}`).pipe(
+            catchError(error => {
+                console.error('Error deleting court schedule:', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Utility method to check if a date falls within a schedule's date range
+     */
+    isDateInScheduleRange(date: Date, schedule: CourtSchedule): boolean {
+        const checkDate = new Date(date);
+        const startDate = new Date(schedule.startDate);
+        const endDate = new Date(schedule.endDate);
+        
+        return checkDate >= startDate && checkDate <= endDate;
+    }
+
+    /**
+     * Utility method to check if a day of week is scheduled
+     */
+    isDayScheduled(dayOfWeek: number, schedule: CourtSchedule): boolean {
+        return schedule.scheduleDays.some(day => day.dayOfWeek === dayOfWeek);
+    }
+
+    /**
+     * Utility method to get schedule configuration for a specific day
+     */
+    getScheduleForDay(dayOfWeek: number, schedule: CourtSchedule): CourtScheduleDay | undefined {
+        return schedule.scheduleDays.find(day => day.dayOfWeek === dayOfWeek);
+    }
+
+    /**
+     * Utility method to format time slot for display
+     */
+    formatTimeSlot(timeSlot: string): string {
+        const [hours, minutes] = timeSlot.split(':');
+        const hour = parseInt(hours, 10);
+        const minute = parseInt(minutes, 10);
+        
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        
+        return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+    }
+
+    /**
+     * Utility method to calculate end time based on start time and duration
+     */
+    calculateEndTime(startTime: string, durationMinutes: number): string {
+        const [hours, minutes] = startTime.split(':');
+        const startDate = new Date();
+        startDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+        
+        const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+        
+        return `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+    }
+}

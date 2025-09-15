@@ -8,6 +8,7 @@ export interface Club {
     club_id?: string;
     name: string;
     website?: string;
+    type?: string; // 'CLUB' or 'VENUE'
 }
 
 @Injectable({

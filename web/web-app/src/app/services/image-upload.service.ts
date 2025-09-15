@@ -25,6 +25,10 @@ export class ImageUploadService {
   };
 
   private storage = storage;
+  
+  // Browser cache for profile images
+  private imageCache = new Map<string, { url: string; timestamp: number }>();
+  private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
   constructor() {
     this.verifyStorageConnection();
@@ -62,11 +66,48 @@ export class ImageUploadService {
       switchMap(processedFile => {
         return from(this.uploadToFirebase(processedFile, userId, uploadOptions));
       }),
+      map(downloadURL => {
+        // Cache the uploaded image URL
+        this.cacheImageUrl(userId, downloadURL);
+        return downloadURL;
+      }),
       catchError(error => {
         console.error('Error in uploadProfilePicture:', error);
         return throwError(() => new Error(`Failed to process image: ${error?.message || 'Unknown error'}`));
       })
     );
+  }
+
+  /**
+   * Get cached profile image URL or fetch from Firebase
+   * @param userId - User ID
+   * @param imageUrl - The image URL from user profile
+   * @returns Observable of the cached or fetched URL
+   */
+  getCachedProfileImage(userId: string, imageUrl?: string): Observable<string | null> {
+    // Check if we have a cached version
+    const cached = this.getCachedImageUrl(userId);
+    if (cached) {
+      return new Observable(observer => {
+        observer.next(cached);
+        observer.complete();
+      });
+    }
+
+    // If no cache and no imageUrl provided, return null
+    if (!imageUrl) {
+      return new Observable(observer => {
+        observer.next(null);
+        observer.complete();
+      });
+    }
+
+    // Cache the provided URL and return it
+    this.cacheImageUrl(userId, imageUrl);
+    return new Observable(observer => {
+      observer.next(imageUrl);
+      observer.complete();
+    });
   }
 
   /**
@@ -231,5 +272,69 @@ export class ImageUploadService {
     }
 
     return { isValid: true };
+  }
+
+  /**
+   * Cache an image URL for a user
+   * @param userId - User ID
+   * @param imageUrl - Image URL to cache
+   */
+  private cacheImageUrl(userId: string, imageUrl: string): void {
+    this.imageCache.set(userId, {
+      url: imageUrl,
+      timestamp: Date.now()
+    });
+  }
+
+  /**
+   * Get cached image URL for a user
+   * @param userId - User ID
+   * @returns Cached URL if valid, null otherwise
+   */
+  private getCachedImageUrl(userId: string): string | null {
+    const cached = this.imageCache.get(userId);
+    if (!cached) {
+      return null;
+    }
+
+    // Check if cache is still valid
+    const now = Date.now();
+    if (now - cached.timestamp > this.CACHE_DURATION) {
+      // Cache expired, remove it
+      this.imageCache.delete(userId);
+      return null;
+    }
+
+    return cached.url;
+  }
+
+  /**
+   * Clear cache for a specific user
+   * @param userId - User ID
+   */
+  clearUserImageCache(userId: string): void {
+    this.imageCache.delete(userId);
+  }
+
+  /**
+   * Clear all cached images
+   */
+  clearAllImageCache(): void {
+    this.imageCache.clear();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { size: number; entries: Array<{ userId: string; timestamp: number }> } {
+    const entries = Array.from(this.imageCache.entries()).map(([userId, data]) => ({
+      userId,
+      timestamp: data.timestamp
+    }));
+
+    return {
+      size: this.imageCache.size,
+      entries
+    };
   }
 }
