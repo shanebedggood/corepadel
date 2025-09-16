@@ -33,14 +33,6 @@ public class RuleSection extends PanacheEntity {
     @JsonProperty("content")
     public String content;
     
-    @Column(name = "created_at")
-    @JsonProperty("createdAt")
-    public LocalDateTime createdAt;
-    
-    @Column(name = "updated_at")
-    @JsonProperty("updatedAt")
-    public LocalDateTime updatedAt;
-    
     // Constructors
     public RuleSection() {}
     
@@ -48,8 +40,6 @@ public class RuleSection extends PanacheEntity {
         this.sectionOrder = sectionOrder;
         this.sectionTitle = sectionTitle;
         this.content = content;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
     
     // Getters and Setters
@@ -93,21 +83,7 @@ public class RuleSection extends PanacheEntity {
         this.content = content;
     }
     
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    // Timestamp accessors removed
     
     @Override
     public String toString() {
@@ -117,8 +93,6 @@ public class RuleSection extends PanacheEntity {
                 ", sectionOrder=" + sectionOrder +
                 ", sectionTitle='" + sectionTitle + '\'' +
                 ", content='" + content + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

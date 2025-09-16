@@ -203,7 +203,7 @@ export class RunBookingComponent implements OnInit, OnDestroy {
                                `${this.currentUser.first_name || ''} ${this.currentUser.last_name || ''}`.trim() || 
                                'Unknown User';
         
-        const booking: Omit<RunBooking, 'booking_id' | 'created_at' | 'updated_at'> = {
+        const booking: Omit<RunBooking, 'booking_id'> = {
             user_id: this.currentUser.firebaseUid,
             user_name: userDisplayName,
             booking_date: this.selectedSlot.date,

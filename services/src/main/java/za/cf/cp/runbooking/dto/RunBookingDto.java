@@ -23,26 +23,17 @@ public class RunBookingDto {
     @JsonProperty("booking_time")
     private String bookingTime; // HH:MM format
     
-    @JsonProperty("created_at")
-    private String createdAt;
-    
-    @JsonProperty("updated_at")
-    private String updatedAt;
-    
     // Default constructor
     public RunBookingDto() {}
     
     // Constructor with all fields
     public RunBookingDto(String bookingId, String userId, String userName, 
-                        String bookingDate, String bookingTime, 
-                        String createdAt, String updatedAt) {
+                        String bookingDate, String bookingTime) {
         this.bookingId = bookingId;
         this.userId = userId;
         this.userName = userName;
         this.bookingDate = bookingDate;
         this.bookingTime = bookingTime;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
     
     // Getters and setters
@@ -86,21 +77,7 @@ public class RunBookingDto {
         this.bookingTime = bookingTime;
     }
     
-    public String getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public String getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(String updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    // Timestamp accessors removed
     
     @Override
     public String toString() {
@@ -110,8 +87,6 @@ public class RunBookingDto {
                 ", userName='" + userName + '\'' +
                 ", bookingDate='" + bookingDate + '\'' +
                 ", bookingTime='" + bookingTime + '\'' +
-                ", createdAt='" + createdAt + '\'' +
-                ", updatedAt='" + updatedAt + '\'' +
                 '}';
     }
 }

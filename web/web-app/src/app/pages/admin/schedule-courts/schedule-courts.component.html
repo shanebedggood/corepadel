@@ -33,6 +33,7 @@
                         optionValue="id"
                         placeholder="Select venue for this schedule"
                         [showClear]="true"
+                        (onChange)="onVenueChange()"
                         class="w-full">
                     </p-select>
                     @if (scheduleForm.get('venueId')?.invalid && scheduleForm.get('venueId')?.touched) {
@@ -168,6 +169,24 @@
                                         </div>
                                         @if (dayControl.get('gameDuration')?.invalid && dayControl.get('gameDuration')?.touched) {
                                             <small class="p-error">Please select a game duration.</small>
+                                        }
+                                    </div>
+
+                                    <!-- Court Count -->
+                                    <div class="field">
+                                        <label [for]="'courtCount-' + i">Number of Courts *</label>
+                                        <p-inputNumber 
+                                            [id]="'courtCount-' + i"
+                                            formControlName="courtCount" 
+                                            [min]="1" 
+                                            [max]="20"
+                                            placeholder="Number of courts"
+                                            [showButtons]="true"
+                                            [step]="1"
+                                            class="w-full">
+                                        </p-inputNumber>
+                                        @if (dayControl.get('courtCount')?.invalid && dayControl.get('courtCount')?.touched) {
+                                            <small class="p-error">Please enter a valid number of courts (minimum 1).</small>
                                         }
                                     </div>
                                 </div>

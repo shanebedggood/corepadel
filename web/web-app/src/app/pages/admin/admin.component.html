@@ -54,7 +54,7 @@
                                     <i class="pi" [ngClass]="{ 'pi-check text-green-500': user.emailVerified, 'pi-times text-red-500': !user.emailVerified }" >
                                         </i>
                                     </td>
-                                <td>{{ user.createdAt | date:'d MMM y, HH:mm' }}</td>
+                                <td><!-- removed createdAt display --></td>
                                 <td>{{ user.lastSignInTime | date:'d MMM y, HH:mm' }}</td>
                                 <td>
                                     <div class="flex gap-2">

@@ -30,7 +30,7 @@ import { Observable, map, switchMap } from 'rxjs';
                             <!-- Profile Photo -->
                             <div class="profile-photo-section text-center mb-6">
                                 <p-avatar 
-                                    [image]="cachedProfileImage$ | async" 
+                                    [image]="(cachedProfileImage$ | async) || undefined" 
                                     [label]="!(cachedProfileImage$ | async) ? getUserInitials(profile) : undefined"
                                     size="xlarge" 
                                     shape="circle"

@@ -24,11 +24,7 @@ public class CreateCourtScheduleRequest {
     @JsonProperty("scheduleDays")
     public List<Day> scheduleDays;
 
-    @JsonProperty("createdAt")
-    public String createdAt; // Optional
-
-    @JsonProperty("updatedAt")
-    public String updatedAt; // Optional
+    // createdAt/updatedAt removed from request payload
 
     public static class Day {
         @JsonProperty("dayOfWeek")
@@ -39,10 +35,12 @@ public class CreateCourtScheduleRequest {
         public String timeSlot; // HH:mm
         @JsonProperty("gameDuration")
         public int gameDuration;
+        @JsonProperty("courtCount")
+        public int courtCount = 1; // Number of courts available for this time slot
         
         @Override
         public String toString() {
-            return "Day{dayOfWeek=" + dayOfWeek + ", venueId='" + venueId + "', timeSlot='" + timeSlot + "', gameDuration=" + gameDuration + "}";
+            return "Day{dayOfWeek=" + dayOfWeek + ", venueId='" + venueId + "', timeSlot='" + timeSlot + "', gameDuration=" + gameDuration + ", courtCount=" + courtCount + "}";
         }
     }
     

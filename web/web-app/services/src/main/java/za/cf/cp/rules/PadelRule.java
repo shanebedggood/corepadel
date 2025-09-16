@@ -25,14 +25,6 @@ public class PadelRule extends PanacheEntity {
     @JsonProperty("orderNumber")
     public Integer orderNumber;
     
-    @Column(name = "created_at")
-    @JsonProperty("createdAt")
-    public LocalDateTime createdAt;
-    
-    @Column(name = "updated_at")
-    @JsonProperty("updatedAt")
-    public LocalDateTime updatedAt;
-    
     // New relationship to rule sections
     @OneToMany(mappedBy = "rule", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy("sectionOrder ASC")
@@ -50,8 +42,6 @@ public class PadelRule extends PanacheEntity {
     public PadelRule(String title, Integer orderNumber) {
         this.title = title;
         this.orderNumber = orderNumber;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
     
     // Static method for ordered listing
@@ -84,21 +74,7 @@ public class PadelRule extends PanacheEntity {
         this.orderNumber = orderNumber;
     }
     
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    // Timestamp accessors removed
     
     public List<RuleSection> getSections() {
         return sections;
@@ -123,8 +99,6 @@ public class PadelRule extends PanacheEntity {
                 ", title='" + title + '\'' +
                 ", orderNumber=" + orderNumber +
                 ", sectionsCount=" + (sections != null ? sections.size() : 0) +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

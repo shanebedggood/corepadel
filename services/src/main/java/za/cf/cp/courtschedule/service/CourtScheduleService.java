@@ -4,8 +4,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import za.cf.cp.courtschedule.CourtSchedule;
 import za.cf.cp.courtschedule.CourtScheduleDay;
+import za.cf.cp.courtschedule.CourtBooking;
+import za.cf.cp.courtschedule.AvailableSlot;
 import za.cf.cp.courtschedule.dto.CreateCourtScheduleRequest;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +34,7 @@ public class CourtScheduleService {
             day.venueId = UUID.fromString(d.venueId);
             day.timeSlot = LocalTime.parse(d.timeSlot);
             day.gameDuration = d.gameDuration;
+            day.courtCount = d.courtCount > 0 ? d.courtCount : 1; // Default to 1 if not provided or invalid
             day.persist();
             schedule.days.add(day);
         }
@@ -40,6 +44,89 @@ public class CourtScheduleService {
 
     public List<CourtSchedule> getAllSchedules() {
         return CourtSchedule.listAll();
+    }
+
+    public List<AvailableSlot> getAvailableSlots(String clubId, String startDate, String endDate) {
+        var availableSlots = new ArrayList<AvailableSlot>();
+        
+        try {
+            System.out.println("getAvailableSlots called with: clubId=" + clubId + ", startDate=" + startDate + ", endDate=" + endDate);
+            
+            // Parse date range
+            var start = LocalDate.parse(startDate);
+            var end = LocalDate.parse(endDate);
+            var clubUuid = UUID.fromString(clubId);
+            
+            System.out.println("Parsed dates: start=" + start + ", end=" + end + ", clubUuid=" + clubUuid);
+            
+            // Get all active schedules for the club
+            System.out.println("Querying schedules for club: " + clubUuid);
+            var schedules = CourtSchedule.list("clubId = ?1 AND startDate <= ?2 AND endDate >= ?3", 
+                clubUuid, end, start);
+            
+            System.out.println("Found " + schedules.size() + " schedules for club " + clubUuid);
+            
+            // Early return if no schedules found
+            if (schedules.isEmpty()) {
+                System.out.println("No schedules found for club " + clubUuid + ", returning empty list");
+                return availableSlots;
+            }
+            
+            for (var schedule : schedules) {
+                var courtSchedule = (CourtSchedule) schedule;
+                
+                // Load the schedule days (they might be lazy loaded)
+                courtSchedule.days.size(); // Force loading of the collection
+                
+                // For each day in the date range
+                for (var date = start; !date.isAfter(end); date = date.plusDays(1)) {
+                    int dayOfWeek = date.getDayOfWeek().getValue() % 7; // Convert to 0-6 (Sunday=0)
+                    
+                    // Find schedule days that match this day of week
+                    for (var day : courtSchedule.days) {
+                        if (day.dayOfWeek == dayOfWeek) {
+                            // Check if this date falls within the schedule date range
+                            if (!date.isBefore(courtSchedule.startDate) && !date.isAfter(courtSchedule.endDate)) {
+                                
+                                // Get existing bookings for this date and time slot
+                                System.out.println("Querying bookings for venueId=" + day.venueId + ", date=" + date + ", timeSlot=" + day.timeSlot);
+                                List<CourtBooking> existingBookings = CourtBooking.<CourtBooking>list(
+                                    "venueId = ?1 AND bookingDate = ?2 AND timeSlot = ?3 AND status = 'confirmed'",
+                                    day.venueId, date, day.timeSlot
+                                );
+                                System.out.println("Found " + existingBookings.size() + " existing bookings");
+                                
+                                // Create available slot
+                                var slot = new AvailableSlot();
+                                slot.date = date;
+                                slot.timeSlot = day.timeSlot;
+                                slot.gameDuration = day.gameDuration;
+                                slot.scheduleId = courtSchedule.scheduleId;
+                                slot.venueId = day.venueId;
+                                slot.venueName = "Venue " + day.venueId; // TODO: Get actual venue name
+                                slot.totalCourts = day.courtCount;
+                                slot.availableCourts = day.courtCount - existingBookings.size();
+                                slot.bookings = existingBookings;
+                                slot.isBookedByUser = false; // TODO: Check if current user has booking
+                                slot.userBookingId = null;
+                                
+                                // Only add if there are available courts
+                                if (slot.availableCourts > 0) {
+                                    availableSlots.add(slot);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error calculating available slots: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        System.out.println("Returning " + availableSlots.size() + " available slots");
+        return availableSlots;
     }
 
     @Transactional
@@ -54,7 +141,7 @@ public class CourtScheduleService {
         schedule.clubId = UUID.fromString(req.clubId);
         schedule.startDate = req.startDate;
         schedule.endDate = req.endDate;
-        schedule.updatedAt = java.time.LocalDateTime.now();
+        // No updatedAt tracking anymore
 
         // Delete existing schedule days from database
         CourtScheduleDay.delete("schedule.scheduleId = ?1", scheduleId);
@@ -67,6 +154,7 @@ public class CourtScheduleService {
             day.venueId = UUID.fromString(d.venueId);
             day.timeSlot = LocalTime.parse(d.timeSlot);
             day.gameDuration = d.gameDuration;
+            day.courtCount = d.courtCount > 0 ? d.courtCount : 1; // Default to 1 if not provided or invalid
             day.persist();
         }
 
@@ -75,5 +163,3 @@ public class CourtScheduleService {
         return schedule;
     }
 }
-
-

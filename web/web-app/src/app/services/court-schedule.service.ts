@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError, timeout } from 'rxjs';
+import { catchError, map, take } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { FirebaseAuthService } from './firebase-auth.service';
 
 export interface CourtScheduleDay {
     dayOfWeek: number; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
     venueId: string;
     timeSlot: string; // Format: "HH:MM"
     gameDuration: number; // Duration in minutes (60, 90, or 120)
+    courtCount: number; // Number of courts available for this time slot
 }
 
 export interface CourtSchedule {
@@ -17,8 +19,6 @@ export interface CourtSchedule {
     startDate: string; // Changed to string to match backend expectation
     endDate: string; // Changed to string to match backend expectation
     scheduleDays: CourtScheduleDay[];
-    createdAt?: string;
-    updatedAt?: string;
 }
 
 export interface CourtScheduleResponse {
@@ -32,20 +32,23 @@ export interface CourtBooking {
     scheduleId: string;
     userId: string;
     userName: string;
-    bookingDate: string; // YYYY-MM-DD format
+    // API responses use 'date'; requests may use 'bookingDate'
+    date?: string; // YYYY-MM-DD format
+    bookingDate?: string; // kept optional for request payloads
     timeSlot: string; // HH:MM format
     gameDuration: number;
     venueId: string;
     courtNumber?: number;
+    teamNumber?: number; // Team number: 1 or 2 (padel has 2 teams of 2 players each)
+    teamPosition?: number; // Position within team: 1 or 2 (each team has 2 players)
     status: 'confirmed' | 'cancelled' | 'completed';
-    createdAt?: Date;
-    updatedAt?: Date;
 }
 
 export interface AvailableSlot {
     date: string; // YYYY-MM-DD format
     timeSlot: string; // HH:MM format
     gameDuration: number;
+    scheduleId: string;
     venueId: string;
     venueName: string;
     availableCourts: number;
@@ -61,7 +64,35 @@ export interface AvailableSlot {
 export class CourtScheduleService {
     private readonly apiUrl = environment.quarkusApiUrl;
 
-    constructor(private http: HttpClient) {}
+    constructor(
+        private http: HttpClient,
+        private authService: FirebaseAuthService
+    ) {}
+
+    /**
+     * Get authentication headers for API calls
+     */
+    private async getAuthHeaders(): Promise<HttpHeaders> {
+        return new Promise((resolve, reject) => {
+            this.authService.currentUser$.pipe(
+                take(1),
+                map(user => {
+                    if (!user) {
+                        reject(new Error('User not authenticated'));
+                        return;
+                    }
+                    
+                    user.getIdToken().then(idToken => {
+                        const headers = new HttpHeaders({
+                            'Authorization': `Bearer ${idToken}`,
+                            'Content-Type': 'application/json'
+                        });
+                        resolve(headers);
+                    }).catch(reject);
+                })
+            ).subscribe();
+        });
+    }
 
     /**
      * Create a new court schedule
@@ -123,59 +154,85 @@ export class CourtScheduleService {
      * Get available booking slots for a specific date range
      */
     getAvailableSlots(clubId: string, startDate: string, endDate: string): Observable<AvailableSlot[]> {
-        return this.http.get<AvailableSlot[]>(
-            `${this.apiUrl}/court-schedules/club/${clubId}/available-slots?startDate=${startDate}&endDate=${endDate}`
-        ).pipe(
-            catchError(error => {
-                console.error('Error fetching available slots:', error);
-                return throwError(() => error);
-            })
-        );
+        return new Observable(observer => {
+            this.getAuthHeaders().then(headers => {
+                this.http.get<AvailableSlot[]>(
+                    `${this.apiUrl}/court-schedules/club/${clubId}/available-slots?startDate=${startDate}&endDate=${endDate}`,
+                    { headers }
+                ).pipe(
+                    timeout(30000), // 30 second timeout
+                    catchError(error => {
+                        console.error('Error fetching available slots:', error);
+                        return throwError(() => error);
+                    })
+                ).subscribe(observer);
+            }).catch(error => {
+                observer.error(error);
+            });
+        });
     }
 
     /**
      * Create a court booking
      */
-    createBooking(booking: Omit<CourtBooking, 'id' | 'createdAt' | 'updatedAt'>): Observable<{ success: boolean; message: string; booking?: CourtBooking }> {
-        return this.http.post<{ success: boolean; message: string; booking?: CourtBooking }>(
-            `${this.apiUrl}/court-bookings`, booking
-        ).pipe(
-            catchError(error => {
-                console.error('Error creating court booking:', error);
-                return throwError(() => error);
-            })
-        );
+    createBooking(booking: Omit<CourtBooking, 'id'>): Observable<{ success: boolean; message: string; booking?: CourtBooking }> {
+        return new Observable(observer => {
+            this.getAuthHeaders().then(headers => {
+                this.http.post<{ success: boolean; message: string; booking?: CourtBooking }>(
+                    `${this.apiUrl}/court-bookings`, booking, { headers }
+                ).pipe(
+                    catchError(error => {
+                        console.error('Error creating court booking:', error);
+                        return throwError(() => error);
+                    })
+                ).subscribe(observer);
+            }).catch(error => {
+                observer.error(error);
+            });
+        });
     }
 
     /**
      * Cancel a court booking
      */
     cancelBooking(bookingId: string, userId: string): Observable<{ success: boolean; message: string }> {
-        return this.http.delete<{ success: boolean; message: string }>(
-            `${this.apiUrl}/court-bookings/${bookingId}?userId=${userId}`
-        ).pipe(
-            catchError(error => {
-                console.error('Error cancelling court booking:', error);
-                return throwError(() => error);
-            })
-        );
+        return new Observable(observer => {
+            this.getAuthHeaders().then(headers => {
+                this.http.delete<{ success: boolean; message: string }>(
+                    `${this.apiUrl}/court-bookings/${bookingId}?userId=${userId}`, { headers }
+                ).pipe(
+                    catchError(error => {
+                        console.error('Error cancelling court booking:', error);
+                        return throwError(() => error);
+                    })
+                ).subscribe(observer);
+            }).catch(error => {
+                observer.error(error);
+            });
+        });
     }
 
     /**
      * Get user's court bookings
      */
     getUserBookings(userId: string, startDate?: string, endDate?: string): Observable<CourtBooking[]> {
-        let url = `${this.apiUrl}/court-bookings/user/${userId}`;
-        if (startDate && endDate) {
-            url += `?startDate=${startDate}&endDate=${endDate}`;
-        }
-        
-        return this.http.get<CourtBooking[]>(url).pipe(
-            catchError(error => {
-                console.error('Error fetching user bookings:', error);
-                return throwError(() => error);
-            })
-        );
+        return new Observable(observer => {
+            this.getAuthHeaders().then(headers => {
+                let url = `${this.apiUrl}/court-bookings/user/${userId}`;
+                if (startDate && endDate) {
+                    url += `?startDate=${startDate}&endDate=${endDate}`;
+                }
+                
+                this.http.get<CourtBooking[]>(url, { headers }).pipe(
+                    catchError(error => {
+                        console.error('Error fetching user bookings:', error);
+                        return throwError(() => error);
+                    })
+                ).subscribe(observer);
+            }).catch(error => {
+                observer.error(error);
+            });
+        });
     }
 
     /**
@@ -252,5 +309,29 @@ export class CourtScheduleService {
         const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
         
         return `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+    }
+
+    /**
+     * Utility method to get court count from venue facilities
+     */
+    getCourtCountFromVenue(venue: any): number {
+        if (!venue || !venue.facilities) {
+            return 1; // Default to 1 court if no facilities found
+        }
+        
+        // Look for court-related facilities
+        const courtFacilities = venue.facilities.filter((facility: any) => 
+            facility.facility && (
+                facility.facility.name.toLowerCase().includes('court') ||
+                facility.facility.name.toLowerCase().includes('padel') ||
+                facility.facility.category.toLowerCase().includes('court')
+            )
+        );
+        
+        if (courtFacilities.length > 0) {
+            return courtFacilities.reduce((total: number, facility: any) => total + (facility.quantity || 1), 0);
+        }
+        
+        return 1; // Default to 1 court if no court facilities found
     }
 }

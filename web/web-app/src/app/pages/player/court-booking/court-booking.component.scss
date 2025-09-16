@@ -1,0 +1,690 @@
+.court-booking-container {
+  padding: 1rem;
+}
+
+.search-section {
+  .p-card {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    
+    .p-card-body {
+      padding: 1.5rem;
+    }
+  }
+  
+  .search-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    
+    .field {
+      display: flex;
+      flex-direction: column;
+      
+      label {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+      }
+    }
+    
+    .date-range-container {
+      display: flex;
+      gap: 1rem;
+      
+      .field {
+        flex: 1;
+      }
+      
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+    
+    .p-select, .p-inputtext, .p-button, .p-datepicker {
+      height: 2.5rem;
+      width: 100%;
+    }
+    
+    .p-datepicker {
+      width: 100%;
+      
+      .p-inputtext {
+        width: 100%;
+        height: 2.5rem;
+      }
+    }
+    
+    .p-button {
+      font-weight: 500;
+      align-self: flex-start;
+    }
+  }
+}
+
+.slot-card, .booking-card {
+  height: 100%;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .slot-header, .booking-header {
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-50);
+    border-bottom: 1px solid var(--surface-border);
+    
+    .flex {
+      gap: 1rem;
+    }
+  }
+
+  .slot-content, .booking-content {
+    padding: 0.75rem;
+  }
+}
+
+.slot-card {
+  .slot-header {
+    h4 {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+  }
+}
+
+.booking-card {
+  .booking-header {
+    h4 {
+      color: var(--green-600);
+      font-weight: 600;
+    }
+  }
+}
+
+.booking-card.full-width {
+  width: 100%;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .court-booking-container {
+    padding: 0.5rem;
+  }
+  
+  .slot-card, .booking-card {
+    margin-bottom: 1rem;
+  }
+}
+
+// Courts grid layout
+.courts-grid {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  overflow: hidden;
+  
+  // Dynamic grid based on number of courts
+  &.courts-1 {
+    grid-template-columns: 1fr;
+  }
+  
+  &.courts-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  &.courts-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  
+  // For 4+ courts, use 2 columns to prevent overflow
+  &.courts-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  
+  &.courts-5 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+  }
+  
+  &.courts-6 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+  }
+  
+  // For more than 6 courts, use auto-fit with minimum width
+  &.courts-7, &.courts-8, &.courts-9, &.courts-10 {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  }
+  
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    &.courts-3, &.courts-4, &.courts-5, &.courts-6 {
+      grid-template-columns: 1fr 1fr;
+    }
+    
+    &.courts-5, &.courts-6 {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    &.courts-2, &.courts-3, &.courts-4, &.courts-5, &.courts-6 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.court-item {
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  padding: 0.5rem;
+  text-align: center;
+  background: var(--surface-0);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  &.booked {
+    background: var(--red-50);
+    border-color: var(--red-200);
+  }
+  
+  &.available {
+    background: var(--green-50);
+    border-color: var(--green-200);
+  }
+  
+  .court-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+  
+  .court-status {
+    font-size: 0.625rem;
+    
+    .text-success {
+      color: var(--green-600);
+      font-weight: 500;
+    }
+  }
+  
+  .court-actions {
+    .p-button {
+      font-size: 0.625rem;
+      padding: 0.25rem 0.5rem;
+      height: auto;
+    }
+  }
+}
+
+// Slots grid layout - now using Tailwind classes
+
+// Custom badge styles
+.p-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+// Button adjustments
+.p-button {
+  &.p-button-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+// Card grid adjustments
+.grid {
+  .col-12 {
+    margin-bottom: 1rem;
+  }
+}
+
+// Tab view styling
+.p-tabview {
+  .p-tabview-nav {
+    background: var(--surface-0);
+    border-bottom: 1px solid var(--surface-border);
+  }
+  
+  .p-tabview-panel {
+    padding: 1.5rem 0;
+  }
+}
+
+// Message styling
+.p-message {
+  margin-bottom: 1rem;
+}
+
+// Progress spinner
+.p-progressspinner {
+  width: 2rem;
+  height: 2rem;
+}
+
+// Calendar styling
+.p-calendar {
+  width: 100%;
+}
+
+// Select styling
+.p-select {
+  width: 100%;
+}
+
+// Form styling
+form {
+  .grid {
+    align-items: end;
+  }
+  
+  label {
+    font-weight: 500;
+    color: var(--text-color);
+  }
+}
+
+// Empty state styling
+.text-center {
+  .pi {
+    color: var(--text-color-secondary);
+  }
+  
+  h3 {
+    color: var(--text-color-secondary);
+    font-weight: 500;
+  }
+  
+  p {
+    color: var(--text-color-secondary);
+  }
+}
+
+// Loading state
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  
+  .p-progressspinner {
+    margin-bottom: 1rem;
+  }
+}
+
+// Status indicators
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  .pi {
+    font-size: 0.875rem;
+  }
+}
+
+// Time slot styling
+.time-slot {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+// Duration styling
+.duration {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+}
+
+// Venue name styling
+.venue-name {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+// Player list styling
+.player-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  
+  .p-badge {
+    font-size: 0.75rem;
+  }
+}
+
+// Booking actions
+.booking-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+// Court number styling
+.court-number {
+  background: var(--surface-100);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+// Booking date styling
+.booking-date {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+}
+
+// Responsive text sizes
+@media (max-width: 576px) {
+  .slot-card, .booking-card {
+    .slot-header, .booking-header {
+      padding: 0.75rem;
+      
+      h4 {
+        font-size: 1rem;
+      }
+    }
+    
+    .slot-content, .booking-content {
+      padding: 0.75rem;
+    }
+  }
+  
+  .p-button {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+// PrimeNG accordion styling
+.slots-accordion {
+  .p-accordion-header {
+    border-radius: 8px !important;
+    margin-bottom: 0.5rem;
+    
+    .p-accordion-header-link {
+      border-radius: 8px !important;
+      padding: 1rem !important;
+      background-color: #f8f9fa !important;
+      border: 1px solid #e9ecef !important;
+      
+      &:hover {
+        background-color: #e9ecef !important;
+      }
+      
+      &:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+      }
+    }
+  }
+  
+  .p-accordion-content {
+    border: none !important;
+    padding: 1rem !important;
+    background-color: #fff !important;
+    border-radius: 0 0 8px 8px !important;
+  }
+  
+  .p-accordion-tab {
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.slot-header-accordion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  
+  .slot-info-line {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex: 1;
+    
+    .slot-date {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+      min-width: 120px;
+    }
+    
+    .slot-venue {
+      font-size: 0.9rem;
+      color: #666;
+      flex: 1;
+      text-align: center;
+    }
+    
+    .slot-time {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #333;
+      min-width: 100px;
+      text-align: right;
+    }
+  }
+  
+  .slot-badges {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: 1rem;
+  }
+}
+
+.slot-card-horizontal {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1rem;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  .slot-header-horizontal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+    
+    .slot-info-line {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex: 1;
+      
+      .slot-date {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        min-width: 120px;
+      }
+      
+      .slot-venue {
+        font-size: 0.9rem;
+        color: #666;
+        flex: 1;
+        text-align: center;
+      }
+      
+      .slot-time {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #333;
+        min-width: 100px;
+        text-align: right;
+      }
+    }
+    
+    .slot-badges {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: 1rem;
+    }
+  }
+  
+  .courts-container-horizontal {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+    margin: 0;
+    
+    .court-card-horizontal {
+      min-width: 280px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 0.75rem;
+      background-color: #fafafa;
+      
+      &.fully-booked {
+        border-color: #4caf50;
+        background-color: #f8fff8;
+      }
+      
+      &.partially-booked {
+        border-color: #ff9800;
+        background-color: #fff8f0;
+      }
+      
+      &.available {
+        border-color: #ccc;
+        background-color: #fafafa;
+      }
+      
+      .court-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e0e0e0;
+        
+        .court-number {
+          font-weight: 600;
+          font-size: 1rem;
+          color: #333;
+        }
+        
+        .court-count {
+          font-weight: 600;
+          font-size: 1rem;
+          color: #666;
+          text-align: right;
+        }
+      }
+      
+      // Custom classes for better text sizing
+      .player-name {
+        font-size: 1rem !important;
+        color: #666;
+      }
+      
+      .player-name-current {
+        font-size: 1rem !important;
+        color: #22c55e;
+        font-weight: 600;
+      }
+      
+      .available-text {
+        font-size: 1rem !important;
+        color: #666;
+      }
+    }
+  }
+}
+
+// Team slot styling
+.teams-container {
+  display: flex;
+  margin-bottom: 20px;
+  
+  .team-slot {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 0.5rem;
+    background-color: #fff;
+    min-height: 80px;
+    
+    .team-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid #e0e0e0;
+      
+      span:first-child {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+      }
+      
+      span:last-child {
+        font-size: 0.9rem;
+        color: #666;
+      }
+    }
+    
+    .team-players {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      .player-slot {
+        padding: 0.25rem 0.5rem;
+        background-color: #e8f5e8;
+        border-radius: 4px;
+        border-left: 3px solid #4caf50;
+        text-align: center;
+        
+        &.available {
+          background-color: #f5f5f5;
+          border-left-color: #ccc;
+          
+          .p-button {
+            font-size: 0.9rem;
+            padding: 0.2rem 0.4rem;
+            min-width: auto;
+            width: 100%;
+          }
+          
+          span {
+            font-size: 0.9rem;
+            color: #666;
+          }
+        }
+        
+        span {
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}

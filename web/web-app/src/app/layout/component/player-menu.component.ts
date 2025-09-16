@@ -67,6 +67,11 @@ export class PlayerMenu implements OnInit {
             label: 'Padel Rules',
             icon: 'pi pi-fw pi-book',
             routerLink: ['/player/rules']
+          },
+          {
+            label: 'Court Booking',
+            icon: 'pi pi-fw pi-calendar-plus',
+            routerLink: ['/player/court-booking']
           }
         ]
       },

@@ -43,6 +43,33 @@ public class CourtScheduleResource {
     }
 
     @GET
+    @Path("/club/{clubId}/available-slots")
+    public Response getAvailableSlots(
+            @PathParam("clubId") String clubId,
+            @jakarta.ws.rs.QueryParam("startDate") String startDate,
+            @jakarta.ws.rs.QueryParam("endDate") String endDate) {
+        try {
+            LOG.info("Fetching available slots for club: " + clubId + " from " + startDate + " to " + endDate);
+            
+            if (startDate == null || endDate == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(java.util.Map.of("success", false, "message", "startDate and endDate are required"))
+                        .build();
+            }
+            
+            var availableSlots = service.getAvailableSlots(clubId, startDate, endDate);
+            
+            LOG.info("Successfully fetched available slots: " + availableSlots.size());
+            return Response.ok(availableSlots).build();
+        } catch (Exception e) {
+            LOG.error("Error fetching available slots: " + e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(java.util.Map.of("success", false, "message", "Error fetching available slots"))
+                    .build();
+        }
+    }
+
+    @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") String id) {
         try {

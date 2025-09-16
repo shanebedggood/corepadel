@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
@@ -28,6 +29,7 @@ import { ErrorHandlerService } from '../../../services/error-handler.service';
         CardModule,
         SelectModule,
         InputTextModule,
+        InputNumberModule,
         DatePickerModule,
         CheckboxModule,
         MessageModule,
@@ -133,8 +135,11 @@ export class ScheduleCourtsComponent implements OnInit, OnDestroy {
         if (!date) {
             throw new Error('Date is required');
         }
-        // Format as YYYY-MM-DD for backend
-        return date.toISOString().split('T')[0];
+        // Use local date components to avoid timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     private loadAvailableVenues(): void {
@@ -178,7 +183,8 @@ export class ScheduleCourtsComponent implements OnInit, OnDestroy {
                             dayOfWeek: [d.dayOfWeek, Validators.required],
                             dayName: [dayName],
                             timeSlot: [normalizedTime, Validators.required],
-                            gameDuration: [d.gameDuration, Validators.required]
+                            gameDuration: [d.gameDuration, Validators.required],
+                            courtCount: [d.courtCount || 1, [Validators.required, Validators.min(1)]]
                         });
                         daysArray.push(group);
                     }
@@ -210,11 +216,15 @@ export class ScheduleCourtsComponent implements OnInit, OnDestroy {
 
     private addScheduleDay(dayValue: number): void {
         const dayName = this.daysOfWeek.find(d => d.value === dayValue)?.label || '';
+        const selectedVenue = this.availableVenues.find(v => v.id === this.scheduleForm.get('venueId')?.value);
+        const defaultCourtCount = selectedVenue ? this.courtScheduleService.getCourtCountFromVenue(selectedVenue) : 1;
+        
         const dayFormGroup = this.fb.group({
             dayOfWeek: [dayValue, Validators.required],
             dayName: [dayName],
             timeSlot: ['', Validators.required],
-            gameDuration: [60, Validators.required]
+            gameDuration: [60, Validators.required],
+            courtCount: [defaultCourtCount, [Validators.required, Validators.min(1)]]
         });
         
         this.scheduleDaysArray.push(dayFormGroup);
@@ -272,11 +282,10 @@ export class ScheduleCourtsComponent implements OnInit, OnDestroy {
                     dayOfWeek: day.dayOfWeek,
                     venueId: formValue.venueId, // Use the schedule-level venue ID
                     timeSlot: day.timeSlot,
-                    gameDuration: day.gameDuration
+                    gameDuration: day.gameDuration,
+                    courtCount: day.courtCount
                 }))
             };
-
-            console.log('Sending schedule data:', schedule);
 
             const operation = this.isEditMode 
                 ? this.courtScheduleService.updateSchedule(this.scheduleId!, schedule)
@@ -342,5 +351,19 @@ export class ScheduleCourtsComponent implements OnInit, OnDestroy {
 
     onCancel(): void {
         this.router.navigate(['/admin/court-schedules']);
+    }
+
+    onVenueChange(): void {
+        const selectedVenueId = this.scheduleForm.get('venueId')?.value;
+        const selectedVenue = this.availableVenues.find(v => v.id === selectedVenueId);
+        
+        if (selectedVenue) {
+            const defaultCourtCount = this.courtScheduleService.getCourtCountFromVenue(selectedVenue);
+            
+            // Update court count for all existing schedule days
+            this.scheduleDaysArray.controls.forEach(control => {
+                control.get('courtCount')?.setValue(defaultCourtCount);
+            });
+        }
     }
 }

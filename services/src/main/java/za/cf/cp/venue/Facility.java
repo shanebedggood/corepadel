@@ -45,14 +45,6 @@ public class Facility extends PanacheEntityBase {
     @JsonProperty("unit")
     public String unit;
 
-    @Column(name = "created_at")
-    @JsonProperty("created_at")
-    public LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    @JsonProperty("updated_at")
-    public LocalDateTime updatedAt;
-
     // Default constructor
     public Facility() {}
 
@@ -61,8 +53,6 @@ public class Facility extends PanacheEntityBase {
         this.name = name;
         this.category = category;
         this.isCountable = isCountable;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     // Getters and setters
@@ -122,21 +112,7 @@ public class Facility extends PanacheEntityBase {
         this.unit = unit;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    // Timestamp accessors removed
 
     @Override
     public String toString() {
@@ -148,8 +124,6 @@ public class Facility extends PanacheEntityBase {
                 ", category='" + category + '\'' +
                 ", isCountable=" + isCountable +
                 ", unit='" + unit + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

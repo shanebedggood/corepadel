@@ -10,8 +10,6 @@ export interface RunBooking {
     user_name: string;
     booking_date: string; // YYYY-MM-DD format
     booking_time: string; // HH:MM format (always 05:00)
-    created_at?: string;
-    updated_at?: string;
 }
 
 export interface RunSlot {
@@ -61,7 +59,7 @@ export class RunBookingService {
      * Create a new run booking
      * @param booking - The booking details
      */
-    createBooking(booking: Omit<RunBooking, 'booking_id' | 'created_at' | 'updated_at'>): Observable<BookingResponse> {
+    createBooking(booking: Omit<RunBooking, 'booking_id'>): Observable<BookingResponse> {
         return this.http.post<BookingResponse>(this.apiUrl, booking).pipe(
             catchError(this.handleError<BookingResponse>('createBooking', { success: false, message: 'Failed to create booking' }))
         );

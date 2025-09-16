@@ -1,0 +1,265 @@
+<div class="court-booking-container">
+  <app-page-header 
+    title="Court Booking" 
+    subtitle=""
+    [breadcrumbs]="breadcrumbs">
+    
+    <div header-actions>
+      <p-button 
+        label="Refresh" 
+        icon="pi pi-refresh" 
+        [loading]="loading"
+        (onClick)="onSearch()"
+        severity="secondary">
+      </p-button>
+    </div>
+  </app-page-header>
+
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <p-tabs value="0">
+    <p-tablist>
+      <p-tab value="0">Available Courts</p-tab>
+      <p-tab value="1">My Bookings</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="0">
+      <div class="search-section mb-4">
+        <p-card>
+          <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+            <div class="search-form-container">
+              <div class="field">
+                <label for="venue">Venue *</label>
+                <p-select 
+                  id="venue"
+                  formControlName="venueId"
+                  [options]="venues"
+                  optionLabel="name"
+                  optionValue="id"
+                  placeholder="Select a venue"
+                  [showClear]="true">
+                </p-select>
+                @if (searchForm.get('venueId')?.invalid && searchForm.get('venueId')?.touched) {
+                  <small class="p-error">Please select a venue.</small>
+                }
+              </div>
+
+              <div class="date-range-container">
+                <div class="field">
+                  <label for="startDate">Start Date *</label>
+                  <p-datepicker 
+                    id="startDate"
+                    formControlName="startDate"
+                    placeholder="Select start date"
+                    [showIcon]="true"
+                    [minDate]="minDate"
+                    [maxDate]="maxDate"
+                    dateFormat="dd/mm/yy">
+                  </p-datepicker>
+                  @if (searchForm.get('startDate')?.invalid && searchForm.get('startDate')?.touched) {
+                    <small class="p-error">Please select a start date.</small>
+                  }
+                </div>
+                
+                <div class="field">
+                  <label for="endDate">End Date *</label>
+                  <p-datepicker 
+                    id="endDate"
+                    formControlName="endDate"
+                    placeholder="Select end date"
+                    [showIcon]="true"
+                    [minDate]="minDate"
+                    [maxDate]="maxDate"
+                    dateFormat="dd/mm/yy">
+                  </p-datepicker>
+                  @if (searchForm.get('endDate')?.invalid && searchForm.get('endDate')?.touched) {
+                    <small class="p-error">Please select an end date.</small>
+                  }
+                </div>
+              </div>
+              
+              <div class="field">
+                <p-button 
+                  type="submit"
+                  label="Search Available Slots"
+                  icon="pi pi-search"
+                  [loading]="loading"
+                  [disabled]="!searchForm.valid">
+                </p-button>
+              </div>
+            </div>
+          </form>
+        </p-card>
+      </div>
+
+      @if (errorMessage) {
+        <p-message severity="error" [text]="errorMessage" (onClose)="errorMessage = ''"></p-message>
+      }
+
+      @if (successMessage) {
+        <p-message severity="success" [text]="successMessage" (onClose)="successMessage = ''"></p-message>
+      }
+
+      @if (loading) {
+        <div class="text-center p-4">
+          <p-progressSpinner></p-progressSpinner>
+          <p class="mt-2">Loading available slots...</p>
+        </div>
+      } @else if (availableSlots.length > 0) {
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="flex justify-content-between align-items-center">
+              <h3 class="m-0">Available Court Slots</h3>
+            </div>
+          </ng-template>
+          
+          <p-accordion [multiple]="true" class="slots-accordion">
+            @for (slot of availableSlots; track slot.date + slot.timeSlot; let i = $index) {
+              <p-accordion-panel [value]="i">
+                <p-accordion-header>{{ getSlotHeader(slot) }}</p-accordion-header>
+                <p-accordion-content>
+                
+                <div class="courts-container-horizontal">
+                  @for (court of getCourtsArray(slot); track court.number) {
+                    <div class="court-card-horizontal" 
+                         [class.fully-booked]="court.playerCount === 4" 
+                         [class.partially-booked]="court.playerCount > 0 && court.playerCount < 4"
+                         [class.available]="court.playerCount === 0">
+                      <div class="court-header">
+                        <span class="court-number">Court {{ court.number }}</span>
+                        <span class="court-count">{{ court.playerCount }}/{{ court.maxPlayers }} players</span>
+                      </div>
+                      
+                      <div class="teams-container">
+                        @for (team of court.teams; track team.teamNumber) {
+                          <div class="team-slot">
+                            <div class="team-header">
+                              <span class="font-semibold text-sm">Team {{ team.teamNumber }}</span>
+                              <span class="text-xs text-600">({{ team.players.length }}/2)</span>
+                            </div>
+                            <div class="team-players">
+                              @for (player of team.players; track player.userId) {
+                                <div class="player-slot">
+                                  @if (player.userId === currentUser?.uid) {
+                                    <span class="player-name-current">You</span>
+                                  } @else {
+                                    <span class="player-name">{{ player.name }}</span>
+                                  }
+                                </div>
+                              }
+                              @for (availableSlot of [1, 2]; track availableSlot) {
+                                @if (availableSlot > team.players.length) {
+                                  <div class="player-slot available">
+                                    @if (canJoinTeam(slot, court.number, team.teamNumber)) {
+                                      <p-button 
+                                        label="Book slot"
+                                        icon="pi pi-plus"
+                                        size="small"
+                                        severity="secondary"
+                                        [text]="true"
+                                        [loading]="isTeamBeingBooked(slot, court.number, team.teamNumber)"
+                                        [disabled]="isTeamBeingBooked(slot, court.number, team.teamNumber)"
+                                        (onClick)="joinTeam(slot, court.number, team.teamNumber)">
+                                      </p-button>
+                                    } @else {
+                                      <span class="available-text">Available</span>
+                                    }
+                                  </div>
+                                }
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+                </p-accordion-content>
+              </p-accordion-panel>
+            }
+          </p-accordion>
+        </p-card>
+      } @else if (searchForm.get('venueId')?.value && searchForm.get('startDate')?.value && searchForm.get('endDate')?.value) {
+        <p-card>
+          <div class="text-center p-4">
+            <i class="pi pi-calendar-times text-4xl text-400 mb-3"></i>
+            <h3 class="text-600">No Available Slots</h3>
+            <p class="text-500">No court slots are available for the selected venue and date range.</p>
+          </div>
+        </p-card>
+      } @else {
+        <p-card>
+          <div class="text-center p-4">
+            <i class="pi pi-search text-4xl text-400 mb-3"></i>
+            <h3 class="text-600">Search for Available Courts</h3>
+            <p class="text-500">Select a venue and date range to see available court slots.</p>
+          </div>
+        </p-card>
+      }
+      </p-tabpanel>
+
+      <!-- My Bookings Tab -->
+      <p-tabpanel value="1">
+      @if (myBookings.length > 0) {
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="flex justify-content-between align-items-center">
+              <h3 class="m-0">My Court Bookings</h3>
+              <p-badge [value]="myBookings.length" severity="success"></p-badge>
+            </div>
+          </ng-template>
+
+          <p-table [value]="myBookings">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Date</th>
+                <th>Venue</th>
+                <th>Time</th>
+                <th>Court</th>
+                <th></th>
+                <th>Status</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-booking>
+              <tr>
+                <td>{{ getBookingDisplayDate(booking) }}</td>
+                <td>{{ getVenueName(booking.venueId) }}</td>
+                <td>{{ formatTimeRange(booking.timeSlot, booking.gameDuration) }}</td>
+                <td>{{ booking.courtNumber || '-' }}</td>
+                <td></td>
+                <td>
+                  <p-badge [value]="getBookingStatusLabel(booking.status)" [severity]="getBookingStatusBadge(booking.status)"></p-badge>
+                </td>
+                <td class="text-right">
+                  @if (canCancelBooking(booking)) {
+                    <p-button 
+                      label="Cancel"
+                      icon="pi pi-times"
+                      size="small"
+                      severity="danger"
+                      [text]="true"
+                      (onClick)="cancelBooking(booking)">
+                    </p-button>
+                  } @else {
+                    <span class="text-xs text-500">Cannot cancel</span>
+                  }
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      } @else {
+        <p-card>
+          <div class="text-center p-4">
+            <i class="pi pi-calendar text-4xl text-400 mb-3"></i>
+            <h3 class="text-600">No Bookings Yet</h3>
+            <p class="text-500">You haven't booked any courts yet. Use the "Available Courts" tab to find and book courts.</p>
+          </div>
+        </p-card>
+      }
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</div>

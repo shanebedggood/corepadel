@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -38,14 +37,6 @@ public class RunBooking extends PanacheEntityBase {
     @JsonProperty("booking_time")
     public LocalTime bookingTime = LocalTime.of(5, 0); // Always 5:00 AM
     
-    @Column(name = "created_at")
-    @JsonProperty("created_at")
-    public LocalDateTime createdAt;
-    
-    @Column(name = "updated_at")
-    @JsonProperty("updated_at")
-    public LocalDateTime updatedAt;
-    
     // Default constructor required by JPA
     public RunBooking() {}
     
@@ -55,19 +46,15 @@ public class RunBooking extends PanacheEntityBase {
         this.userName = userName;
         this.bookingDate = bookingDate;
         this.bookingTime = LocalTime.of(5, 0); // Always 5:00 AM
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
     
     // Constructor with all fields
     public RunBooking(String firebaseUid, String userName, LocalDate bookingDate, 
-                     LocalTime bookingTime, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                     LocalTime bookingTime) {
         this.firebaseUid = firebaseUid;
         this.userName = userName;
         this.bookingDate = bookingDate;
         this.bookingTime = bookingTime != null ? bookingTime : LocalTime.of(5, 0);
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
     
     // Getters and setters
@@ -111,33 +98,6 @@ public class RunBooking extends PanacheEntityBase {
         this.bookingTime = bookingTime != null ? bookingTime : LocalTime.of(5, 0);
     }
     
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-    
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-    
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-    
     @Override
     public String toString() {
         return "RunBooking{" +
@@ -146,8 +106,6 @@ public class RunBooking extends PanacheEntityBase {
                 ", userName='" + userName + '\'' +
                 ", bookingDate=" + bookingDate +
                 ", bookingTime=" + bookingTime +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

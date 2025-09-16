@@ -58,6 +58,7 @@
             <th>Day of Week</th>
             <th>Venue</th>
             <th>Time Slot</th>
+            <th>Courts</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -81,6 +82,13 @@
               <div class="time-slots">
                 @for (slot of getUniqueTimeSlots(schedule.scheduleDays); track slot.timeSlot + slot.gameDuration) {
                   <span class="time-badge">{{ slot.timeSlot }} ({{ slot.gameDuration }}min)</span>
+                }
+              </div>
+            </td>
+            <td>
+              <div class="court-counts">
+                @for (day of schedule.scheduleDays; track day.dayOfWeek + day.timeSlot) {
+                  <span class="court-badge">{{ day.courtCount || 1 }} courts</span>
                 }
               </div>
             </td>

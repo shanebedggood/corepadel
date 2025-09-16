@@ -26,6 +26,7 @@ import { ProfileComponent } from './app/pages/profile/profile.component';
 import { ProfileUpdateComponent } from './app/pages/profile/profile-update.component';
 import { ClubsComponent } from './app/pages/clubs/clubs.component';
 import { RunBookingComponent } from './app/pages/run-booking/run-booking.component';
+import { CourtBookingComponent } from './app/pages/player/court-booking/court-booking.component';
 import { ProfileCompletionGuard } from './app/guards/profile-completion.guard';
 import { DevAuthPreserveGuard } from './app/guards/dev-auth-preserve.guard';
 import authRoutes from './app/pages/auth/auth.routes';
@@ -49,6 +50,7 @@ export const appRoutes: Routes = [
             { path: 'tournaments', component: TournamentsComponent, canActivate: [ProfileCompletionGuard] },
             { path: 'clubs', component: ClubsComponent, canActivate: [ProfileCompletionGuard] },
             { path: 'run-booking', component: RunBookingComponent, canActivate: [ProfileCompletionGuard] },
+            { path: 'court-booking', component: CourtBookingComponent, canActivate: [ProfileCompletionGuard] },
             { path: 'matches', component: Dashboard, canActivate: [ProfileCompletionGuard] }, // Placeholder for player matches
             { path: 'teams', component: Dashboard, canActivate: [ProfileCompletionGuard] }, // Placeholder for player teams
             { path: 'profile', component: ProfileComponent, canActivate: [ProfileCompletionGuard] },

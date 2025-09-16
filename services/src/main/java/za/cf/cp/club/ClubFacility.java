@@ -41,9 +41,7 @@ public class ClubFacility extends PanacheEntityBase {
     @JsonProperty("notes")
     public String notes;
 
-    @Column(name = "created_at")
-    @JsonProperty("created_at")
-    public LocalDateTime createdAt;
+    // created_at removed
 
     // Default constructor
     public ClubFacility() {}
@@ -54,7 +52,6 @@ public class ClubFacility extends PanacheEntityBase {
         this.club = club;
         this.facility = facility;
         this.quantity = quantity;
-        this.createdAt = LocalDateTime.now();
     }
 
     // Getters and setters
@@ -98,13 +95,7 @@ public class ClubFacility extends PanacheEntityBase {
         this.notes = notes;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    // created_at accessors removed
 
     @Override
     public String toString() {
@@ -113,7 +104,6 @@ public class ClubFacility extends PanacheEntityBase {
                 ", facility=" + facility +
                 ", quantity=" + quantity +
                 ", notes='" + notes + '\'' +
-                ", createdAt=" + createdAt +
                 '}';
     }
 
