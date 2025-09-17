@@ -14,9 +14,6 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { VenueService, Venue } from '../../services/venue.service';
 import { VenueFacility } from '../../services/quarkus-venue.service';
 
-// Extended interface to handle both old and new formats during migration
-// Legacy format support removed – only array-based facilities are supported going forward
-
 @Component({
   selector: 'app-clubs',
   standalone: true,
@@ -31,16 +28,21 @@ import { VenueFacility } from '../../services/quarkus-venue.service';
     SkeletonModule,
     MessageModule,
     IconFieldModule,
-    InputIconModule
+    InputIconModule,
   ],
   templateUrl: './clubs.component.html',
-  styleUrls: ['./clubs.component.scss']
+  styleUrls: ['./clubs.component.scss', '../../shared/styles/container.styles.scss']
 })
 export class ClubsComponent implements OnInit, OnDestroy {
   allVenues: Venue[] = [];
   filteredVenues: Venue[] = [];
+  favouriteVenues: Venue[] = [];
+  otherVenues: Venue[] = [];
+  favouriteClubIds = new Set<string>();
   loading = true;
+  loadingFavourites = true;
   error = false;
+  
   
   searchFilters = {
     name: '',
@@ -61,6 +63,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadVenues();
+    this.loadFavourites();
     this.setupSearch();
   }
 
@@ -77,7 +80,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (venues) => {
           this.allVenues = venues || [];
-          this.filteredVenues = venues || [];
+          this.applyFavouriteOrdering();
           this.populateFilterOptions();
           this.loading = false;
         },
@@ -136,6 +139,22 @@ export class ClubsComponent implements OnInit, OnDestroy {
       });
   }
 
+  private loadFavourites() {
+    this.loadingFavourites = true;
+    this.venueService.getFavouriteClubIds()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (ids) => {
+          this.favouriteClubIds = new Set((ids || []).filter(Boolean));
+          this.applyFavouriteOrdering();
+          this.loadingFavourites = false;
+        },
+        error: () => {
+          this.loadingFavourites = false;
+        }
+      });
+  }
+
   private populateFilterOptions() {
     // Extract unique provinces, cities, and suburbs
     const provincesSet = new Set<string>();
@@ -185,7 +204,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   private applyFilters() {
-    this.filteredVenues = this.allVenues.filter(venue => {
+    const base = this.allVenues.filter(venue => {
       const nameMatch = !this.searchFilters.name || 
         venue.name.toLowerCase().includes(this.searchFilters.name.toLowerCase());
       
@@ -199,6 +218,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
         venue.address?.suburb === this.searchFilters.suburb;
       return nameMatch && provinceMatch && cityMatch && suburbMatch;
     });
+    this.filteredVenues = this.orderWithFavouritesFirst(base);
+    this.splitIntoSections(this.filteredVenues);
   }
 
   clearFilters() {
@@ -222,11 +243,69 @@ export class ClubsComponent implements OnInit, OnDestroy {
     return venueFacility.facility?.name || 'Unknown Facility';
   }
 
-  getFacilityIcon(venueFacility: VenueFacility): string {
-    return venueFacility.facility?.icon || 'pi pi-star';
-  }
-
   trackByFacility(index: number, venueFacility: VenueFacility): any {
     return venueFacility.facility?.id || index;
+  }
+
+  isFavourite(venueId?: string): boolean {
+    if (!venueId) return false;
+    return this.favouriteClubIds.has(venueId);
+  }
+
+  toggleFavourite(venue: Venue): void {
+    if (!venue?.id) return;
+    const currentlyFav = this.isFavourite(venue.id);
+    // Optimistic update
+    if (currentlyFav) {
+      this.favouriteClubIds.delete(venue.id);
+    } else {
+      this.favouriteClubIds.add(venue.id);
+    }
+    this.applyFavouriteOrdering();
+    this.venueService.toggleFavouriteClub(venue.id, currentlyFav).subscribe({
+      next: () => {},
+      error: () => {
+        // Revert on error
+        if (currentlyFav) {
+          this.favouriteClubIds.add(venue.id!);
+        } else {
+          this.favouriteClubIds.delete(venue.id!);
+        }
+        this.applyFavouriteOrdering();
+      }
+    });
+  }
+
+  private applyFavouriteOrdering(): void {
+    if (!this.allVenues?.length) {
+      this.filteredVenues = [];
+      this.favouriteVenues = [];
+      this.otherVenues = [];
+      return;
+    }
+    // If filters already applied, reorder that list; otherwise reorder all
+    const baseList = (this.filteredVenues?.length ? this.filteredVenues : this.allVenues).slice();
+    this.filteredVenues = this.orderWithFavouritesFirst(baseList);
+    this.splitIntoSections(this.filteredVenues);
+  }
+
+  private orderWithFavouritesFirst(list: Venue[]): Venue[] {
+    const favs: Venue[] = [];
+    const others: Venue[] = [];
+    for (const v of list) {
+      if (v?.id && this.favouriteClubIds.has(v.id)) favs.push(v); else others.push(v);
+    }
+    // Keep original order within groups
+    return [...favs, ...others];
+  }
+
+  private splitIntoSections(list: Venue[]): void {
+    const favs: Venue[] = [];
+    const others: Venue[] = [];
+    for (const v of list) {
+      if (v?.id && this.favouriteClubIds.has(v.id)) favs.push(v); else others.push(v);
+    }
+    this.favouriteVenues = favs;
+    this.otherVenues = others;
   }
 }

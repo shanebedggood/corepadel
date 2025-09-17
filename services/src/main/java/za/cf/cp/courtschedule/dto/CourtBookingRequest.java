@@ -33,9 +33,6 @@ public class CourtBookingRequest {
     @JsonProperty("teamNumber")
     public Integer teamNumber; // Team number: 1 or 2 (padel has 2 teams of 2 players each)
     
-    @JsonProperty("teamPosition")
-    public Integer teamPosition; // Position within team: 1 or 2 (legacy field, not used in simplified logic)
-    
     @JsonProperty("status")
     public String status = "confirmed";
     
@@ -43,7 +40,7 @@ public class CourtBookingRequest {
     
     public CourtBookingRequest(String scheduleId, String userId, String userName, 
                               LocalDate bookingDate, LocalTime timeSlot, int gameDuration,
-                              UUID venueId, Integer courtNumber, Integer teamNumber, Integer teamPosition) {
+                              UUID venueId, Integer courtNumber, Integer teamNumber) {
         this.scheduleId = scheduleId;
         this.userId = userId;
         this.userName = userName;
@@ -53,7 +50,6 @@ public class CourtBookingRequest {
         this.venueId = venueId;
         this.courtNumber = courtNumber;
         this.teamNumber = teamNumber;
-        this.teamPosition = teamPosition;
         this.status = "confirmed";
     }
 }

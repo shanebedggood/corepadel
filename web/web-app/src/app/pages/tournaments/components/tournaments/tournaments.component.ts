@@ -15,7 +15,6 @@ import { Tournament, TournamentService, TournamentStatus } from '../../../../ser
 import { TournamentConfigService } from '../../../../services/tournament-config.service';
 import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
 import { Observable, catchError, of, map, combineLatest, switchMap, filter, take } from 'rxjs';
-import { PageHeaderComponent, BreadcrumbItem } from '../../../../layout/component/page-header.component';
 
 @Component({
     selector: 'app-tournaments',
@@ -30,11 +29,10 @@ import { PageHeaderComponent, BreadcrumbItem } from '../../../../layout/componen
         ConfirmDialogModule,
         ToastModule,
         MessageModule,
-        PageHeaderComponent
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './tournaments.component.html',
-    styles: []
+    styleUrls: ['../../../../shared/styles/container.styles.scss']
 })
 export class TournamentsComponent implements OnInit {
     tournaments: Tournament[] = [];
@@ -44,11 +42,6 @@ export class TournamentsComponent implements OnInit {
     layout: 'grid' | 'list' = 'grid';
     isAdmin: boolean = false;
     private dataLoaded: boolean = false;
-
-    // Page header configuration
-    breadcrumbs: BreadcrumbItem[] = [
-        { label: 'Tournaments', icon: 'pi pi-trophy' }
-    ];
 
     constructor(
         private tournamentService: TournamentService,

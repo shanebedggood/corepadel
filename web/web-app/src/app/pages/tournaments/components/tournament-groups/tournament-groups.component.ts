@@ -227,14 +227,6 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
         this.editingGroup = null;
     }
 
-    onEditDialogVisibleChange(visible: boolean): void {
-        // Method for handling dialog visibility changes
-    }
-
-    testLoadVenues(): void {
-        // Method for testing venue loading (can be removed if no longer needed)
-    }
-
     saveGroup(): void {
         if (this.groupForm.valid && this.editingGroup) {
             this.saving = true;
@@ -533,6 +525,10 @@ export class TournamentGroupsComponent implements OnInit, OnDestroy {
         if (!visible) {
             this.teamEditorData = null;
         }
+    }
+
+    onEditDialogVisibleChange(visible: boolean): void {
+        this.showEditDialog = visible;
     }
 
     autoCreateTeams(): void {

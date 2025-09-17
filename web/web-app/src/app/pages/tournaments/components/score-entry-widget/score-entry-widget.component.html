@@ -1,6 +1,6 @@
 <div class="p-6">
     <div class="mb-6">
-        <h2 class="text-2xl font-bold text-surface-900 dark:text-surface-0 mb-2">Score Entry</h2>
+        <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mb-2">Score Entry</div>
         <p class="text-surface-600 dark:text-surface-400">Select a tournament and enter match scores</p>
     </div>
     <!-- Tournament Selection -->
@@ -20,7 +20,7 @@
     <!-- Matches Table -->
     @if (!loading && matches.length > 0) {
         <div class="mb-6">
-        <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Matches</h3>
+        <div class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Matches</div>
         <p-table [value]="matches" [dataKey]="'id'" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} matches"
             [rowsPerPageOptions]="[5, 10, 20]" styleClass="p-datatable-sm" responsiveLayout="scroll">
@@ -84,7 +84,7 @@
         <div class="text-center py-8">
         <i class="pi pi-calendar-times text-4xl text-surface-400 mb-4">
         </i>
-        <h3 class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">No Matches Found</h3>
+        <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">No Matches Found</div>
         <p class="text-surface-600 dark:text-surface-400">This tournament doesn't have any matches yet.</p>
         </div>
     }
@@ -93,7 +93,7 @@
         <div class="text-center py-8">
         <i class="pi pi-trophy text-4xl text-surface-400 mb-4">
         </i>
-        <h3 class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">Select a Tournament</h3>
+        <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">Select a Tournament</div>
         <p class="text-surface-600 dark:text-surface-400">Choose a tournament from the dropdown above to view and enter
             match scores.</p>
         </div>

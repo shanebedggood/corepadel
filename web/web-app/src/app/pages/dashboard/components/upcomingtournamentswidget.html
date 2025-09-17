@@ -1,0 +1,64 @@
+<div class="col-span-12 card">
+  <div class="font-semibold text-xl mb-4">Upcoming tournaments</div>
+  @if (loading()) {
+    <div class="col-12">
+      <p>Loading tournaments…</p>
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="col-12">
+      <p>No upcoming tournaments available right now.</p>
+    </div>
+  } @else {
+    <p-carousel 
+      [value]="filtered()" 
+      [numVisible]="3" 
+      [numScroll]="1" 
+      [responsiveOptions]="responsiveOptions"
+      [circular]="true"
+      [autoplayInterval]="0"
+      class="custom-carousel">
+      <ng-template let-tournament pTemplate="item">
+        <div class="tournament-item">
+          <p-card class="tournament-card">
+            <ng-template pTemplate="header">
+              <div class="tournament-header">
+                <div class="tournament-title">
+                  <i class="pi pi-trophy text-gray-800 mr-2"></i>
+                  <span class="font-bold text-lg text-gray-800">{{ tournament.name }}</span>
+                </div>
+                <div class="tournament-badge">
+                  <p-tag [value]="tournament.category?.name || 'Tournament'" class="category-tag"></p-tag>
+                </div>
+              </div>
+            </ng-template>
+            <div class="tournament-content">
+              <div class="tournament-info-item">
+                <i class="pi pi-map-marker text-blue-500 mr-2"></i>
+                <span>{{ tournament.venue?.name || tournament.club?.name }}</span>
+              </div>
+              <div class="tournament-info-item">
+                <i class="pi pi-calendar text-green-500 mr-2"></i>
+                <span>{{ tournament.startDate | date:'mediumDate' }} - {{ tournament.endDate | date:'mediumDate' }}</span>
+              </div>
+              <div class="tournament-info-item">
+                <i class="pi pi-users text-purple-500 mr-2"></i>
+                <span>{{ tournament.format?.name || 'N/A' }}</span>
+              </div>
+              @if (tournament.entryFee && tournament.entryFee > 0) {
+                <div class="tournament-info-item">
+                  <i class="pi pi-money-bill text-orange-500 mr-2"></i>
+                  <span>Entry: ${{ tournament.entryFee }}</span>
+                </div>
+              }
+            </div>
+            <ng-template pTemplate="footer">
+              <div class="tournament-footer">
+                    <p-button label="Enter now" [routerLink]="['/player/tournaments']" styleClass="p-button-outlined" severity="secondary" [disabled]="true"></p-button>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+      </ng-template>
+    </p-carousel>
+  }
+</div>

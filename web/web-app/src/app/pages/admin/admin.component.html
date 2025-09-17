@@ -6,7 +6,7 @@
             <div class="col-12">
                 <p-card header="User Management" styleClass="mb-4">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold">All Users</h2>
+                        <div class="text-xl font-semibold">All Users</div>
                         <button pButton type="button" label="Refresh" icon="pi pi-refresh" class="p-button-outlined" (click)="loadUsers()" [loading]="loading" >
                             </button>
                         </div>
@@ -54,7 +54,6 @@
                                     <i class="pi" [ngClass]="{ 'pi-check text-green-500': user.emailVerified, 'pi-times text-red-500': !user.emailVerified }" >
                                         </i>
                                     </td>
-                                <td><!-- removed createdAt display --></td>
                                 <td>{{ user.lastSignInTime | date:'d MMM y, HH:mm' }}</td>
                                 <td>
                                     <div class="flex gap-2">

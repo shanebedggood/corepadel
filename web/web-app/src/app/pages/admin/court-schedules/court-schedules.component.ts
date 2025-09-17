@@ -145,6 +145,17 @@ export class CourtSchedulesComponent implements OnInit, OnDestroy {
     return days;
   }
 
+  formatDaysWithCourts(scheduleDays: any[]): string[] {
+    if (!scheduleDays || scheduleDays.length === 0) return [];
+    
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return scheduleDays.map(day => {
+      const dayName = dayNames[day.dayOfWeek];
+      const courtCount = day.courtCount || 1;
+      return `${dayName} - ${courtCount} court${courtCount > 1 ? 's' : ''}`;
+    });
+  }
+
   getUniqueVenues(scheduleDays: any[]): string[] {
     if (!scheduleDays || scheduleDays.length === 0) return [];
     return [...new Set(scheduleDays.map(day => day.venueId))];

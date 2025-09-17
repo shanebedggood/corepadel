@@ -12,9 +12,9 @@ import { Subscription } from 'rxjs';
     <section class="py-16 bg-white">
       <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             For Clubs & Organizers
-          </h2>
+          </div>
           <p class="text-xl text-gray-600">
             Streamline your tournament management and enhance member engagement
           </p>
@@ -24,9 +24,9 @@ import { Subscription } from 'rxjs';
           <!-- Content -->
           <div class="space-y-6">
             <div class="space-y-4">
-              <h3 class="text-2xl font-semibold text-gray-900">
+              <div class="text-2xl font-semibold text-gray-900">
                 Manage Your Club Efficiently
-              </h3>
+              </div>
               <p class="text-gray-600">
                 Create and manage tournaments, track player registrations, and provide 
                 seamless experiences for your members.

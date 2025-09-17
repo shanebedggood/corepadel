@@ -9,11 +9,11 @@ import { Subscription } from 'rxjs';
   imports: [CommonModule],
   template: `
     <div class="p-6">
-      <h2 class="text-2xl font-bold mb-4">Local Image Service Example</h2>
+      <div class="text-2xl font-bold mb-4">Local Image Service Example</div>
       
       <!-- Responsive Image URLs -->
       <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-2">Responsive Image URLs</h3>
+        <div class="text-lg font-semibold mb-2">Responsive Image URLs</div>
         @if (responsiveUrls) {
           <div class="space-y-2">
             <div><strong>WebP Small:</strong> {{ responsiveUrls.webp.small }}</div>
@@ -28,7 +28,7 @@ import { Subscription } from 'rxjs';
 
       <!-- Single Image URL -->
       <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-2">Single Image URL</h3>
+        <div class="text-lg font-semibold mb-2">Single Image URL</div>
         @if (singleImageUrl) {
           <div>
             <strong>Large WebP:</strong> {{ singleImageUrl }}
@@ -38,7 +38,7 @@ import { Subscription } from 'rxjs';
 
       <!-- Upload Example -->
       <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-2">Upload Example (Placeholder)</h3>
+        <div class="text-lg font-semibold mb-2">Upload Example (Placeholder)</div>
         <input type="file" (change)="onFileSelected($event)" class="mb-2" />
         <button (click)="uploadFile()" class="px-4 py-2 bg-blue-500 text-white rounded">
           Upload File

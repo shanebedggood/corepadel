@@ -1,10 +1,8 @@
-<div class="court-booking-container">
-  <app-page-header 
-    title="Court Booking" 
-    subtitle=""
-    [breadcrumbs]="breadcrumbs">
-    
-    <div header-actions>
+<div class="container-base p-4">
+  <div class="card">
+    <div class="font-semibold text-xl mb-1">Court Booking</div>
+    <p class="text-gray-600 mb-4">Book and manage your court reservations</p>
+    <div class="flex justify-end mb-4">
       <p-button 
         label="Refresh" 
         icon="pi pi-refresh" 
@@ -13,7 +11,6 @@
         severity="secondary">
       </p-button>
     </div>
-  </app-page-header>
 
   <p-toast></p-toast>
   <p-confirmDialog></p-confirmDialog>
@@ -26,71 +23,71 @@
     <p-tabpanels>
       <p-tabpanel value="0">
       <div class="search-section mb-4">
-        <p-card>
-          <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
-            <div class="search-form-container">
-              <div class="field">
-                <label for="venue">Venue *</label>
-                <p-select 
-                  id="venue"
-                  formControlName="venueId"
-                  [options]="venues"
-                  optionLabel="name"
-                  optionValue="id"
-                  placeholder="Select a venue"
-                  [showClear]="true">
-                </p-select>
-                @if (searchForm.get('venueId')?.invalid && searchForm.get('venueId')?.touched) {
-                  <small class="p-error">Please select a venue.</small>
-                }
-              </div>
+        <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+          <div class="search-form-container">
+            <div class="field">
+              <label for="venue">Venue *</label>
+              <p-select 
+                id="venue"
+                formControlName="venueId"
+                [options]="venues"
+                optionLabel="name"
+                optionValue="id"
+                [filter]="true"
+                filterBy="name"
+                placeholder="Select a venue"
+                [showClear]="true">
+              </p-select>
+              @if (searchForm.get('venueId')?.invalid && searchForm.get('venueId')?.touched) {
+                <small class="p-error">Please select a venue.</small>
+              }
+            </div>
 
-              <div class="date-range-container">
-                <div class="field">
-                  <label for="startDate">Start Date *</label>
-                  <p-datepicker 
-                    id="startDate"
-                    formControlName="startDate"
-                    placeholder="Select start date"
-                    [showIcon]="true"
-                    [minDate]="minDate"
-                    [maxDate]="maxDate"
-                    dateFormat="dd/mm/yy">
-                  </p-datepicker>
-                  @if (searchForm.get('startDate')?.invalid && searchForm.get('startDate')?.touched) {
-                    <small class="p-error">Please select a start date.</small>
-                  }
-                </div>
-                
-                <div class="field">
-                  <label for="endDate">End Date *</label>
-                  <p-datepicker 
-                    id="endDate"
-                    formControlName="endDate"
-                    placeholder="Select end date"
-                    [showIcon]="true"
-                    [minDate]="minDate"
-                    [maxDate]="maxDate"
-                    dateFormat="dd/mm/yy">
-                  </p-datepicker>
-                  @if (searchForm.get('endDate')?.invalid && searchForm.get('endDate')?.touched) {
-                    <small class="p-error">Please select an end date.</small>
-                  }
-                </div>
+            <div class="date-range-container">
+              <div class="field">
+                <label for="startDate">Start Date *</label>
+                <p-datepicker 
+                  id="startDate"
+                  formControlName="startDate"
+                  placeholder="Select start date"
+                  [showIcon]="true"
+                  [minDate]="minDate"
+                  [maxDate]="maxDate"
+                  dateFormat="dd/mm/yy">
+                </p-datepicker>
+                @if (searchForm.get('startDate')?.invalid && searchForm.get('startDate')?.touched) {
+                  <small class="p-error">Please select a start date.</small>
+                }
               </div>
               
               <div class="field">
-                <p-button 
-                  type="submit"
-                  label="Search Available Slots"
-                  icon="pi pi-search"
-                  [loading]="loading"
-                  [disabled]="!searchForm.valid">
-                </p-button>
+                <label for="endDate">End Date *</label>
+                <p-datepicker 
+                  id="endDate"
+                  formControlName="endDate"
+                  placeholder="Select end date"
+                  [showIcon]="true"
+                  [minDate]="minDate"
+                  [maxDate]="maxDate"
+                  dateFormat="dd/mm/yy">
+                </p-datepicker>
+                @if (searchForm.get('endDate')?.invalid && searchForm.get('endDate')?.touched) {
+                  <small class="p-error">Please select an end date.</small>
+                }
               </div>
             </div>
-          </form>
-        </p-card>
+            
+            <div class="field">
+              <p-button 
+                type="submit"
+                label="Search Available Slots"
+                icon="pi pi-search"
+                [loading]="loading"
+                [disabled]="!searchForm.valid">
+              </p-button>
+            </div>
+          </div>
+        </form>
       </div>
 
       @if (errorMessage) {
@@ -107,13 +104,8 @@
           <p class="mt-2">Loading available slots...</p>
         </div>
       } @else if (availableSlots.length > 0) {
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="flex justify-content-between align-items-center">
-              <h3 class="m-0">Available Court Slots</h3>
-            </div>
-          </ng-template>
-          
+        <div class="card">
+          <div class="text-lg font-semibold text-gray-800 mb-3">Available Court Slots</div>
           <p-accordion [multiple]="true" class="slots-accordion">
             @for (slot of availableSlots; track slot.date + slot.timeSlot; let i = $index) {
               <p-accordion-panel [value]="i">
@@ -179,37 +171,30 @@
               </p-accordion-panel>
             }
           </p-accordion>
-        </p-card>
+        </div>
       } @else if (searchForm.get('venueId')?.value && searchForm.get('startDate')?.value && searchForm.get('endDate')?.value) {
-        <p-card>
-          <div class="text-center p-4">
+        <div class="card">
+          <div class="text-center">
             <i class="pi pi-calendar-times text-4xl text-400 mb-3"></i>
-            <h3 class="text-600">No Available Slots</h3>
+            <div class="text-lg font-semibold text-gray-800 mb-1">No Available Slots</div>
             <p class="text-500">No court slots are available for the selected venue and date range.</p>
           </div>
-        </p-card>
+        </div>
       } @else {
-        <p-card>
-          <div class="text-center p-4">
+        <div class="card">
+          <div class="text-center">
             <i class="pi pi-search text-4xl text-400 mb-3"></i>
-            <h3 class="text-600">Search for Available Courts</h3>
+            <div class="text-lg font-semibold text-gray-800 mb-1">Search for Available Courts</div>
             <p class="text-500">Select a venue and date range to see available court slots.</p>
           </div>
-        </p-card>
+        </div>
       }
       </p-tabpanel>
 
       <!-- My Bookings Tab -->
       <p-tabpanel value="1">
       @if (myBookings.length > 0) {
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="flex justify-content-between align-items-center">
-              <h3 class="m-0">My Court Bookings</h3>
-              <p-badge [value]="myBookings.length" severity="success"></p-badge>
-            </div>
-          </ng-template>
-
+        <div class="card">
           <p-table [value]="myBookings">
             <ng-template pTemplate="header">
               <tr>
@@ -230,12 +215,11 @@
                 <td>{{ booking.courtNumber || '-' }}</td>
                 <td></td>
                 <td>
-                  <p-badge [value]="getBookingStatusLabel(booking.status)" [severity]="getBookingStatusBadge(booking.status)"></p-badge>
+                  <p-badge class="booking-status-badge" [value]="getBookingStatusLabel(booking.status)" [severity]="getBookingStatusBadge(booking.status)"></p-badge>
                 </td>
                 <td class="text-right">
                   @if (canCancelBooking(booking)) {
                     <p-button 
-                      label="Cancel"
                       icon="pi pi-times"
                       size="small"
                       severity="danger"
@@ -249,17 +233,18 @@
               </tr>
             </ng-template>
           </p-table>
-        </p-card>
+        </div>
       } @else {
-        <p-card>
-          <div class="text-center p-4">
+        <div class="card">
+          <div class="text-center">
             <i class="pi pi-calendar text-4xl text-400 mb-3"></i>
-            <h3 class="text-600">No Bookings Yet</h3>
+            <div class="text-lg font-semibold text-gray-800 mb-1">No Bookings Yet</div>
             <p class="text-500">You haven't booked any courts yet. Use the "Available Courts" tab to find and book courts.</p>
           </div>
-        </p-card>
+        </div>
       }
       </p-tabpanel>
     </p-tabpanels>
   </p-tabs>
+  </div>
 </div>

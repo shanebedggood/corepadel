@@ -31,9 +31,9 @@ import { Subscription } from 'rxjs';
       
       <div class="relative z-10 text-center px-4">
         <img src="assets/logo.png" alt="STRIDE & SERVE Logo" class="mb-8 w-32 shrink-0 mx-auto" />
-        <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold text-white !text-white uppercase" style="font-family: 'Modern Font', sans-serif;">
+        <div class="text-5xl sm:text-6xl md:text-7xl font-bold text-white !text-white uppercase" style="font-family: 'Modern Font', sans-serif;">
           STRIDE & SERVE
-        </h1>
+        </div>
         <p class="font-normal text-xl sm:text-2xl md:text-3xl leading-normal md:mt-4 text-gray-200 mt-4">
           Your activity. Organised.
         </p>

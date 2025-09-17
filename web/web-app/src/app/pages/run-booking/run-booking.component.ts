@@ -37,7 +37,7 @@ interface CalendarDay {
         ProgressSpinnerModule
     ],
     templateUrl: './run-booking.component.html',
-    styleUrls: ['./run-booking.component.scss']
+    styleUrls: ['./run-booking.component.scss', '../../shared/styles/container.styles.scss']
 })
 export class RunBookingComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
@@ -64,6 +64,7 @@ export class RunBookingComponent implements OnInit, OnDestroy {
     newBookingName = '';
     isCreatingBooking = false;
     isCancellingBooking = false;
+    
 
     constructor(
         private runBookingService: RunBookingService,
@@ -106,7 +107,7 @@ export class RunBookingComponent implements OnInit, OnDestroy {
             const isCurrentMonth = date.getMonth() === this.currentMonth;
             const isToday = this.isToday(date);
             const isWeekday = this.runBookingService.isWeekday(date);
-            const isBookable = isCurrentMonth && isWeekday;
+            const isBookable = isCurrentMonth;
             
             this.calendarDays.push({
                 date,
@@ -156,7 +157,7 @@ export class RunBookingComponent implements OnInit, OnDestroy {
     }
 
     onDateSelect(date: Date): void {
-        if (!this.runBookingService.isWeekday(date) || date.getMonth() !== this.currentMonth) {
+        if (date.getMonth() !== this.currentMonth) {
             return;
         }
 
@@ -294,10 +295,6 @@ export class RunBookingComponent implements OnInit, OnDestroy {
             classes.push('other-month');
         }
         
-        if (!day.isWeekday) {
-            classes.push('weekend');
-        }
-        
         if (day.isBookable) {
             classes.push('bookable');
         }
@@ -318,10 +315,6 @@ export class RunBookingComponent implements OnInit, OnDestroy {
             return 'Other month';
         }
         
-        if (!day.isWeekday) {
-            return 'Weekend - No runs available';
-        }
-        
         if (day.slot) {
             const count = this.getBookingCount(day.slot);
             const isBooked = this.isUserBooked(day.slot);
@@ -336,5 +329,16 @@ export class RunBookingComponent implements OnInit, OnDestroy {
         }
         
         return 'Available - Click to book';
+    }
+
+    // Determines if a provided ISO date string (YYYY-MM-DD) is in the past (before today)
+    isDateInPast(dateStr?: string | null): boolean {
+        if (!dateStr) {
+            return false;
+        }
+        const target = new Date(`${dateStr}T00:00:00`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return target < today;
     }
 }

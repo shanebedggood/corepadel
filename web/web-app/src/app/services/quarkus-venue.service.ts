@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError, switchMap } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 // Facility interface
@@ -56,6 +56,61 @@ export class QuarkusVenueService {
             })
         );
     }
+
+  private authHeaders(): Observable<{ [k: string]: string }> {
+    return new Observable(sub => {
+      // lazy import to avoid circular deps; use Firebase SDK via window if available
+      try {
+        const stored = localStorage.getItem('firebaseAuthUser');
+        const firebase = (window as any)?.firebaseAuth;
+        const currentUser = (firebase && firebase.currentUser) || null;
+        const getToken = currentUser?.getIdToken ? currentUser.getIdToken.bind(currentUser) : null;
+        const resolve = (token: string | null) => {
+          const headers: any = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          sub.next(headers); sub.complete();
+        };
+        if (getToken) {
+          getToken().then((t: string) => resolve(t)).catch(() => resolve(null));
+        } else {
+          resolve(null);
+        }
+      } catch {
+        sub.next({ 'Content-Type': 'application/json' }); sub.complete();
+      }
+    });
+  }
+
+  getFavouriteClubs(firebaseUid: string): Observable<string[]> {
+    return this.authHeaders().pipe(
+      switchMap(headers => this.http.get<any[]>(`${this.apiUrl}/users/firebase/${firebaseUid}/favourites`, { headers })),
+      map(list => (list || []).map(item => item.clubId || item.club_id)),
+      catchError(error => {
+        console.error('Error fetching favourite clubs:', error);
+        return of([]);
+      })
+    );
+  }
+
+  addFavouriteClub(firebaseUid: string, clubId: string): Observable<void> {
+    return this.authHeaders().pipe(
+      switchMap(headers => this.http.post<void>(`${this.apiUrl}/users/firebase/${firebaseUid}/favourites/${clubId}`, {}, { headers })),
+      catchError(error => {
+        console.error('Error adding favourite club:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  removeFavouriteClub(firebaseUid: string, clubId: string): Observable<void> {
+    return this.authHeaders().pipe(
+      switchMap(headers => this.http.delete<void>(`${this.apiUrl}/users/firebase/${firebaseUid}/favourites/${clubId}`, { headers })),
+      catchError(error => {
+        console.error('Error removing favourite club:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
     /**
      * Get venue by ID (now using unified Club API).

@@ -14,8 +14,15 @@ public class CourtBookingService {
 
     @Transactional
     public CourtBooking createBooking(CourtBookingRequest request) {
-        System.out.println("Creating booking for user: " + request.userId + " on " + request.bookingDate);
-        
+        // Enforce: user cannot have more than one confirmed booking on the same day
+        var existingUserDayBooking = CourtBooking.<CourtBooking>find(
+            "firebaseUid = ?1 AND bookingDate = ?2 AND status = 'confirmed'",
+            request.userId, request.bookingDate
+        ).firstResult();
+        if (existingUserDayBooking != null) {
+            throw new RuntimeException("You already have a confirmed booking on this day.");
+        }
+
         // Check if the court already has 4 players booked for this time slot
         var existingBookings = CourtBooking.<CourtBooking>list(
             "venueId = ?1 AND bookingDate = ?2 AND timeSlot = ?3 AND courtNumber = ?4 AND status = 'confirmed'",
@@ -23,7 +30,6 @@ public class CourtBookingService {
         );
         
         if (existingBookings.size() >= 4) {
-            System.out.println("Court " + request.courtNumber + " already has 4 players booked for " + request.bookingDate + " at " + request.timeSlot);
             throw new RuntimeException("Court " + request.courtNumber + " is full (4 players). Please select another court.");
         }
         
@@ -34,14 +40,12 @@ public class CourtBookingService {
         ).firstResult();
         
         if (userExistingBooking != null) {
-            System.out.println("User " + request.userId + " is already booked for court " + request.courtNumber + " on " + request.bookingDate + " at " + request.timeSlot);
             throw new RuntimeException("You are already playing on this court.");
         }
         
         // Auto-assign team if not specified
         if (request.teamNumber == null) {
             request.teamNumber = assignTeam(existingBookings);
-            System.out.println("Auto-assigned user " + request.userId + " to Team " + request.teamNumber);
         } else {
             // Check if the specified team is full (2 players)
             var teamBookings = CourtBooking.<CourtBooking>list(
@@ -50,7 +54,6 @@ public class CourtBookingService {
             );
             
             if (teamBookings.size() >= 2) {
-                System.out.println("Team " + request.teamNumber + " is already full for court " + request.courtNumber);
                 throw new RuntimeException("This team is already full. Please choose another team.");
             }
         }
@@ -70,14 +73,10 @@ public class CourtBookingService {
         
         // Persist the booking
         booking.persist();
-        
-        System.out.println("Successfully created booking: " + booking.bookingId);
         return booking;
     }
 
     public List<CourtBooking> getUserBookings(String userId, String startDate, String endDate) {
-        System.out.println("Getting bookings for user: " + userId + " from " + startDate + " to " + endDate);
-        
         try {
             var start = LocalDate.parse(startDate);
             var end = LocalDate.parse(endDate);
@@ -87,7 +86,6 @@ public class CourtBookingService {
                 userId, start, end
             );
             
-            System.out.println("Found " + bookings.size() + " bookings for user: " + userId);
             return bookings;
         } catch (Exception e) {
             System.err.println("Error fetching user bookings: " + e.getMessage());
@@ -98,13 +96,10 @@ public class CourtBookingService {
 
     @Transactional
     public boolean cancelBooking(UUID bookingId, String userId) {
-        System.out.println("Cancelling booking: " + bookingId + " for user: " + userId);
-        
         try {
             var booking = CourtBooking.<CourtBooking>findByIdOptional(bookingId);
             
             if (booking.isEmpty()) {
-                System.out.println("Booking not found: " + bookingId);
                 return false;
             }
             
@@ -112,15 +107,13 @@ public class CourtBookingService {
             
             // Check if user owns this booking
             if (!courtBooking.firebaseUid.equals(userId)) {
-                System.out.println("User " + userId + " not authorized to cancel booking: " + bookingId);
-                return false;
+                 return false;
             }
             
             // Update status to cancelled
             courtBooking.status = "cancelled";
             courtBooking.persist();
             
-            System.out.println("Successfully cancelled booking: " + bookingId);
             return true;
         } catch (Exception e) {
             System.err.println("Error cancelling booking: " + e.getMessage());

@@ -12,9 +12,9 @@ import { Subscription } from 'rxjs';
     <section class="py-16 bg-gray-50">
       <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Join the Padel Community
-          </h2>
+          </div>
           <p class="text-xl text-gray-600">
             Connect with players, join tournaments, and improve your game with our community
           </p>
@@ -38,9 +38,9 @@ import { Subscription } from 'rxjs';
           <!-- Content -->
           <div class="space-y-6">
             <div class="space-y-4">
-              <h3 class="text-2xl font-semibold text-gray-900">
+              <div class="text-2xl font-semibold text-gray-900">
                 Find Your Perfect Match
-              </h3>
+              </div>
               <p class="text-gray-600">
                 Discover players at your skill level, join clubs, and participate in tournaments 
                 designed to challenge and improve your game.

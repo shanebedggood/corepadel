@@ -44,22 +44,7 @@ export class PlayerMenu implements OnInit {
         label: 'My Padel',
         items: [
           {
-            label: 'My Tournaments',
-            icon: 'pi pi-fw pi-trophy',
-            routerLink: ['/player/tournaments']
-          },
-          {
-            label: 'My Matches',
-            icon: 'pi pi-fw pi-calendar',
-            routerLink: ['/player/matches']
-          },
-          {
-            label: 'My Teams',
-            icon: 'pi pi-fw pi-users',
-            routerLink: ['/player/teams']
-          },
-          {
-            label: 'Padel Clubs',
+            label: 'Padel Venues',
             icon: 'pi pi-fw pi-warehouse',
             routerLink: ['/player/clubs']
           },
@@ -69,7 +54,7 @@ export class PlayerMenu implements OnInit {
             routerLink: ['/player/rules']
           },
           {
-            label: 'Court Booking',
+            label: 'Book a Court',
             icon: 'pi pi-fw pi-calendar-plus',
             routerLink: ['/player/court-booking']
           }

@@ -50,25 +50,17 @@ public class CourtScheduleService {
         var availableSlots = new ArrayList<AvailableSlot>();
         
         try {
-            System.out.println("getAvailableSlots called with: clubId=" + clubId + ", startDate=" + startDate + ", endDate=" + endDate);
-            
             // Parse date range
             var start = LocalDate.parse(startDate);
             var end = LocalDate.parse(endDate);
             var clubUuid = UUID.fromString(clubId);
             
-            System.out.println("Parsed dates: start=" + start + ", end=" + end + ", clubUuid=" + clubUuid);
-            
             // Get all active schedules for the club
-            System.out.println("Querying schedules for club: " + clubUuid);
             var schedules = CourtSchedule.list("clubId = ?1 AND startDate <= ?2 AND endDate >= ?3", 
                 clubUuid, end, start);
             
-            System.out.println("Found " + schedules.size() + " schedules for club " + clubUuid);
-            
             // Early return if no schedules found
             if (schedules.isEmpty()) {
-                System.out.println("No schedules found for club " + clubUuid + ", returning empty list");
                 return availableSlots;
             }
             
@@ -89,13 +81,11 @@ public class CourtScheduleService {
                             if (!date.isBefore(courtSchedule.startDate) && !date.isAfter(courtSchedule.endDate)) {
                                 
                                 // Get existing bookings for this date and time slot
-                                System.out.println("Querying bookings for venueId=" + day.venueId + ", date=" + date + ", timeSlot=" + day.timeSlot);
                                 List<CourtBooking> existingBookings = CourtBooking.<CourtBooking>list(
                                     "venueId = ?1 AND bookingDate = ?2 AND timeSlot = ?3 AND status = 'confirmed'",
                                     day.venueId, date, day.timeSlot
                                 );
-                                System.out.println("Found " + existingBookings.size() + " existing bookings");
-                                
+
                                 // Create available slot
                                 var slot = new AvailableSlot();
                                 slot.date = date;
@@ -124,8 +114,7 @@ public class CourtScheduleService {
             System.err.println("Error calculating available slots: " + e.getMessage());
             e.printStackTrace();
         }
-        
-        System.out.println("Returning " + availableSlots.size() + " available slots");
+
         return availableSlots;
     }
 

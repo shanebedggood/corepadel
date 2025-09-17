@@ -1,6 +1,4 @@
-.court-booking-container {
-  padding: 1rem;
-}
+// Container styles moved to shared/styles/container.styles.scss
 
 .search-section {
   .p-card {
@@ -111,17 +109,6 @@
   width: 100%;
   display: block;
   margin-bottom: 1rem;
-}
-
-// Responsive adjustments
-@media (max-width: 768px) {
-  .court-booking-container {
-    padding: 0.5rem;
-  }
-  
-  .slot-card, .booking-card {
-    margin-bottom: 1rem;
-  }
 }
 
 // Courts grid layout
@@ -237,6 +224,11 @@
   font-weight: 500;
 }
 
+.booking-status-badge {
+  font-size: 1rem !important;
+  font-weight: semibold;
+}
+
 // Button adjustments
 .p-button {
   &.p-button-sm {
@@ -263,6 +255,7 @@
     padding: 1.5rem 0;
   }
 }
+
 
 // Message styling
 .p-message {

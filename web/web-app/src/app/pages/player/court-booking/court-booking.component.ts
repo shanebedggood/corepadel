@@ -50,12 +50,12 @@ import { PageHeaderComponent, BreadcrumbItem } from '../../../layout/component/p
     DividerModule,
     DatePickerModule,
     AccordionModule,
-    PageHeaderComponent
+    // PageHeaderComponent removed
   ],
   providers: [ConfirmationService],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './court-booking.component.html',
-  styleUrls: ['./court-booking.component.scss']
+  styleUrls: ['./court-booking.component.scss', '../../../shared/styles/container.styles.scss']
 })
 export class CourtBookingComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -201,6 +201,10 @@ export class CourtBookingComponent implements OnInit, OnDestroy {
 
   private loadAvailableSlots(): void {
     const formValue = this.searchForm.value;
+    // Guard against undefined values to avoid 404 on API URL
+    if (!formValue?.venueId || !formValue?.startDate || !formValue?.endDate) {
+      return;
+    }
     const startDate = this.formatDateForBackend(formValue.startDate);
     const endDate = this.formatDateForBackend(formValue.endDate);
     const venueId = formValue.venueId;
@@ -536,14 +540,10 @@ export class CourtBookingComponent implements OnInit, OnDestroy {
     // Mark request as pending
     this.pendingUserNameRequests.add(firebaseUid);
     
-    console.log('Fetching user name for Firebase UID:', firebaseUid);
-    
     this.userService.getUserByFirebaseUid(firebaseUid)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (user) => {
-          console.log('Received user data:', user);
-          
           // Remove from pending requests
           this.pendingUserNameRequests.delete(firebaseUid);
           
@@ -555,10 +555,8 @@ export class CourtBookingComponent implements OnInit, OnDestroy {
                               user.username || 
                               user.email || 
                               'Unknown Player';
-            console.log('Setting display name:', displayName);
             this.userNameCache.set(firebaseUid, displayName);
           } else {
-            console.log('No user found, setting to Unknown Player');
             this.userNameCache.set(firebaseUid, 'Unknown Player');
           }
           
@@ -750,7 +748,6 @@ export class CourtBookingComponent implements OnInit, OnDestroy {
       venueId: slot.venueId,
       courtNumber: courtNumber,
       teamNumber: teamNumber,
-      teamPosition: 1, // Default position since we don't care about specific positions
       status: 'confirmed' as const
     };
 
@@ -779,7 +776,14 @@ export class CourtBookingComponent implements OnInit, OnDestroy {
           console.error('Error booking team position:', error);
           
           // Check if it's a booking conflict error
-          if (error.error?.message?.includes('already full') || error.error?.message?.includes('already booked')) {
+          if (error.status === 409 && (error.error?.message?.includes('already have a confirmed booking') || error.error?.message?.includes('already booked on this day'))) {
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Already Booked Today',
+              detail: 'You already have a confirmed booking on this day.',
+              life: 5000
+            });
+          } else if (error.error?.message?.includes('already full') || error.error?.message?.includes('already booked')) {
             this.messageService.add({
               severity: 'warn',
               summary: 'Position Unavailable',

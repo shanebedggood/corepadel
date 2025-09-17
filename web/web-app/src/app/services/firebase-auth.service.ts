@@ -221,7 +221,16 @@ export class FirebaseAuthService {
           'Content-Type': 'application/json'
         };
         
-        await this.http.post(`${environment.quarkusApiUrl}/users`, userData, { headers }).toPromise();
+        // Attempt to create the user in the backend. If the user already exists (409), treat as success.
+        try {
+          await this.http.post(`${environment.quarkusApiUrl}/users`, userData, { headers }).toPromise();
+        } catch (postError: any) {
+          if (postError?.status === 409) {
+            console.warn('User already exists in backend, treating sync as successful.');
+          } else {
+            throw postError;
+          }
+        }
         
         // Clear the stored signup data after successful sync
         localStorage.removeItem('signupData');
@@ -229,7 +238,8 @@ export class FirebaseAuthService {
         // Proactively refresh profile with retries so roles are present before navigation
         await this.loadUserProfileWithRetry(3, 200);
         
-      } catch (error) {
+      } catch (error: any) {
+        // If error was a handled 409 above, we won't reach here. Any other error should bubble up.
         console.error('Error syncing user to database:', error);
         throw error;
       }

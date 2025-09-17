@@ -12,7 +12,6 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { PageHeaderComponent } from '../../../../layout/component/page-header.component';
 import { TournamentParticipantsComponent } from '../tournament-participants/tournament-participants.component';
 import { TournamentDetailsComponent } from '../tournament-details/tournament-details.component';
 import { TournamentGroupsComponent } from '../tournament-groups/tournament-groups.component';
@@ -111,13 +110,6 @@ interface TournamentPlayer {
     mobile?: string;
 }
 
-interface BreadcrumbItem {
-    label: string;
-    routerLink?: string;
-    route?: string;
-    icon?: string;
-}
-
 @Component({
     selector: 'app-edit-tournament',
     standalone: true,
@@ -128,7 +120,6 @@ interface BreadcrumbItem {
     ConfirmDialogModule,
     MessageModule,
     TabsModule,
-    PageHeaderComponent,
     TournamentParticipantsComponent,
     TournamentDetailsComponent,
     TournamentGroupsComponent,
@@ -138,7 +129,7 @@ interface BreadcrumbItem {
 ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './edit-tournament.component.html',
-    styleUrls: ['./edit-tournament.component.scss']
+    styleUrls: ['./edit-tournament.component.scss', '../../../../shared/styles/container.styles.scss']
 })
 export class EditTournamentComponent implements OnInit, OnDestroy {
     // Core properties
@@ -153,12 +144,6 @@ export class EditTournamentComponent implements OnInit, OnDestroy {
     tournamentConfig: TournamentConfig | null = null;
     roundRobinConfig: RoundRobinConfig | null = null;
     venues: Venue[] = [];
-
-    // Breadcrumbs
-    breadcrumbs: BreadcrumbItem[] = [
-        { label: 'Tournaments', routerLink: '/admin/tournaments' },
-        { label: 'Manage Tournament', route: 'current' }
-    ];
 
     // Groups data (for coordination between components)
     groups: (TournamentGroup & { venue?: Venue; teamCount?: number })[] = [];

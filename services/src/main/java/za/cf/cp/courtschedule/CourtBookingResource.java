@@ -16,7 +16,6 @@ import org.jboss.logging.Logger;
 import za.cf.cp.courtschedule.service.CourtBookingService;
 import za.cf.cp.courtschedule.dto.CourtBookingRequest;
 
-import java.util.List;
 import java.util.UUID;
 
 @Path("/api/court-bookings")
@@ -77,6 +76,12 @@ public class CourtBookingResource {
             response.put("booking", booking);
             
             return Response.status(Response.Status.CREATED).entity(response).build();
+        } catch (RuntimeException e) {
+            // Business rule violations -> return 409 Conflict with message
+            LOG.warn("Business rule violation: " + e.getMessage());
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(java.util.Map.of("success", false, "message", e.getMessage()))
+                    .build();
         } catch (Exception e) {
             LOG.error("Error creating court booking: " + e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)

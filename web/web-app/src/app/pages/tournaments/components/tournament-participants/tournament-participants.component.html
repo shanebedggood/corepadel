@@ -2,7 +2,7 @@
     <!-- Header with Add Button -->
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Players</h2>
+            <div class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Players</div>
             <p class="text-gray-600 dark:text-gray-400 mt-1 text-md">
                 Manage individual players in this tournament
             </p>
@@ -45,7 +45,7 @@
             @if (!loading && participants.length === 0) {
                 <div class="text-center py-8">
                     <i class="pi pi-users text-4xl text-gray-400 mb-4"></i>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Players</h3>
+                    <div class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Players</div>
                     <p class="text-gray-600 dark:text-gray-400 mb-4">
                         No players have been added to this tournament yet.
                     </p>
@@ -180,7 +180,7 @@
                 @if (!hasSearched) {
                     <div class="text-center py-8">
                         <i class="pi pi-search text-4xl text-gray-400 mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">Search for Players</h3>
+                        <div class="text-lg font-medium text-gray-900 mb-2">Search for Players</div>
                         <p class="text-gray-600">
                             Use the search above to find players to add to the tournament.
                         </p>

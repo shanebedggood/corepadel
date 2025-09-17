@@ -1,12 +1,10 @@
-<div class="clubs-container p-4">
-  <!-- Header -->
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-2">Padel Clubs</h1>
-    <p class="text-gray-600">Discover and explore padel clubs in your area</p>
-  </div>
+<div class="container-base p-4">
+  <div class="card">
+    <div class="font-semibold text-xl mb-4">Padel Clubs</div>
+    <p class="text-gray-600 mb-6">Discover and explore padel clubs in your area</p>
 
   <!-- Search and Filters -->
-  <div class="search-filters mb-6 p-4 bg-white rounded-lg shadow-sm border">
+  <div class="search-filters card mb-6">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Name Search -->
       <div class="search-field">
@@ -68,7 +66,7 @@
   @if (loading) {
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     @for (item of [1,2,3,4,5,6]; track item) {
-    <div class="bg-white rounded-lg shadow-sm border p-4">
+    <div class="card">
       <p-skeleton height="2rem" class="mb-3"></p-skeleton>
       <p-skeleton height="1rem" class="mb-2"></p-skeleton>
       <p-skeleton height="1rem" class="mb-2"></p-skeleton>
@@ -92,22 +90,30 @@
     <div class="text-gray-400 mb-4">
       <i class="pi pi-search text-6xl"></i>
     </div>
-    <h3 class="text-xl font-semibold text-gray-600 mb-2">No clubs found</h3>
+    <div class="text-xl font-semibold text-gray-600 mb-2">No clubs found</div>
     <p class="text-gray-500">
       Try adjusting your search criteria or filters to find more clubs.
     </p>
   </div>
   }
 
-  <!-- Clubs Grid -->
-  @if (!loading && !error && filteredVenues.length > 0) {
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    @for (venue of filteredVenues; track venue.id) {
+  <!-- Favourite Clubs -->
+  @if (!loading && !error && favouriteVenues.length > 0) {
+  <div class="mb-2 mt-6">
+    <div class="text-lg font-semibold text-gray-800">My Favourite Clubs</div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    @for (venue of favouriteVenues; track venue.id) {
     <div class="club-card">
       <p-card [style]="{ width: '100%' }" class="h-full">
         <ng-template pTemplate="header">
           <div class="club-header p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ venue.name }}</h3>
+            <div class="flex items-center justify-between">
+              <div class="text-lg font-semibold text-gray-800 m-0">{{ venue.name }}</div>
+              <button type="button" class="inline-flex items-center cursor-pointer transition-transform hover:scale-110" (click)="toggleFavourite(venue)" [disabled]="loadingFavourites" [attr.aria-label]="isFavourite(venue.id) ? 'Remove from favourites' : 'Add to favourites'" [attr.title]="isFavourite(venue.id) ? 'Remove from favourites' : 'Add to favourites'">
+                <i class="pi transition-colors" [ngClass]="isFavourite(venue.id) ? 'pi-star-fill text-gray-800' : 'pi-star text-gray-600 hover:text-gray-800'"></i>
+              </button>
+            </div>
           </div>
         </ng-template>
 
@@ -117,13 +123,11 @@
             @if (venue.facilities && venue.facilities.length > 0) {
             <div class="facilities-section">
               <div class="text-md font-semibold text-gray-700 mb-2 flex items-center">
-                <i class="pi pi-star text-green-600 mr-2"></i>
                 Available Facilities
               </div>
               <div class="flex flex-wrap gap-2">
                 @for (venueFacility of venue.facilities; track trackByFacility($index, venueFacility)) {
-                <p-tag [value]="getFacilityDisplay(venueFacility)" [icon]="getFacilityIcon(venueFacility)"
-                  severity="info" class="text-xs"></p-tag>
+                <p-tag [value]="getFacilityDisplay(venueFacility)" severity="info" class="text-md text-gray-700"></p-tag>
                 }
               </div>
             </div>
@@ -180,4 +184,93 @@
     }
   </div>
   }
+
+  <!-- All Clubs -->
+  @if (!loading && !error && otherVenues.length > 0) {
+  <div class="mb-2">
+    <div class="text-xl font-semibold text-gray-800">All Clubs</div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (venue of otherVenues; track venue.id) {
+    <div class="club-card">
+      <p-card [style]="{ width: '100%' }" class="h-full">
+        <ng-template pTemplate="header">
+          <div class="club-header p-4 bg-gradient-to-r from-green-50 to-emerald-50">
+            <div class="flex items-center justify-between">
+              <div class="text-lg font-semibold text-gray-800 m-0">{{ venue.name }}</div>
+              <button type="button" class="inline-flex items-center cursor-pointer transition-transform hover:scale-110" (click)="toggleFavourite(venue)" [disabled]="loadingFavourites" [attr.aria-label]="isFavourite(venue.id) ? 'Remove from favourites' : 'Add to favourites'" [attr.title]="isFavourite(venue.id) ? 'Remove from favourites' : 'Add to favourites'">
+                <i class="pi transition-colors" [ngClass]="isFavourite(venue.id) ? 'pi-star-fill text-gray-800' : 'pi-star text-gray-600 hover:text-gray-800'"></i>
+              </button>
+            </div>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="content">
+          <div class="club-details space-y-6">
+            <!-- Facilities Section -->
+            @if (venue.facilities && venue.facilities.length > 0) {
+            <div class="facilities-section">
+              <div class="text-md font-semibold text-gray-700 mb-2 flex items-center">
+                Available Facilities
+              </div>
+              <div class="flex flex-wrap gap-2">
+                @for (venueFacility of venue.facilities; track trackByFacility($index, venueFacility)) {
+                <p-tag [value]="getFacilityDisplay(venueFacility)" severity="info" class="text-md text-gray-700"></p-tag>
+                }
+              </div>
+            </div>
+            }
+
+            <!-- Address Information -->
+            <div class="address-info">
+              <div class="flex items-start space-x-2">
+                <i class="pi pi-map-marker text-green-600 mt-1"></i>
+                <div class="flex-1 space-y-0.5">
+                  @if (venue.address.street) {
+                  <div class="text-gray-800 font-medium">
+                    {{ venue.address.street }}
+                  </div>
+                  }
+                  @if (venue.address.suburb) {
+                  <div class="text-gray-600">
+                    {{ venue.address.suburb }}
+                  </div>
+                  }
+                  @if (venue.address.city) {
+                  <div class="text-gray-600">
+                    {{ venue.address.city }}
+                  </div>
+                  }
+                  @if (venue.address.province) {
+                  <div class="text-gray-600">
+                    {{ venue.address.province }}
+                  </div>
+                  }
+                  @if (venue.address.postalCode) {
+                  <div class="text-gray-500 text-sm">
+                    {{ venue.address.postalCode }}
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Website Link -->
+            @if (venue.website) {
+            <div class="website-link">
+              <a [href]="venue.website" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center space-x-2 text-green-600 hover:text-green-700 transition-colors">
+                <i class="pi pi-external-link"></i>
+                <span>Visit Website</span>
+              </a>
+            </div>
+            }
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+    }
+  </div>
+  }
+  </div>
 </div>

@@ -1,19 +1,16 @@
-<div class="card">
-    <!-- Page Header -->
-    <app-page-header title="Create New Tournament"
-        subtitle=""
-        [breadcrumbs]="breadcrumbs">
-        <div header-actions class="flex items-center">
-            <div
-                class="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div class="flex items-center text-blue-700 dark:text-blue-300">
-                    <i class="pi pi-info-circle mr-2">
-                    </i>
-                    <span class="text-sm font-medium">Draft Mode</span>
-                </div>
-            </div>
+<div class="container-base p-4">
+  <div class="card">
+    <div class="font-semibold text-xl mb-1">Create New Tournament</div>
+    <p class="text-gray-600 mb-4">Set up a new tournament with all the necessary details</p>
+    <div class="flex justify-between items-center mb-4">
+      <div class="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div class="flex items-center text-blue-700 dark:text-blue-300">
+          <i class="pi pi-info-circle mr-2">
+          </i>
+          <span class="text-sm font-medium">Draft Mode</span>
         </div>
-    </app-page-header>
+      </div>
+    </div>
     
     <!-- Error Message -->
     @if (errorMessage) {
@@ -58,7 +55,7 @@
                                 <i class="pi pi-info-circle text-blue-600 dark:text-blue-400">
                                 </i>
                             </div>
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Basic Information</h2>
+                            <div class="text-xl font-semibold text-gray-900 dark:text-white">Basic Information</div>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div class="field">
@@ -155,7 +152,7 @@
                                 <i class="pi pi-calendar text-green-600 dark:text-green-400">
                                 </i>
                             </div>
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Dates</h2>
+                            <div class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Dates</div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="field">
@@ -210,7 +207,7 @@
                                 <i class="pi pi-map-marker text-orange-600 dark:text-orange-400">
                                 </i>
                             </div>
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Venue Information</h2>
+                            <div class="text-xl font-semibold text-gray-900 dark:text-white">Venue Information</div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="field">
@@ -240,7 +237,7 @@
                                 <i class="pi pi-users text-indigo-600 dark:text-indigo-400">
                                 </i>
                             </div>
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Configuration</h2>
+                            <div class="text-xl font-semibold text-gray-900 dark:text-white">Tournament Configuration</div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             @if (isRoundRobinFormat()) {
@@ -290,8 +287,8 @@
                                         <i class="pi pi-sitemap text-yellow-600 dark:text-yellow-400">
                                         </i>
                                     </div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Group Advancement Settings
-                                    </h3>
+                                    <div class="text-lg font-semibold text-gray-900 dark:text-white">Group Advancement Settings
+                                    </div>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div class="field">
@@ -352,8 +349,8 @@
                                     <i class="pi pi-globe text-green-600 dark:text-green-400">
                                     </i>
                                 </div>
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Combined Elimination Settings
-                                </h3>
+                                <div class="text-lg font-semibold text-gray-900 dark:text-white">Combined Elimination Settings
+                                </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="field">
@@ -416,7 +413,7 @@
                                 <i class="pi pi-exclamation-triangle text-red-600 mt-1 mr-3">
                                 </i>
                                 <div class="flex-1">
-                                    <h4 class="text-lg font-semibold text-red-800 mb-2">Validation Error</h4>
+                                    <div class="text-lg font-semibold text-red-800 mb-2">Validation Error</div>
                                     <p class="text-red-700">{{ errorMessage }}</p>
                                     <button type="button"
                                         class="mt-3 text-red-600 hover:text-red-800 underline text-sm"
@@ -446,4 +443,5 @@
             </form>
         </div>
     }
+  </div>
 </div>

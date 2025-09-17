@@ -20,7 +20,6 @@ import { AutoFocusModule } from 'primeng/autofocus';
 import { BadgeModule } from 'primeng/badge';
 import { MessageModule } from 'primeng/message';
 import { ErrorHandlerService } from '../../../../services/error-handler.service';
-import { BreadcrumbItem, PageHeaderComponent } from "../../../../layout/component/page-header.component";
 
 
 // Define interfaces locally to work around TournamentService formatting issues
@@ -120,10 +119,9 @@ export interface TournamentProgressionOption {
         AutoFocusModule,
         BadgeModule,
         MessageModule,
-        PageHeaderComponent
     ],
     templateUrl: './create-tournament.component.html',
-    styles: []
+    styleUrls: ['../../../../shared/styles/container.styles.scss']
 })
 export class CreateTournamentComponent implements OnInit {
     activeStep: number = 0;
@@ -162,12 +160,6 @@ export class CreateTournamentComponent implements OnInit {
     eliminationBracketSizes: any[] = [];
     teamsToAdvance: any[] = [];
     combinedEliminationBracketSizes: any[] = [];
-
-    // Page header configuration
-    breadcrumbs: BreadcrumbItem[] = [
-        { label: 'Tournaments', route: '/admin/tournaments', icon: 'pi pi-trophy' },
-        { label: 'Create New' }
-    ];
 
     constructor(
         private tournamentService: TournamentService,

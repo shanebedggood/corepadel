@@ -301,41 +301,6 @@ export class UserService {
     }
 
     /**
-     * Get or create user from Firebase profile (legacy method name for compatibility)
-     */
-    getOrCreateUserFromCognito(firebaseProfile: any): Observable<User | null> {
-        const firebaseUid = firebaseProfile.firebase_uid || firebaseProfile.cognito_sub;
-        
-        if (!firebaseUid) {
-            console.error('No firebase_uid or cognito_sub provided in firebaseProfile:', firebaseProfile);
-            return of(null);
-        }
-        
-        return this.getUserByFirebaseUid(firebaseUid).pipe(
-            switchMap(existingUser => {
-                if (existingUser) {
-                    return of(existingUser);
-                } else {
-                    // Create new user
-                    const user: User = {
-                        firebase_uid: firebaseUid,
-                        email: firebaseProfile.email,
-                        username: firebaseProfile.username,
-                        first_name: firebaseProfile.first_name,
-                        last_name: firebaseProfile.last_name,
-                        display_name: firebaseProfile.display_name,
-                        email_verified: firebaseProfile.email_verified
-                    };
-                    return this.createUser(user);
-                }
-            }),
-            catchError(this.handleError<User | null>('getOrCreateUserFromCognito', null))
-        );
-    }
-
-
-
-    /**
      * Health check
      */
     healthCheck(): Observable<string> {

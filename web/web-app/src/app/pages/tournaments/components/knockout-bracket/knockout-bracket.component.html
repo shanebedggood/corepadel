@@ -107,7 +107,7 @@
                 <!-- Quarterfinals -->
                 @if (quarterfinals.length > 0) {
                     <div class="phase-section">
-                        <h3 style="background-color: #fffbeb; padding: 8px 16px; border-radius: 4px;">{{ getPhaseTitle('quarterfinal') }}</h3>
+                        <div class="bg-amber-50 px-4 py-2 rounded">{{ getPhaseTitle('quarterfinal') }}</div>
                         <div class="matches-grid">
                             @for (match of quarterfinals; track match.id) {
                                 <div class="match-card" [class]="getMatchStatusClass(match.status)">
@@ -168,7 +168,7 @@
                 <!-- Semifinals -->
                 @if (semifinals.length > 0) {
                     <div class="phase-section">
-                        <h3 style="background-color: #fefce8; padding: 8px 16px; border-radius: 4px;">{{ getPhaseTitle('semifinal') }}</h3>
+                        <div class="bg-yellow-50 px-4 py-2 rounded">{{ getPhaseTitle('semifinal') }}</div>
                         <div class="matches-grid">
                             @for (match of semifinals; track match.id) {
                                 <div class="match-card" [class]="getMatchStatusClass(match.status)">
@@ -239,7 +239,7 @@
                 <!-- Finals -->
                 @if (finals.length > 0) {
                     <div class="phase-section final-section">
-                        <h3 style="background-color: #fef3c7; padding: 8px 16px; border-radius: 4px;">{{ getPhaseTitle('final') }}</h3>
+                        <div class="bg-amber-100 px-4 py-2 rounded">{{ getPhaseTitle('final') }}</div>
                         <div class="matches-grid final-grid">
                             @for (match of finals; track match.id) {
                                 <div class="match-card final-match" [class]="getMatchStatusClass(match.status)">
@@ -340,7 +340,7 @@
         @if (editingMatch) {
             <div class="p-0">
                 <div class="border-b border-gray-200 p-5 pb-4">
-                    <h4 class="text-xl font-semibold text-gray-900 mb-3">Edit Match Schedule</h4>
+                    <div class="text-xl font-semibold text-gray-900 mb-3">Edit Match Schedule</div>
                     <div class="space-y-1">
                         <div class="text-lg font-semibold text-gray-900">{{ getTeamName(editingMatch.team1Id) }} vs {{ getTeamName(editingMatch.team2Id) }}</div>
                         <div class="text-sm text-gray-600">{{ getTeamPlayerNames(editingMatch.team1Id) }} vs {{ getTeamPlayerNames(editingMatch.team2Id) }}</div>

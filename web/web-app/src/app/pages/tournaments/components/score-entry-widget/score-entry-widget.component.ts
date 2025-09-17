@@ -9,7 +9,6 @@ import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
-// CalendarModule removed - using HTML5 datetime-local input instead
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TournamentService, Tournament, TournamentMatch, TournamentTeam } from '../../../../services/tournament.service';

@@ -32,7 +32,7 @@ import { TournamentMatch, TournamentService } from '../../../../../services/tour
         @if (match) {
             <div class="p-0">
                 <div class="border-b border-gray-200 p-4 pb-3">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Enter Match Score</h4>
+                    <div class="text-lg font-semibold text-gray-900 mb-4">Enter Match Score</div>
                     @if (showGroupInfo) {
                         <div class="text-xs text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis mb-4">
                             {{ getGroupName(match.groupId || '') }} • {{ getVenueName(match.venueId, match.groupId) }}

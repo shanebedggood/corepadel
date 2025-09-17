@@ -31,11 +31,6 @@ public class PadelRule extends PanacheEntity {
     @JsonProperty("sections")
     public List<RuleSection> sections;
     
-    // Legacy field - will be removed after migration
-    @Column(name = "rule_description", columnDefinition = "TEXT")
-    @JsonProperty("ruleDescription")
-    public String ruleDescription;
-    
     // Constructors
     public PadelRule() {}
     
@@ -84,13 +79,6 @@ public class PadelRule extends PanacheEntity {
         this.sections = sections;
     }
     
-    public String getRuleDescription() {
-        return ruleDescription;
-    }
-    
-    public void setRuleDescription(String ruleDescription) {
-        this.ruleDescription = ruleDescription;
-    }
     
     @Override
     public String toString() {

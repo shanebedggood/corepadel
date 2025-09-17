@@ -211,9 +211,7 @@ public class RunBookingService {
             booking.getFirebaseUid(),
             booking.getUserName(),
             booking.getBookingDate().format(DATE_FORMATTER),
-            booking.getBookingTime().format(DateTimeFormatter.ofPattern("HH:mm")),
-            booking.getCreatedAt() != null ? booking.getCreatedAt().toString() : null,
-            booking.getUpdatedAt() != null ? booking.getUpdatedAt().toString() : null
+            booking.getBookingTime().format(DateTimeFormatter.ofPattern("HH:mm"))
         );
     }
 }

@@ -8,6 +8,12 @@
   backdrop-filter: blur(10px);
 }
 
+// Ensure the search filters card shows the subtle border
+.search-filters.card {
+  border: 1px solid #e5e7eb;
+  border-radius: var(--content-border-radius);
+}
+
 .club-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -18,7 +24,14 @@
 }
 
 .club-header {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   border-bottom: 1px solid #e5e7eb;
+  padding: 1rem !important;
+}
+
+.club-header h3 {
+  color: #1f2937 !important;
+  margin-bottom: 0 !important;
 }
 
 .address-info {
@@ -65,7 +78,7 @@
 
 // Style the facilities pills to match the orange color from the top bar
 :host ::ng-deep .facilities-section .p-tag {
-  background-color: #fb923c !important;
-  color: white !important;
+  background-color: #f3f4f6 !important;
+  color: #211e1e !important;
   border: none !important;
 }

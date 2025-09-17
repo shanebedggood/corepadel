@@ -8,7 +8,12 @@
 .card {
     padding: 2rem;
     margin-bottom: 2rem;
+    background-color: var(--surface-card);
+    border-radius: var(--content-border-radius);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
+
 
 .p-toast {
     &.p-toast-top-right,

@@ -1,4 +1,5 @@
-<div class="card">
+<div class="container-base p-4">
+  <div class="card">
     <!-- Error Message -->
     @if (errorMessage) {
     <p-message severity="error" [text]="errorMessage" [closable]="true" (onClose)="errorMessage = ''">
@@ -17,14 +18,13 @@
     @if (!loading && tournament) {
     <div class="w-full">
         <!-- Page Header -->
-        <app-page-header [title]="tournament.name + ' - Standings'"
-            subtitle="Tournament group standings and points table" [breadcrumbs]="breadcrumbs">
-            <div header-actions class="flex items-center gap-4">
-                <button pButton type="button" label="View Tournament" icon="pi pi-eye" class="p-button-secondary"
-                    (click)="viewTournament()">
-                </button>
-            </div>
-        </app-page-header>
+        <div class="font-semibold text-xl mb-1">{{ tournament.name }} - Standings</div>
+        <p class="text-gray-600 mb-4">Tournament group standings and points table</p>
+        <div class="flex justify-end mb-4">
+            <button pButton type="button" label="View Tournament" icon="pi pi-eye" class="p-button-secondary"
+                (click)="viewTournament()">
+            </button>
+        </div>
         <!-- Tournament Info Card -->
         <div class="mb-6">
             <p-card styleClass="shadow-sm">
@@ -60,12 +60,12 @@
                                 </i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900"> {{ groupStanding.group.name }}
+                                <div class="text-lg font-semibold text-gray-900"> {{ groupStanding.group.name }}
                                     @if (groupStanding.group.venue) {
                                     <span class="text-lg text-gray-600 font-normal"> - {{ groupStanding.group.venue.name
                                         }} </span>
                                     }
-                                </h3>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -154,9 +154,10 @@
     @if (!loading && !tournament) {
     <div class="text-center py-12">
         <p-message severity="warn"
-            text="Tournament Not Found. The tournament you're looking for doesn't exist or has been removed."
+            content="Tournament Not Found. The tournament you're looking for doesn't exist or has been removed."
             styleClass="w-full">
         </p-message>
     </div>
     }
+  </div>
 </div>

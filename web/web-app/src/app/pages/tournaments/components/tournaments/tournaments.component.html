@@ -1,19 +1,19 @@
-<div class="card">
+<div class="container-base p-4">
+  <div class="card">
+    <div class="font-semibold text-xl mb-1">Tournaments</div>
+    <p class="text-gray-600 mb-4">Manage and view all tournaments</p>
+    <div class="flex justify-end mb-4">
+      <button pButton type="button" icon="pi pi-refresh" [disabled]="loading" (click)="refreshTournaments()"
+          pTooltip="Refresh tournament statuses" class="mr-2" severity="secondary">
+      </button>
+      <button pButton type="button" icon="pi pi-plus" (click)="navigateToCreate()" class="">
+      </button>
+    </div>
+
     <p-toast>
     </p-toast>
     <p-confirmDialog>
     </p-confirmDialog>
-    <!-- Page Header -->
-    <app-page-header title="Tournaments" subtitle=""
-        [breadcrumbs]="breadcrumbs">
-        <div header-actions class="flex gap-2 pr-2">
-            <button pButton type="button" icon="pi pi-refresh" [disabled]="loading" (click)="refreshTournaments()"
-                pTooltip="Refresh tournament statuses" class="lg ">
-            </button>
-            <button pButton type="button" icon="pi pi-plus" (click)="navigateToCreate()" class="lg ">
-            </button>
-        </div>
-    </app-page-header>
 
     @if (tournaments.length === 0 && !loading) {
     <div class="text-center py-8">
@@ -34,7 +34,7 @@
             <p-table [value]="tournaments" [dataKey]="'id'" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tournaments"
                 [rowsPerPageOptions]="[5, 10, 25, 50]"
-                [globalFilterFields]="['name', 'venue.name', 'venueType.name', 'status.name']" styleClass="p-datatable-sm">
+                [globalFilterFields]="['name', 'venue.name', 'venueType.name', 'status.name']" class="p-datatable-sm">
                 <ng-template pTemplate="header">
                     <tr>
                         <th pSortableColumn="name">Name <p-sortIcon field="name">
@@ -65,9 +65,9 @@
                                 <i class="pi pi-trophy text-primary">
                                 </i>
                                 <div class="flex flex-col">
-                                    <span class="font-semibold">{{tournament.name}}</span>
+                                    <span class="font-semibold text-lg">{{tournament.name}}</span>
                                     @if (tournament.club?.name) {
-                                        <span class="text-sm text-gray-500">{{tournament.club.name}}</span>
+                                        <span class="text-md text-gray-500">{{tournament.club.name}}</span>
                                     }
                                 </div>
                             </div>
@@ -79,7 +79,7 @@
                         <td class="cursor-pointer" (click)="viewTournament(tournament)">{{tournament.endDate |
                             date:'mediumDate'}}</td>
                         <td class="cursor-pointer" (click)="viewTournament(tournament)">
-                            <span class="px-2 py-0.5 rounded text-xs font-medium"
+                            <span class="px-2 py-0.5 rounded text-md font-medium"
                                 [style.background-color]="getStatusColor(tournament)"
                                 [style.color]="getStatusTextColor(tournament)"> {{getStatusName(tournament)}} </span>
                         </td>
@@ -89,15 +89,25 @@
                             <div class="flex gap-1 justify-center">
                                 @if (isAdmin) {
                                     <div class="flex gap-1">
-                                        <button pButton type="button" icon="pi pi-times"
-                                            class="p-button-sm p-button-outlined p-button-danger"
+                                        <p-button 
+                                            icon="pi pi-times"
+                                            size="small"
+                                            severity="danger"
+                                            [text]="true"
                                             [disabled]="getStatusId(tournament) === 'cancelled' || saving"
-                                            (click)="cancelTournament(tournament, $event)" pTooltip="Cancel tournament">
-                                        </button>
-                                        <button pButton type="button" icon="pi pi-trash"
-                                            class="p-button-sm p-button-outlined p-button-danger" [disabled]="saving"
-                                            (click)="deleteTournament(tournament, $event)" pTooltip="Delete tournament">
-                                        </button>
+                                            (onClick)="cancelTournament(tournament, $event)"
+                                            [pTooltip]="'Cancel tournament'">
+                                        </p-button>
+
+                                        <p-button 
+                                            icon="pi pi-trash"
+                                            size="small"
+                                            severity="danger"
+                                            [text]="true"
+                                            [disabled]="saving"
+                                            (onClick)="deleteTournament(tournament, $event)"
+                                            [pTooltip]="'Delete tournament'">
+                                        </p-button>
                                     </div>
                                 }
                             </div>
@@ -109,7 +119,7 @@
                         <td colspan="7" class="text-center py-8">
                             <i class="pi pi-trophy text-4xl text-400 mb-4">
                             </i>
-                            <h3 class="text-xl font-semibold mb-2">No Tournaments Found</h3>
+                            <div class="text-xl font-semibold mb-2">No Tournaments Found</div>
                             <p class="text-500">No tournaments match your criteria.</p>
                         </td>
                     </tr>
@@ -128,7 +138,7 @@
                     <div class="mb-3">
                         <div class="flex justify-between items-start mb-2">
                             <div class="cursor-pointer flex-1 min-w-0" (click)="viewTournament(tournament)">
-                                <h3 class="text-lg font-semibold text-gray-900 truncate">{{ tournament.name }}</h3>
+                                <div class="text-lg font-semibold text-gray-900 truncate">{{ tournament.name }}</div>
                                 @if (tournament.club?.name) {
                                     <p class="text-sm text-gray-500 truncate">{{ tournament.club?.name }}</p>
                                 }
@@ -157,8 +167,7 @@
                     </div>
                     <div class="space-y-2 text-sm text-gray-600 cursor-pointer" (click)="viewTournament(tournament)">
                         <div class="flex items-center">
-                            <i class="pi pi-map-marker mr-2">
-                            </i>
+                            <i class="pi pi-map-marker mr-2"></i>
                             <span>{{ tournament.venue?.name || tournament.venueType.name || 'Venue TBD' }}</span>
                         </div>
                         <div class="flex items-center">
@@ -189,4 +198,5 @@
             </p-message>
         </div>
     }
+  </div>
 </div>

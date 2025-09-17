@@ -82,7 +82,6 @@ public class TournamentTeam extends PanacheEntityBase {
         }
     }
     
-    // Legacy methods for backward compatibility
     public List<String> getPlayerUids() {
         return getPlayerFirebaseUids();
     }
@@ -140,7 +139,6 @@ public class TournamentTeam extends PanacheEntityBase {
         this.player2FirebaseUid = player2FirebaseUid;
     }
     
-    // Legacy getters for backward compatibility
     public String getPlayer1Uid() {
         return player1FirebaseUid;
     }

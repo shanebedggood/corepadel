@@ -1,9 +1,7 @@
-<div class="rules-container p-4">
-  <!-- Header -->
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-2">Padel Rules</h1>
-    <p class="text-gray-600">Essential rules and guidelines for playing padel</p>
-  </div>
+<div class="container-base p-4">
+  <div class="card">
+    <div class="font-semibold text-xl mb-4">Padel Rules</div>
+    <p class="text-gray-600 mb-6">Essential rules and guidelines for playing padel</p>
 
   <!-- Loading State -->
   @if (loading) {
@@ -28,7 +26,7 @@
     <div class="text-red-400 mb-4">
       <i class="pi pi-exclamation-triangle text-6xl"></i>
     </div>
-    <h3 class="text-xl font-semibold text-red-600 mb-2">Failed to load rules</h3>
+    <div class="text-xl font-semibold text-red-600 mb-2">Failed to load rules</div>
     <p class="text-red-500">
       There was an error loading the padel rules. Please try again later.
     </p>
@@ -51,11 +49,11 @@
               <div class="rule-number-badge">
                 {{ rule?.order_number || (i + 1) }}
               </div>
+              <div class="text-lg font-semibold text-gray-800 flex-1 text-center">{{ rule?.title || 'Untitled Rule' }}</div>
               <div class="rule-category">
-                <i class="pi pi-book text-green-600"></i>
+                <i class="pi pi-book text-gray-800"></i>
               </div>
             </div>
-            <h3 class="text-lg font-semibold text-gray-800 mt-3">{{ rule?.title || 'Untitled Rule' }}</h3>
           </div>
         </ng-template>
 
@@ -69,7 +67,7 @@
             </div>
 
             <!-- Rule Stats -->
-            <div class="rule-stats flex items-center justify-between text-xs text-gray-500">
+            <div class="rule-stats flex items-center justify-between text-md text-gray-500">
               <span class="flex items-center">
                 <i class="pi pi-list mr-1"></i>
                 {{ (rule?.sections || []).length }} section{{ (rule?.sections || []).length !== 1 ? 's' : '' }}
@@ -100,7 +98,7 @@
     <div class="text-gray-400 mb-4">
       <i class="pi pi-book text-6xl"></i>
     </div>
-    <h3 class="text-xl font-semibold text-gray-600 mb-2">No rules available</h3>
+    <div class="text-xl font-semibold text-gray-600 mb-2">No rules available</div>
     <p class="text-gray-500">
       No padel rules are currently available.
     </p>
@@ -118,9 +116,9 @@
           <div class="rule-number-badge-large">
             {{ getSelectedRuleOrderNumber() }}
           </div>
-          <h2 class="text-2xl font-bold text-gray-800">
+          <div class="text-2xl font-bold text-gray-800">
             {{ getSelectedRuleTitle() }}
-          </h2>
+          </div>
         </div>
         <button class="modal-close" (click)="closeRuleModal()">
           <i class="pi pi-times"></i>
@@ -155,3 +153,4 @@
   </div>
 </div>
 }
+</div>

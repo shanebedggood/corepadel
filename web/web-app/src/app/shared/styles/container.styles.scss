@@ -1,0 +1,12 @@
+// Shared container styles for consistent look and feel across components
+.container-base {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .container-base {
+    padding: 0.5rem;
+  }
+}

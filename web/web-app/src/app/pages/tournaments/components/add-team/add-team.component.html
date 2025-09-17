@@ -4,7 +4,7 @@
 
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ isEditing ? 'Edit Team' : 'Add Team' }}</h1>
+        <div class="text-2xl font-bold text-gray-900 mb-2">{{ isEditing ? 'Edit Team' : 'Add Team' }}</div>
         @if (group) {
             <p class="text-gray-600">
                 {{ isEditing ? 'Editing team in' : 'Adding team to' }} {{ group.name }}
@@ -14,7 +14,7 @@
 
     <!-- Team Form -->
     <div class="mb-6">
-        <h2 class="text-lg font-semibold mb-4">Team Details</h2>
+        <div class="text-lg font-semibold mb-4">Team Details</div>
         <form [formGroup]="teamForm" class="space-y-4">
             <div class="field">
                 <label for="addTeamName" class="block mb-2 font-medium">Team Name</label>
@@ -30,7 +30,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <!-- Search Section -->
         <div>
-            <h2 class="text-lg font-semibold mb-4">Search Players</h2>
+            <div class="text-lg font-semibold mb-4">Search Players</div>
 
             <!-- Search Input -->
             <div class="mb-4">
@@ -73,7 +73,7 @@
 
         <!-- Selected Players -->
         <div>
-            <h2 class="text-lg font-semibold mb-4">Selected Players</h2>
+            <div class="text-lg font-semibold mb-4">Selected Players</div>
             <div class="border rounded-lg p-4 shadow-sm bg-white" [ngClass]="{ 
           'border-green-300 bg-green-50': selectedPlayers.length >= 1, 
           'border-gray-300 bg-gray-50': selectedPlayers.length === 0 

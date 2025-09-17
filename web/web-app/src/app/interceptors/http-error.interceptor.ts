@@ -30,6 +30,11 @@ export const httpErrorInterceptor: HttpInterceptorFn = (
         return throwError(() => error);
       }
 
+      // Suppress global toast for known, component-handled conflicts (booking same day)
+      if (error.status === 409 && req.url.includes('/court-bookings')) {
+        return throwError(() => error);
+      }
+
       // Map error using the centralized mapping service
       const errorMapping = errorMappingService.mapHttpError(error);
 

@@ -10,7 +10,6 @@ import { DividerModule } from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';
 import { TabsModule } from 'primeng/tabs';
 import { InputTextModule } from 'primeng/inputtext';
-// CalendarModule removed - using HTML5 datetime-local input instead
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -20,7 +19,6 @@ import { MessageModule } from 'primeng/message';
 import { MessageService } from 'primeng/api';
 import { TournamentService, Tournament, TournamentMatch, TournamentTeam, TournamentGroup } from '../../../../services/tournament.service';
 import { VenueService, Venue } from '../../../../services/venue.service';
-import { PageHeaderComponent, BreadcrumbItem } from '../../../../layout/component/page-header.component';
 import { FormsModule } from "@angular/forms";
 
 interface MatchWithTeams extends TournamentMatch {
@@ -48,12 +46,11 @@ interface MatchWithTeams extends TournamentMatch {
         ConfirmDialogModule,
         ToastModule,
         MessageModule,
-        PageHeaderComponent,
         FormsModule
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './match-schedule.component.html',
-    styles: []
+    styleUrls: ['../../../../shared/styles/container.styles.scss']
 })
 export class MatchScheduleComponent implements OnInit {
     tournamentId: string = '';
@@ -72,12 +69,6 @@ export class MatchScheduleComponent implements OnInit {
     // Edit match properties
     editingMatch: MatchWithTeams | null = null;
     showEditDialog: boolean = false;
-
-    // Page header configuration
-    breadcrumbs: BreadcrumbItem[] = [
-        { label: 'Tournaments', route: '/admin/tournaments', icon: 'pi pi-trophy' },
-        { label: 'Match Schedule' }
-    ];
 
     constructor(
         private tournamentService: TournamentService,

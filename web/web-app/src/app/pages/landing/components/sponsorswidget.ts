@@ -12,9 +12,9 @@ import { map, catchError } from 'rxjs/operators';
     <section class="py-16 bg-gray-50">
       <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <div class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Our Sponsors
-          </h2>
+          </div>
           <p class="text-xl text-gray-600">
             Proud to partner with leading brands in the padel community
           </p>
@@ -34,7 +34,7 @@ import { map, catchError } from 'rxjs/operators';
                   />
                 </div>
               }
-              <h3 class="text-xl font-semibold text-gray-900 mb-2">The world's best shot.</h3>
+              <div class="text-xl font-semibold text-gray-900 mb-2">The world's best shot.</div>
             </div>
           </div>
 
@@ -51,7 +51,7 @@ import { map, catchError } from 'rxjs/operators';
                   />
                 </div>
               }
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">Club Partner</h3>
+              <div class="text-lg font-semibold text-gray-900 mb-2">Club Partner</div>
             </div>
           </div>
         </div>

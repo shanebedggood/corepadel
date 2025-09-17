@@ -45,7 +45,7 @@
     <div class="table-container">
       <p-table [value]="courtSchedules" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
         [lazy]="false" [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schedules"
-        [rowsPerPageOptions]="[10, 25, 50]" styleClass="p-datatable-sm">
+        [rowsPerPageOptions]="[10, 25, 50]" class="p-datatable-sm">
         
         <ng-template pTemplate="header">
           <tr>
@@ -58,7 +58,6 @@
             <th>Day of Week</th>
             <th>Venue</th>
             <th>Time Slot</th>
-            <th>Courts</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -69,7 +68,11 @@
             <td>{{ formatDate(schedule.startDate) }}</td>
             <td>{{ formatDate(schedule.endDate) }}</td>
             <td>
-              <span class="days-badge">{{ formatDaysOfWeek(schedule.scheduleDays) }}</span>
+              <div class="days-with-courts">
+                @for (dayWithCourt of formatDaysWithCourts(schedule.scheduleDays); track dayWithCourt) {
+                  <span class="day-court-badge">{{ dayWithCourt }}</span>
+                }
+              </div>
             </td>
             <td>
               <div class="venue-info">
@@ -82,13 +85,6 @@
               <div class="time-slots">
                 @for (slot of getUniqueTimeSlots(schedule.scheduleDays); track slot.timeSlot + slot.gameDuration) {
                   <span class="time-badge">{{ slot.timeSlot }} ({{ slot.gameDuration }}min)</span>
-                }
-              </div>
-            </td>
-            <td>
-              <div class="court-counts">
-                @for (day of schedule.scheduleDays; track day.dayOfWeek + day.timeSlot) {
-                  <span class="court-badge">{{ day.courtCount || 1 }} courts</span>
                 }
               </div>
             </td>
@@ -111,7 +107,7 @@
 
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="7" class="text-center">
+            <td colspan="6" class="text-center">
               <div class="empty-table-message">
                 <i class="pi pi-calendar-times"></i>
                 <p>No court schedules found</p>

@@ -157,7 +157,7 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
         @if (emailSent) {
           <div class="text-center w-full max-w-[30rem] mx-auto">
           <i class="pi pi-check-circle text-6xl text-green-500 mb-4"></i>
-          <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mb-2">Check Your Email</h2>
+          <div class="text-xl font-semibold text-surface-900 dark:text-surface-0 mb-2">Check Your Email</div>
           <p class="text-surface-600 dark:text-surface-400 mb-4">
             We've sent a secure {{ isSignUpMode ? 'sign-up' : 'sign-in' }} link to <strong>{{ email }}</strong>
           </p>
@@ -190,7 +190,7 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
             @if (!processingLink) {
               <div>
             <i class="pi pi-link text-6xl text-blue-500 mb-4"></i>
-            <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mb-2">Completing Sign-In</h2>
+            <div class="text-xl font-semibold text-surface-900 dark:text-surface-0 mb-2">Completing Sign-In</div>
             <p class="text-surface-600 dark:text-surface-400 mb-4">
               Please wait while we complete your sign-in...
             </p>

@@ -9,12 +9,12 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
-// CalendarModule removed - using HTML5 datetime-local input instead
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { TableModule } from 'primeng/table';
+import { DatePickerModule } from 'primeng/datepicker';
 
 // Services
 import { Tournament, TournamentService, TournamentMatch, TournamentGroup, TournamentTeam, TournamentPlayer } from '../../../../services/tournament.service';
@@ -46,6 +46,7 @@ interface MatchGenerationStatus {
         InputTextModule,
         InputNumberModule,
         SelectModule,
+        DatePickerModule,
         DialogModule,
         TooltipModule,
         SelectModule,
@@ -96,7 +97,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
     filterGroup: string = '';
     filterVenue: string = '';
     filterStatus: string = '';
-    filterDate: string = '';
+    filterDate: Date | null = null;
 
 
 
@@ -433,11 +434,13 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         }
 
         // Filter by date
-        if (this.filterDate && this.filterDate.trim() !== '') {
+        if (this.filterDate) {
+            const selected = this.filterDate instanceof Date ? this.filterDate : new Date(this.filterDate as any);
+            const selectedYmd = selected.toISOString().split('T')[0];
             filtered = filtered.filter(match => {
                 if (!match.scheduledTime) return false;
-                const matchDate = new Date(match.scheduledTime).toISOString().split('T')[0];
-                return matchDate === this.filterDate;
+                const matchYmd = new Date(match.scheduledTime as any).toISOString().split('T')[0];
+                return matchYmd === selectedYmd;
             });
         }
 
@@ -460,7 +463,7 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         this.filterGroup = '';
         this.filterVenue = '';
         this.filterStatus = '';
-        this.filterDate = '';
+        this.filterDate = null;
     }
 
     // Match editing methods
@@ -474,11 +477,9 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         event.stopPropagation(); // Prevent row click
         this.editingMatch = { ...match };
 
-        let scheduledTime = null;
+        let scheduledTime: Date | null = null;
         if (match.scheduledTime) {
-            const date = new Date(match.scheduledTime);
-            // Format for datetime-local input: YYYY-MM-DDTHH:MM
-            scheduledTime = date.toISOString().slice(0, 16);
+            scheduledTime = new Date(match.scheduledTime as any);
         }
 
         this.scheduleForm.patchValue({
@@ -498,11 +499,10 @@ export class TournamentMatchesComponent implements OnInit, OnDestroy, OnChanges 
         if (this.editingMatch) {
             const formValue = this.scheduleForm.value;
 
-            // Convert the datetime-local string to a date-time string to avoid timezone issues
+            // Convert Date to a date-time string to avoid timezone issues
             let scheduledTime: string | undefined = undefined;
             if (formValue.scheduledTime) {
-                // Format as YYYY-MM-DDTHH:mm to avoid timezone conversion
-                const date = new Date(formValue.scheduledTime);
+                const date: Date = new Date(formValue.scheduledTime);
                 scheduledTime = this.formatDateTimeOnly(date);
             }
 

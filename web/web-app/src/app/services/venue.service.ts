@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, catchError, of, throwError, map } from 'rxjs';
 import { QuarkusVenueService, Venue } from './quarkus-venue.service';
+import { FirebaseAuthService } from './firebase-auth.service';
 
 // Re-export the Venue interface for backward compatibility
 export type { Venue } from './quarkus-venue.service';
@@ -13,7 +14,7 @@ export class VenueService {
   private cacheExpiry = 30 * 60 * 1000; // 30 minutes
   private lastFetch = 0;
 
-  constructor(private quarkusVenueService: QuarkusVenueService) {}
+  constructor(private quarkusVenueService: QuarkusVenueService, private auth: FirebaseAuthService) {}
 
   /**
    * Get all venues from Quarkus backend.
@@ -97,6 +98,20 @@ export class VenueService {
         return throwError(() => error);
       })
     );
+  }
+
+  getFavouriteClubIds(): Observable<string[]> {
+    const user = this.auth.getCurrentUser();
+    if (!user?.uid) return of([]);
+    return this.quarkusVenueService.getFavouriteClubs(user.uid);
+  }
+
+  toggleFavouriteClub(clubId: string, isCurrentlyFavourite: boolean): Observable<void> {
+    const user = this.auth.getCurrentUser();
+    if (!user?.uid) return throwError(() => new Error('Not authenticated'));
+    return isCurrentlyFavourite
+      ? this.quarkusVenueService.removeFavouriteClub(user.uid, clubId)
+      : this.quarkusVenueService.addFavouriteClub(user.uid, clubId);
   }
 
   /**

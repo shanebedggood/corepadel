@@ -7,6 +7,7 @@ import { DividerModule } from 'primeng/divider';
 import { AccordionModule } from 'primeng/accordion';
 import { BadgeModule } from 'primeng/badge';
 import { QuarkusRulesService, PadelRule, RuleSection } from '../../services/quarkus-rules.service';
+// Removed breadcrumbs
 
 
 @Component({
@@ -22,13 +23,14 @@ import { QuarkusRulesService, PadelRule, RuleSection } from '../../services/quar
         BadgeModule
     ],
     templateUrl: './rules.component.html',
-    styleUrls: ['./rules.component.scss']
+    styleUrls: ['./rules.component.scss', '../../shared/styles/container.styles.scss']
 })
 export class Rules implements OnInit {
     padelRules: PadelRule[] = [];
     selectedRuleIndex: number | null = null;
     loading = true;
     error = false;
+    
 
     constructor(private padelRulesService: QuarkusRulesService) { }
 

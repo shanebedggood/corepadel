@@ -172,6 +172,56 @@ public class UserResource {
         }
     }
     
+    // ---- Favourites ----
+    @GET
+    @Path("/firebase/{firebaseUid}/favourites")
+    public Response getFavouriteClubs(@PathParam("firebaseUid") String firebaseUid) {
+        try {
+            var favs = UserFavouriteClub.list("firebaseUid", firebaseUid);
+            return Response.ok(favs).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error retrieving favourites: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    @POST
+    @Path("/firebase/{firebaseUid}/favourites/{clubId}")
+    @jakarta.transaction.Transactional
+    public Response addFavourite(@PathParam("firebaseUid") String firebaseUid, @PathParam("clubId") java.util.UUID clubId) {
+        try {
+            UserFavouriteClub existing = UserFavouriteClub.find("firebaseUid = ?1 and clubId = ?2", firebaseUid, clubId).firstResult();
+            if (existing != null) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            UserFavouriteClub fav = new UserFavouriteClub();
+            fav.firebaseUid = firebaseUid;
+            fav.clubId = clubId;
+            fav.persist();
+            return Response.status(Response.Status.CREATED).entity(fav).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error adding favourite: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    @DELETE
+    @Path("/firebase/{firebaseUid}/favourites/{clubId}")
+    @jakarta.transaction.Transactional
+    public Response removeFavourite(@PathParam("firebaseUid") String firebaseUid, @PathParam("clubId") java.util.UUID clubId) {
+        try {
+            long deleted = UserFavouriteClub.delete("firebaseUid = ?1 and clubId = ?2", firebaseUid, clubId);
+            if (deleted > 0) return Response.noContent().build();
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error removing favourite: " + e.getMessage())
+                    .build();
+        }
+    }
+    
 
     
 

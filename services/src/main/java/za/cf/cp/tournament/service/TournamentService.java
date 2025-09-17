@@ -31,8 +31,8 @@ public class TournamentService {
     @Inject
     EntityManager entityManager;
     
-    // @Inject
-    // TournamentConfigService tournamentConfigService;
+    @Inject
+    TournamentConfigService tournamentConfigService;
     
     @Inject
     za.cf.cp.club.service.ClubService clubService;
@@ -231,19 +231,19 @@ public class TournamentService {
             
             // Convert related entities to DTOs
             if (tournament.getFormat() != null) {
-                // dto.setFormat(tournamentConfigService.convertFormatToDto(tournament.getFormat()));
+                dto.setFormat(tournamentConfigService.convertFormatToDto(tournament.getFormat()));
             }
             if (tournament.getCategory() != null) {
-                // dto.setCategory(tournamentConfigService.convertCategoryToDto(tournament.getCategory()));
+                dto.setCategory(tournamentConfigService.convertCategoryToDto(tournament.getCategory()));
             }
             if (tournament.getRegistrationType() != null) {
-                // dto.setRegistrationType(tournamentConfigService.convertRegistrationTypeToDto(tournament.getRegistrationType()));
+                dto.setRegistrationType(tournamentConfigService.convertRegistrationTypeToDto(tournament.getRegistrationType()));
             }
             if (tournament.getStatus() != null) {
-                // dto.setStatus(tournamentConfigService.convertStatusToDto(tournament.getStatus()));
+                dto.setStatus(tournamentConfigService.convertStatusToDto(tournament.getStatus()));
             }
             if (tournament.getVenueType() != null) {
-                // dto.setVenueType(tournamentConfigService.convertVenueTypeToDto(tournament.getVenueType()));
+                dto.setVenueType(tournamentConfigService.convertVenueTypeToDto(tournament.getVenueType()));
             }
             
             return dto;
@@ -263,7 +263,7 @@ public class TournamentService {
         
         // Convert Round Robin specific entities to DTOs
         if (tournament.getProgressionType() != null) {
-            // dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
+            dto.setProgressionOption(tournamentConfigService.convertProgressionTypeToDto(tournament.getProgressionType()));
         }
         if (tournament.getTeamsToAdvance() != null) {
             dto.setTeamsToAdvance(tournament.getTeamsToAdvance());

@@ -12,7 +12,7 @@ import { TournamentService, Tournament, TournamentGroup, TournamentTeam } from '
 import { VenueService, Venue } from '../../../../services/venue.service';
 import { FirebaseAuthService } from '../../../../services/firebase-auth.service';
 import { Observable, combineLatest, map, catchError, of, switchMap, tap, forkJoin } from 'rxjs';
-import { PageHeaderComponent, BreadcrumbItem } from '../../../../layout/component/page-header.component';
+// PageHeaderComponent removed - using simple header structure
 
 interface TeamStanding {
     team: TournamentTeam;
@@ -45,10 +45,9 @@ interface GroupStanding {
         DividerModule,
         TooltipModule,
         MessageModule,
-        PageHeaderComponent
     ],
     templateUrl: './standings.component.html',
-    styles: []
+    styleUrls: ['../../../../shared/styles/container.styles.scss']
 })
 export class StandingsComponent implements OnInit {
     tournamentId: string = '';
@@ -57,12 +56,6 @@ export class StandingsComponent implements OnInit {
     errorMessage: string = '';
     groupStandings: GroupStanding[] = [];
     venues: Venue[] = [];
-
-    // Page header configuration
-    breadcrumbs: BreadcrumbItem[] = [
-        { label: 'Tournaments', route: '/admin/tournaments', icon: 'pi pi-trophy' },
-        { label: 'Standings' }
-    ];
 
     constructor(
         private tournamentService: TournamentService,
@@ -95,15 +88,6 @@ export class StandingsComponent implements OnInit {
                 switchMap(({ tournament, venues }) => {
                     this.tournament = tournament;
                     this.venues = venues;
-
-                    // Update breadcrumbs with tournament name
-                    if (tournament) {
-                        this.breadcrumbs = [
-                            { label: 'Tournaments', route: '/admin/tournaments', icon: 'pi pi-trophy' },
-                            { label: tournament.name, route: `/admin/edit-tournament/${tournament.id}` },
-                            { label: 'Standings' }
-                        ];
-                    }
 
                     // Load groups and teams
                     return this.tournamentService.getTournamentGroups(this.tournamentId).pipe(

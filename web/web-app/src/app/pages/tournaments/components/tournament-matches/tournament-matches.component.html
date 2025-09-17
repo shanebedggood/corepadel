@@ -2,7 +2,7 @@
     <!-- Match Generation Section -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">Match Schedule</h2>
+            <div class="text-xl font-semibold text-gray-900">Match Schedule</div>
             <div class="flex flex-wrap gap-2">
                 <button 
                     pButton 
@@ -51,7 +51,7 @@
 
     <!-- Match Statistics -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <h4 class="text-lg font-semibold text-gray-900 mb-4">Match Statistics</h4>
+        <div class="text-lg font-semibold text-gray-900 mb-4">Match Statistics</div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div class="text-center p-4 bg-gray-50 rounded-lg">
                 <div class="text-2xl font-bold text-gray-900">{{ getMatchStats().total }}</div>
@@ -104,7 +104,7 @@
                 </div>
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-700">Date:</label>
-                    <input type="date" pInputText [(ngModel)]="filterDate" class="w-full">
+                    <p-datepicker [(ngModel)]="filterDate" dateFormat="dd M yy" [showIcon]="true" styleClass="w-full" placeholder="Select date"></p-datepicker>
                 </div>
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-700">&nbsp;</label>
@@ -313,7 +313,7 @@
         <div class="flex items-center justify-center min-h-64">
             <div class="text-center max-w-md">
                 <i class="pi pi-calendar-times text-6xl mb-4 block text-gray-400"></i>
-                <h5 class="text-xl font-medium text-gray-600 mb-2">No matches found</h5>
+                <div class="text-xl font-medium text-gray-600 mb-2">No matches found</div>
                 <p class="text-sm text-gray-500 mb-4">
                     No matches have been generated yet or no matches match your current filters.
                 </p>
@@ -362,7 +362,7 @@
         @if (editingMatch) {
             <div class="p-0">
                 <div class="border-b border-gray-200 p-5 pb-4">
-                    <h4 class="text-xl font-semibold text-gray-900 mb-3">Edit Match Schedule</h4>
+                    <div class="text-xl font-semibold text-gray-900 mb-3">Edit Match Schedule</div>
                     <div class="space-y-1">
                         <div class="text-lg font-semibold text-gray-900">{{ getTeamName(editingMatch.team1Id) }} vs {{ getTeamName(editingMatch.team2Id) }}</div>
                         <div class="text-sm text-gray-600">{{ getTeamPlayerNames(editingMatch.team1Id) }} vs {{ getTeamPlayerNames(editingMatch.team2Id) }}</div>
@@ -373,7 +373,7 @@
                 <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule()" class="p-5 pt-4">
                     <div class="mb-5">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Scheduled Date & Time</label>
-                        <input type="datetime-local" pInputText formControlName="scheduledTime" class="w-full p-2 border border-gray-300 rounded">
+                        <p-datepicker formControlName="scheduledTime" [showTime]="true" hourFormat="24" dateFormat="dd M yy" [showIcon]="true" styleClass="w-full"></p-datepicker>
                         <small class="block mt-1 text-xs text-gray-500">Leave empty to remove scheduling</small>
                     </div>
 

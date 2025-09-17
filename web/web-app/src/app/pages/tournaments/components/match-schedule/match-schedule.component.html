@@ -1,4 +1,5 @@
-<div class="card">
+<div class="container-base p-4">
+  <div class="card">
     <p-toast>
     </p-toast>
     <p-confirmDialog>
@@ -18,14 +19,13 @@
     @if (!loading && tournament) {
         <div class="w-full">
             <!-- Page Header -->
-            <app-page-header [title]="tournament.name + ' - Match Schedule'" subtitle="View and manage tournament matches"
-                [breadcrumbs]="breadcrumbs">
-                <div header-actions class="flex items-center gap-4">
-                    <button pButton type="button" label="Back to Tournament" icon="pi pi-arrow-left"
-                        class="p-button-outlined lg " (click)="goBack()">
-                    </button>
-                </div>
-            </app-page-header>
+            <div class="font-semibold text-xl mb-1">{{ tournament.name }} - Match Schedule</div>
+            <p class="text-gray-600 mb-4">View and manage tournament matches</p>
+            <div class="flex justify-end mb-4">
+                <button pButton type="button" label="Back to Tournament" icon="pi pi-arrow-left"
+                    class="p-button-outlined" (click)="goBack()">
+                </button>
+            </div>
             
             <!-- Match Statistics -->
             <div class="mb-6">
@@ -90,7 +90,7 @@
             <div class="mb-6">
                 <p-card styleClass="shadow-sm">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Matches</h3>
+                        <div class="text-lg font-semibold text-gray-900">Matches</div>
                         <span class="text-sm text-gray-600">{{ getFilteredMatches().length }} matches found</span>
                     </div>
                     <p-table [value]="getFilteredMatches()" [dataKey]="'id'" [paginator]="true" [rows]="20" [showCurrentPageReport]="true"
@@ -189,6 +189,7 @@
             </button>
         </div>
     }
+  </div>
 </div>
 
 <!-- Edit Match Dialog -->

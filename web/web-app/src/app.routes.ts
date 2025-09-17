@@ -79,10 +79,6 @@ export const appRoutes: Routes = [
             { path: 'profile', component: ProfileComponent, data: { title: 'My Profile' } }
         ]
     },
-    
-    // Legacy redirects
-    { path: 'app', redirectTo: '/choose-role' },
-    
     // Error routes
     { path: 'notfound', component: NotfoundComponent },
     { path: '**', redirectTo: '/notfound' }

@@ -12,6 +12,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageModule } from 'primeng/message';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { DatePickerModule } from 'primeng/datepicker';
 
 // Services
 import { TournamentService, Tournament, TournamentMatch, TournamentTeam, TournamentGroup } from '../../../../services/tournament.service';
@@ -34,6 +35,7 @@ import { MatchScoreDisplayComponent } from '../match-score-display/match-score-d
         TooltipModule,
         MessageModule,
         ToastModule,
+        DatePickerModule,
         MatchScoreDisplayComponent
     ],
     templateUrl: './tournament-knockout-matches.component.html',
@@ -64,7 +66,7 @@ export class TournamentKnockoutMatchesComponent implements OnInit, OnChanges, On
     // Filters
     filterPhase: string = '';
     filterStatus: string = '';
-    filterDate: string = '';
+    filterDate: Date | null = null;
 
     // Mobile view detection
     isMobileView: boolean = false;
@@ -241,9 +243,12 @@ export class TournamentKnockoutMatchesComponent implements OnInit, OnChanges, On
         return this.knockoutMatches.filter(match => {
             const phaseMatch = !this.filterPhase || match.phase.toLowerCase().includes(this.filterPhase.toLowerCase());
             const statusMatch = !this.filterStatus || match.status === this.filterStatus;
-            const dateMatch = !this.filterDate || (match.scheduledTime && 
-                new Date(match.scheduledTime).toDateString() === new Date(this.filterDate).toDateString());
-            
+            const dateMatch = !this.filterDate || (match.scheduledTime && (() => {
+                const selected = this.filterDate as Date;
+                const selectedYmd = new Date(selected as any).toISOString().split('T')[0];
+                const matchYmd = new Date(match.scheduledTime as any).toISOString().split('T')[0];
+                return selectedYmd === matchYmd;
+            })());
             return phaseMatch && statusMatch && dateMatch;
         });
     }
@@ -251,7 +256,7 @@ export class TournamentKnockoutMatchesComponent implements OnInit, OnChanges, On
     clearFilters(): void {
         this.filterPhase = '';
         this.filterStatus = '';
-        this.filterDate = '';
+        this.filterDate = null;
     }
 
     getMatchStats() {

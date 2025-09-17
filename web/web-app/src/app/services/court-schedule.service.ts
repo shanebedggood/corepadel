@@ -40,7 +40,6 @@ export interface CourtBooking {
     venueId: string;
     courtNumber?: number;
     teamNumber?: number; // Team number: 1 or 2 (padel has 2 teams of 2 players each)
-    teamPosition?: number; // Position within team: 1 or 2 (each team has 2 players)
     status: 'confirmed' | 'cancelled' | 'completed';
 }
 

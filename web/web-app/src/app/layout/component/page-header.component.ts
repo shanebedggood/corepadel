@@ -43,9 +43,9 @@ interface PrimeBreadcrumbItem {
       <!-- Page Title -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+          <div class="text-3xl font-bold text-gray-900 dark:text-white">
             {{ title }}
-          </h1>
+          </div>
           @if (subtitle) {
             <p class="text-gray-600 dark:text-gray-400 mb-1">
               {{ subtitle }}
