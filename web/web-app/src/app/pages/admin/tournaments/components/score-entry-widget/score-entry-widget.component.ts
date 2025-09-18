@@ -11,7 +11,7 @@ import { MessageService } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { TournamentService, Tournament, TournamentMatch, TournamentTeam } from '../../../../services/tournament.service';
+import { TournamentService, Tournament, TournamentMatch, TournamentTeam } from '../../../../../services/tournament.service';
 import { Observable, Subscription, combineLatest, map, of } from 'rxjs';
 
 interface MatchWithTeams extends TournamentMatch {
@@ -74,11 +74,11 @@ export class ScoreEntryWidgetComponent implements OnInit, OnDestroy {
     loadTournaments() {
         this.loading = true;
         const sub = this.tournamentService.getTournaments().subscribe({
-            next: (tournaments) => {
+            next: (tournaments: Tournament[]) => {
                 this.tournaments = tournaments;
                 this.loading = false;
             },
-            error: (error) => {
+            error: (error: any) => {
                 console.error('Error loading tournaments:', error);
                 this.messageService.add({
                     life: 0, // Make toast sticky
@@ -127,13 +127,13 @@ export class ScoreEntryWidgetComponent implements OnInit, OnDestroy {
     private enrichMatches(matches: TournamentMatch[]) {
         // Get all teams for this tournament
         const sub = this.tournamentService.getAllTournamentTeams(this.selectedTournamentId!).subscribe({
-            next: (allTeams) => {
+            next: (allTeams: TournamentTeam[][]) => {
                 const flattenedTeams = allTeams.flat();
-                const tournament = this.tournaments.find(t => t.id === this.selectedTournamentId);
+                const tournament = this.tournaments.find((t: Tournament) => t.id === this.selectedTournamentId);
 
                 this.matches = matches.map(match => {
-                    const team1 = flattenedTeams.find(t => t.id === match.team1Id);
-                    const team2 = flattenedTeams.find(t => t.id === match.team2Id);
+                    const team1 = flattenedTeams.find((t: TournamentTeam) => t.id === match.team1Id);
+                    const team2 = flattenedTeams.find((t: TournamentTeam) => t.id === match.team2Id);
                     const canEditScore = this.canEditScore(match);
 
                     return {
@@ -145,7 +145,7 @@ export class ScoreEntryWidgetComponent implements OnInit, OnDestroy {
                     } as MatchWithTeams;
                 });
             },
-            error: (error) => {
+            error: (error: any) => {
                 console.error('Error loading teams:', error);
             }
         });

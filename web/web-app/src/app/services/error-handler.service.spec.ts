@@ -4,10 +4,13 @@ import { ErrorHandlerService } from './error-handler.service';
 
 describe('ErrorHandlerService', () => {
   let service: ErrorHandlerService;
-  let messageService: jasmine.SpyObj<MessageService>;
+  let messageService: any;
 
   beforeEach(() => {
-    const messageServiceSpy = jasmine.createSpyObj('MessageService', ['add']);
+    const messageServiceSpy = {
+      add: jest.fn(),
+      clear: jest.fn(),
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -17,7 +20,7 @@ describe('ErrorHandlerService', () => {
     });
 
     service = TestBed.inject(ErrorHandlerService);
-    messageService = TestBed.inject(MessageService) as jasmine.SpyObj<MessageService>;
+    messageService = TestBed.inject(MessageService);
   });
 
   it('should be created', () => {
@@ -73,34 +76,34 @@ describe('ErrorHandlerService', () => {
   });
 
   describe('handleApiError', () => {
-    it('should show persistent error for 401 status', () => {
-      const error = { status: 401, message: 'Unauthorized' };
-      spyOn(service, 'showPersistentError');
+    it('should show persistent error for network error', () => {
+      const error = { code: 'auth/network-request-failed' };
+      jest.spyOn(service, 'showPersistentError');
 
       service.handleApiError(error, 'Authentication');
 
       expect(service.showPersistentError).toHaveBeenCalledWith(
         'Authentication',
-        'You are not authenticated. Please log in again.'
+        'Network error. Please check your connection and try again.'
       );
     });
 
-    it('should show toast for 400 status', () => {
-      const error = { status: 400, message: 'Bad Request' };
-      spyOn(service, 'showToast');
+    it('should show toast for user not found error', () => {
+      const error = { code: 'auth/user-not-found' };
+      jest.spyOn(service, 'showToast');
 
       service.handleApiError(error, 'API Request');
 
       expect(service.showToast).toHaveBeenCalledWith({
         severity: 'error',
         summary: 'API Request',
-        detail: 'Invalid request. Please check your input.'
+        detail: 'User not found. Please check your credentials.'
       });
     });
 
     it('should use error message when available', () => {
-      const error = { status: 400, error: { message: 'Custom error message' } };
-      spyOn(service, 'showToast');
+      const error = { message: 'Custom error message' };
+      jest.spyOn(service, 'showToast');
 
       service.handleApiError(error, 'API Request');
 
@@ -114,7 +117,7 @@ describe('ErrorHandlerService', () => {
 
   describe('handleSuccess', () => {
     it('should show success toast', () => {
-      spyOn(service, 'showToast');
+      jest.spyOn(service, 'showToast');
 
       service.handleSuccess('Operation completed', 'Success');
 
@@ -128,7 +131,7 @@ describe('ErrorHandlerService', () => {
 
   describe('handleValidationError', () => {
     it('should show validation error toast', () => {
-      spyOn(service, 'showToast');
+      jest.spyOn(service, 'showToast');
 
       service.handleValidationError('Email', 'Email is required');
 

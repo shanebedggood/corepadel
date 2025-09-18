@@ -15,8 +15,8 @@ import { MessageService } from 'primeng/api';
 import { DatePickerModule } from 'primeng/datepicker';
 
 // Services
-import { TournamentService, Tournament, TournamentMatch, TournamentTeam, TournamentGroup } from '../../../../services/tournament.service';
-import { VenueService, Venue } from '../../../../services/venue.service';
+import { TournamentService, Tournament, TournamentMatch, TournamentTeam, TournamentGroup } from '../../../../../services/tournament.service';
+import { VenueService, Venue } from '../../../../../services/venue.service';
 
 // Components
 import { MatchScoreDisplayComponent } from '../match-score-display/match-score-display.component';

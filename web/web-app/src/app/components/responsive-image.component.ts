@@ -74,6 +74,27 @@ export class ResponsiveImageComponent implements OnInit, OnDestroy {
 
   onImageError(event: any): void {
     console.error('Image failed to load:', event);
-    // You could set a fallback image here
+    
+    if (!this.imageUrls) {
+      return;
+    }
+
+    const target = event.target as HTMLImageElement;
+    const currentSrc = target.src;
+    
+    // If the failed image is WebP, try to fallback to JPEG
+    if (currentSrc.includes('.webp')) {
+      const jpgSrc = currentSrc.replace('.webp', '.jpg');
+      if (this.imageUrls.jpg) {
+        // Find the matching size
+        if (currentSrc.includes('/small/')) {
+          target.src = this.imageUrls.jpg.small;
+        } else if (currentSrc.includes('/large/')) {
+          target.src = this.imageUrls.jpg.large;
+        } else {
+          target.src = this.imageUrls.jpg.medium;
+        }
+      }
+    }
   }
 }

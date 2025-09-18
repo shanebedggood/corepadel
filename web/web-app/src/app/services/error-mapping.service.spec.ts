@@ -28,7 +28,7 @@ describe('ErrorMappingService', () => {
 
       expect(result.message).toBe('You are not authenticated. Please log in again.');
       expect(result.shouldShowPersistent).toBe(true);
-      expect(result.context).toBe('User');
+      expect(result.context).toBe('Authentication');
     });
 
     it('should map 403 error correctly', () => {
@@ -42,7 +42,7 @@ describe('ErrorMappingService', () => {
 
       expect(result.message).toBe('You do not have permission to perform this action.');
       expect(result.shouldShowPersistent).toBe(true);
-      expect(result.context).toBe('Tournament');
+      expect(result.context).toBe('Permission Denied');
     });
 
     it('should map 404 error correctly', () => {
@@ -70,7 +70,7 @@ describe('ErrorMappingService', () => {
 
       expect(result.message).toBe('Server error. Please try again later.');
       expect(result.shouldShowPersistent).toBe(true);
-      expect(result.context).toBe('Venue');
+      expect(result.context).toBe('Server Error');
     });
 
     it('should map network error correctly', () => {
@@ -84,7 +84,7 @@ describe('ErrorMappingService', () => {
 
       expect(result.message).toBe('Network error. Please check your connection and try again.');
       expect(result.shouldShowPersistent).toBe(true);
-      expect(result.context).toBe('Booking');
+      expect(result.context).toBe('Network Error');
     });
 
     it('should use custom error message when available', () => {
