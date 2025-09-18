@@ -32,7 +32,7 @@ import { Observable, catchError, of, map, combineLatest, switchMap, filter, take
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './tournaments.component.html',
-    styleUrls: ['../../../../shared/styles/container.styles.scss']
+    styleUrls: ['../../../../shared/styles/container.styles.scss', '../../../../shared/styles/button.styles.scss']
 })
 export class TournamentsComponent implements OnInit {
     tournaments: Tournament[] = [];

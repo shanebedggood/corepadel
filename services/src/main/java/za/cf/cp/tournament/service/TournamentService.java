@@ -648,9 +648,11 @@ public class TournamentService {
             
             List<Object[]> results;
             try {
-                results = entityManager.createNativeQuery(query)
+                @SuppressWarnings("unchecked")
+                List<Object[]> tmp = (List<Object[]>) entityManager.createNativeQuery(query)
                         .setParameter(1, id)
                         .getResultList();
+                results = tmp;
             } catch (Exception e) {
                 System.err.println("Database query error: " + e.getMessage());
                 e.printStackTrace();
@@ -1001,7 +1003,8 @@ public class TournamentService {
                             WHERE tp.tournament_id = ? AND tp.firebase_uid = ?
                             """;
                         
-                        List<Object[]> results = entityManager.createNativeQuery(query)
+                        @SuppressWarnings("unchecked")
+                        List<Object[]> results = (List<Object[]>) entityManager.createNativeQuery(query)
                                 .setParameter(1, tournamentUuid)
                                 .setParameter(2, uid)
                                 .getResultList();
@@ -1089,7 +1092,8 @@ public class TournamentService {
                     WHERE tp.tournament_id = ? AND tp.firebase_uid = ?
                     """;
                 
-                List<Object> results = entityManager.createNativeQuery(query)
+                @SuppressWarnings("unchecked")
+                List<Number> results = (List<Number>) entityManager.createNativeQuery(query)
                         .setParameter(1, UUID.fromString(tournamentId))
                         .setParameter(2, uid)
                         .getResultList();
@@ -1179,10 +1183,11 @@ public class TournamentService {
                         WHERE tp.tournament_id = ? AND tp.firebase_uid = ?
                         """;
                     
-                    List<Object> results = entityManager.createNativeQuery(query)
-                            .setParameter(1, UUID.fromString(tournamentId))
-                            .setParameter(2, uid)
-                            .getResultList();
+                @SuppressWarnings("unchecked")
+                List<Number> results = (List<Number>) entityManager.createNativeQuery(query)
+                        .setParameter(1, UUID.fromString(tournamentId))
+                        .setParameter(2, uid)
+                        .getResultList();
                     
                     if (!results.isEmpty() && results.get(0) != null) {
                         combinedRating += ((Number) results.get(0)).intValue();
@@ -1980,15 +1985,11 @@ public class TournamentService {
             }
             
             // Check if all matches are completed
-            int completedCount = 0;
             for (TournamentMatch match : groupMatches) {
-                if ("completed".equals(match.status)) {
-                    completedCount++;
-                } else {
+                if (!"completed".equals(match.status)) {
                     return false;
                 }
             }
-            
             return true;
         } catch (Exception e) {
             System.err.println("Error checking group match completion: " + e.getMessage());
@@ -2156,7 +2157,7 @@ public class TournamentService {
         performance.points = 0;
         performance.goalsScored = 0;
         performance.goalsConceded = 0;
-        performance.matchesPlayed = 0;
+        
         
         // Get all group matches for this team
         List<TournamentMatch> teamMatches = TournamentMatch.find(
@@ -2167,7 +2168,6 @@ public class TournamentService {
         
         for (TournamentMatch match : teamMatches) {
             if (match.team1Score != null && match.team2Score != null) {
-                performance.matchesPlayed++;
                 
                 if (match.team1.teamId.equals(team.teamId)) {
                     // Team is team1
@@ -2206,7 +2206,6 @@ public class TournamentService {
         int goalsScored;
         int goalsConceded;
         int goalDifference;
-        int matchesPlayed;
     }
 
     /**
@@ -2289,34 +2288,7 @@ public class TournamentService {
         }
     }
 
-    /**
-     * Determine knockout phases based on number of teams
-     */
-    private String[] determineKnockoutPhases(int numTeams) {
-        if (numTeams <= 2) {
-            return new String[]{"final"};
-        } else if (numTeams <= 4) {
-            return new String[]{"semifinal", "final"};
-        } else if (numTeams <= 8) {
-            return new String[]{"quarterfinal", "semifinal", "final"};
-        } else {
-            // For more than 8 teams, we need additional rounds
-            int totalRounds = (int) Math.ceil(Math.log(numTeams) / Math.log(2));
-            String[] phases = new String[totalRounds];
-            phases[totalRounds - 1] = "final";
-            if (totalRounds > 1) {
-                phases[totalRounds - 2] = "semifinal";
-            }
-            if (totalRounds > 2) {
-                phases[totalRounds - 3] = "quarterfinal";
-            }
-            // Add additional rounds as needed
-            for (int i = 0; i < totalRounds - 3; i++) {
-                phases[i] = "round_" + (i + 1);
-            }
-            return phases;
-        }
-    }
+    
 
     /**
      * Generate next round of knockout matches when a round is completed
@@ -2490,19 +2462,5 @@ public class TournamentService {
         return roundMatches.stream().allMatch(match -> "completed".equals(match.status));
     }
 
-    /**
-     * Determine number of teams per phase
-     */
-    private int[] determineTeamsPerPhase(int numTeams) {
-        int totalRounds = (int) Math.ceil(Math.log(numTeams) / Math.log(2));
-        int[] teamsPerPhase = new int[totalRounds];
-        
-        int currentTeams = numTeams;
-        for (int i = 0; i < totalRounds; i++) {
-            teamsPerPhase[i] = currentTeams;
-            currentTeams = currentTeams / 2;
-        }
-        
-        return teamsPerPhase;
-    }
+    
 } 

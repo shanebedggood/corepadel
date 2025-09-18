@@ -31,7 +31,7 @@ import { VenueFacility } from '../../services/quarkus-venue.service';
     InputIconModule,
   ],
   templateUrl: './clubs.component.html',
-  styleUrls: ['./clubs.component.scss', '../../shared/styles/container.styles.scss']
+  styleUrls: ['./clubs.component.scss', '../../shared/styles/container.styles.scss', '../../shared/styles/button.styles.scss']
 })
 export class ClubsComponent implements OnInit, OnDestroy {
   allVenues: Venue[] = [];

@@ -8,7 +8,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AvatarModule } from 'primeng/avatar';
-import { PageHeaderComponent } from '../../layout/component/page-header.component';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { UserService } from '../../services/user.service';
 import { ImageUploadService } from '../../services/image-upload.service';
@@ -27,20 +26,14 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
         InputTextModule,
         CheckboxModule,
         ProgressSpinnerModule,
-        AvatarModule,
-        PageHeaderComponent
+        AvatarModule
     ],
+    styleUrls: ['../../shared/styles/container.styles.scss', '../../shared/styles/button.styles.scss'],
     template: `
-        <div class="card">
-            <!-- Page Header -->
-            <app-page-header 
-                title="Update My Profile"
-                subtitle=""
-                [breadcrumbs]="breadcrumbs">
-            </app-page-header>
-            
-            <!-- Page Content -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div class="container-base p-4">
+            <div class="card">
+                <div class="font-semibold text-xl mb-1">Update My Profile</div>
+                <p class="text-gray-600 mb-4">Update your profile information and preferences</p>
                 @if (userProfile$ | async; as profile) {
                     <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
                         <!-- Profile Photo Section -->
@@ -72,7 +65,7 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
                         <!-- Name Fields -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">
+                                <label for="firstName" class="block text-base font-medium text-gray-700 mb-1">
                                     First Name *
                                 </label>
                                 <input 
@@ -88,7 +81,7 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
                             </div>
 
                             <div>
-                                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">
+                                <label for="lastName" class="block text-base font-medium text-gray-700 mb-1">
                                     Last Name *
                                 </label>
                                 <input 
@@ -106,7 +99,7 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
 
                         <!-- Display Name -->
                         <div>
-                            <label for="displayName" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="displayName" class="block text-base font-medium text-gray-700 mb-1">
                                 Display Name *
                             </label>
                             <input 
@@ -123,7 +116,7 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
 
                         <!-- Email -->
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="email" class="block text-base font-medium text-gray-700 mb-1">
                                 Email Address *
                             </label>
                             <input 
@@ -137,9 +130,31 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
                             <small class="text-gray-500">Email cannot be changed</small>
                         </div>
 
+                        <!-- Playtomic Rating -->
+                        <div>
+                            <label for="playtomicRating" class="block text-base font-medium text-gray-700 mb-1">
+                                Playtomic Rating
+                            </label>
+                            <input 
+                                id="playtomicRating"
+                                type="number" 
+                                pInputText 
+                                formControlName="playtomicRating"
+                                class="w-32"
+                                placeholder="4.50"
+                                step="0.01"
+                                min="0"
+                                max="7">
+                            @if (profileForm.get('playtomicRating')?.invalid && profileForm.get('playtomicRating')?.touched) {
+                                <small class="text-red-500">Rating must be between 0.00 and 7.00</small>
+                            } @else {
+                                <small class="text-gray-500">Your current Playtomic rating (range: 0.00 to 7.00)</small>
+                            }
+                        </div>
+
                         <!-- Interests -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                            <label class="block text-base font-medium text-gray-700 mb-3">
                                 Interests *
                             </label>
                             <div class="space-y-2">
@@ -149,7 +164,7 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
                                         [binary]="true"
                                         inputId="interestPadel">
                                     </p-checkbox>
-                                    <label for="interestPadel" class="ml-2 text-sm text-gray-700">
+                                    <label for="interestPadel" class="ml-2 text-base text-gray-700">
                                         Padel
                                     </label>
                                 </div>
@@ -159,7 +174,7 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
                                         [binary]="true"
                                         inputId="interestRunning">
                                     </p-checkbox>
-                                    <label for="interestRunning" class="ml-2 text-sm text-gray-700">
+                                    <label for="interestRunning" class="ml-2 text-base text-gray-700">
                                         Running
                                     </label>
                                 </div>
@@ -196,6 +211,7 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
     styles: [`
         :host ::ng-deep .p-inputtext {
             border-radius: 0.5rem;
+            font-size: 1rem;
         }
         
         :host ::ng-deep .p-button {
@@ -204,6 +220,10 @@ import { Observable, Subscription, firstValueFrom, switchMap } from 'rxjs';
         
         :host ::ng-deep .p-checkbox .p-checkbox-box {
             border-radius: 0.25rem;
+        }
+        
+        :host ::ng-deep .p-checkbox-label {
+            font-size: 1rem;
         }
         
         .large-profile-avatar {
@@ -233,13 +253,6 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
     profileImageUrl: string | null = null;
     isSubmitting = false;
     private subscriptions = new Subscription();
-    
-    // Page header configuration
-    breadcrumbs = [
-        { label: 'Home', route: '/player', icon: 'pi pi-home' },
-        { label: 'My Profile', route: '/player/profile', icon: 'pi pi-user' },
-        { label: 'Update Profile' }
-    ];
 
     constructor(
         private fb: FormBuilder,
@@ -269,6 +282,7 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
             lastName: ['', Validators.required],
             displayName: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
+            playtomicRating: [null, [Validators.min(0), Validators.max(7)]],
             interestPadel: [false],
             interestRunning: [false]
         });
@@ -294,6 +308,7 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
             lastName: profile.last_name || '',
             displayName: profile.display_name || '',
             email: profile.email || '',
+            playtomicRating: profile.playtomic_rating || null,
             interestPadel: profile.interests?.includes('padel') || false,
             interestRunning: profile.interests?.includes('running') || false
         });
@@ -362,6 +377,7 @@ export class ProfileUpdateComponent implements OnInit, OnDestroy {
                     first_name: this.profileForm.get('firstName')?.value,
                     last_name: this.profileForm.get('lastName')?.value,
                     display_name: this.profileForm.get('displayName')?.value,
+                    playtomic_rating: this.profileForm.get('playtomicRating')?.value,
                     interests: interests,
                     profile_completed: true
                 };

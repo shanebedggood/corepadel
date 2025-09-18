@@ -30,7 +30,7 @@ import { take } from 'rxjs/operators';
         <div class="p-4 text-gray-600">No upcoming runs booked.</div>
       } @else {
         <div class="run-content">
-          <p-table [value]="getUserBookingsWithCounts()" [paginator]="false" [rows]="10" class="p-datatable-sm">
+          <p-table [value]="getUserBookingsWithCounts()" [paginator]="false" [rows]="10" size="small">
             <ng-template pTemplate="header">
               <tr>
                 <th>Date</th>
@@ -57,7 +57,7 @@ import { take } from 'rxjs/operators';
 
       <ng-template pTemplate="footer">
         <div class="run-footer">
-          <p-button label="Go to runs" [routerLink]="['/player/run-booking']" styleClass="p-button-outlined" severity="secondary"></p-button>
+          <p-button label="Go to runs" [routerLink]="['/player/run-booking']"></p-button>
         </div>
       </ng-template>
     </p-card>
@@ -88,10 +88,8 @@ import { take } from 'rxjs/operators';
       font-size: 1rem;
     }
     
-    .run-footer ::ng-deep .p-button {
-      font-size: 1rem !important;
-    }
-  `]
+  `],
+  styleUrls: ['../../../shared/styles/button.styles.scss']
 })
 export class RunBookingsWidget {
   private runService = inject(RunBookingService);

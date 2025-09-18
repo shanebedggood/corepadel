@@ -58,6 +58,10 @@ public class User extends PanacheEntityBase {
     @JsonProperty("profile_completed")
     public Boolean profileCompleted = false;
     
+    @Column(name = "playtomic_rating", precision = 3, scale = 2)
+    @JsonProperty("playtomic_rating")
+    public java.math.BigDecimal playtomicRating;
+    
     // One-to-many relationship with UserRole
     // @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     // @JsonProperty("roles")
@@ -186,6 +190,14 @@ public class User extends PanacheEntityBase {
         this.profileCompleted = profileCompleted != null ? profileCompleted : false;
     }
     
+    public java.math.BigDecimal getPlaytomicRating() {
+        return playtomicRating;
+    }
+    
+    public void setPlaytomicRating(java.math.BigDecimal playtomicRating) {
+        this.playtomicRating = playtomicRating;
+    }
+    
     // public List<UserRole> getRoles() {
     //     return roles;
     // }
@@ -209,6 +221,7 @@ public class User extends PanacheEntityBase {
                 ", emailVerified=" + emailVerified +
                 ", interests=" + java.util.Arrays.toString(interests) +
                 ", profileCompleted=" + profileCompleted +
+                ", playtomicRating=" + playtomicRating +
                 // ", roles=" + (roles != null ? roles.size() : "null") +
                 '}';
     }

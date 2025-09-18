@@ -55,7 +55,7 @@ import { PageHeaderComponent, BreadcrumbItem } from '../../../layout/component/p
   providers: [ConfirmationService],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './court-booking.component.html',
-  styleUrls: ['./court-booking.component.scss', '../../../shared/styles/container.styles.scss']
+  styleUrls: ['./court-booking.component.scss', '../../../shared/styles/container.styles.scss', '../../../shared/styles/button.styles.scss']
 })
 export class CourtBookingComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

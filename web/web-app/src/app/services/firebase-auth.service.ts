@@ -9,7 +9,7 @@ import {
   User,
   updateProfile
 } from '@angular/fire/auth';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { actionCodeSettings } from '../../environments/firebase.config';
 import { setPersistence, browserLocalPersistence } from 'firebase/auth';
@@ -30,6 +30,7 @@ export interface UserProfile {
   profile_picture?: string;
   interests?: string[];
   profile_completed?: boolean;
+  playtomic_rating?: number;
   club_memberships?: ClubMembership[];
 }
 
@@ -223,7 +224,7 @@ export class FirebaseAuthService {
         
         // Attempt to create the user in the backend. If the user already exists (409), treat as success.
         try {
-          await this.http.post(`${environment.quarkusApiUrl}/users`, userData, { headers }).toPromise();
+          await firstValueFrom(this.http.post(`${environment.quarkusApiUrl}/users`, userData, { headers }));
         } catch (postError: any) {
           if (postError?.status === 409) {
             console.warn('User already exists in backend, treating sync as successful.');
@@ -266,13 +267,13 @@ export class FirebaseAuthService {
           'Content-Type': 'application/json'
         };
         
-        const response: any = await this.http.get(`${environment.quarkusApiUrl}/users/firebase/${currentUser.uid}`, { headers }).toPromise();
+        const response: any = await firstValueFrom(this.http.get(`${environment.quarkusApiUrl}/users/firebase/${currentUser.uid}`, { headers }));
         
         if (response) {
           // Fetch roles separately since User entity doesn't include them
           let roles: string[] = [];
           try {
-            const rolesResponse: any = await this.http.get(`${environment.quarkusApiUrl}/users/firebase/${currentUser.uid}/roles`, { headers }).toPromise();
+            const rolesResponse: any = await firstValueFrom(this.http.get(`${environment.quarkusApiUrl}/users/firebase/${currentUser.uid}/roles`, { headers }));
             if (rolesResponse && Array.isArray(rolesResponse)) {
               roles = rolesResponse.map((userRole: any) => userRole.role?.role_name || userRole.role_name || 'unknown');
             }
@@ -294,6 +295,7 @@ export class FirebaseAuthService {
             profile_picture: response.profile_picture,
             interests: response.interests,
             profile_completed: response.profile_completed,
+            playtomic_rating: response.playtomic_rating,
             roles: roles
           };
           
@@ -330,7 +332,7 @@ export class FirebaseAuthService {
         };
         
         const roleData = { roleName: role };
-        await this.http.post(`${environment.quarkusApiUrl}/users/firebase/${targetUserId}/roles`, roleData, { headers }).toPromise();
+        await firstValueFrom(this.http.post(`${environment.quarkusApiUrl}/users/firebase/${targetUserId}/roles`, roleData, { headers }));
         
         // Refresh profile after role change
         await this.loadUserProfileWithRetry();

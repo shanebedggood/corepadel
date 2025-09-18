@@ -23,7 +23,7 @@
         <div class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Matches</div>
         <p-table [value]="matches" [dataKey]="'id'" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} matches"
-            [rowsPerPageOptions]="[5, 10, 20]" styleClass="p-datatable-sm" responsiveLayout="scroll">
+            [rowsPerPageOptions]="[5, 10, 20]" size="small" responsiveLayout="scroll">
             <!-- Match Details -->
             <ng-template pTemplate="header">
                 <tr>

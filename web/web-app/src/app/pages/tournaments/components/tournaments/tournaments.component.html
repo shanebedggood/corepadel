@@ -6,7 +6,7 @@
       <button pButton type="button" icon="pi pi-refresh" [disabled]="loading" (click)="refreshTournaments()"
           pTooltip="Refresh tournament statuses" class="mr-2" severity="secondary">
       </button>
-      <button pButton type="button" icon="pi pi-plus" (click)="navigateToCreate()" class="">
+      <button pButton type="button" icon="pi pi-plus" (click)="navigateToCreate()">
       </button>
     </div>
 
@@ -20,7 +20,7 @@
         <p-message severity="info" text="No tournaments found. Create your first tournament to get started."
             styleClass="w-full mb-4">
         </p-message>
-        <button pButton pRipple type="button" label="Create Tournament" icon="pi pi-plus" class="lg "
+        <button pButton pRipple type="button" label="Create Tournament" icon="pi pi-plus"
             (click)="navigateToCreate()">
         </button>
     </div>
@@ -34,7 +34,7 @@
             <p-table [value]="tournaments" [dataKey]="'id'" [loading]="loading" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tournaments"
                 [rowsPerPageOptions]="[5, 10, 25, 50]"
-                [globalFilterFields]="['name', 'venue.name', 'venueType.name', 'status.name']" class="p-datatable-sm">
+                [globalFilterFields]="['name', 'venue.name', 'venueType.name', 'status.name']" size="small">
                 <ng-template pTemplate="header">
                     <tr>
                         <th pSortableColumn="name">Name <p-sortIcon field="name">
@@ -153,12 +153,15 @@
                             @if (isAdmin) {
                                 <div class="flex gap-1">
                                     <button pButton type="button" icon="pi pi-times"
-                                        class="p-button-sm p-button-outlined p-button-danger"
+                                        class="p-button-sm"
+                                        severity="danger"
                                         [disabled]="getStatusId(tournament) === 'cancelled' || saving"
                                         (click)="cancelTournament(tournament, $event)" pTooltip="Cancel">
                                     </button>
                                     <button pButton type="button" icon="pi pi-trash"
-                                        class="p-button-sm p-button-outlined p-button-danger" [disabled]="saving"
+                                        class="p-button-sm" 
+                                        severity="danger"
+                                        [disabled]="saving"
                                         (click)="deleteTournament(tournament, $event)" pTooltip="Delete">
                                     </button>
                                 </div>

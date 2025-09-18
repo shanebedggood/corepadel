@@ -6,7 +6,6 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import za.cf.cp.venue.Facility;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**

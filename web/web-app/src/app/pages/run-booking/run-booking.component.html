@@ -159,7 +159,8 @@
                       pButton 
                       type="button" 
                       icon="pi pi-times" 
-                      class="p-button-text p-button-sm p-button-danger"
+                      severity="danger"
+                      [text]="true"
                       (click)="onCancelBooking(booking.booking_id!)"
                       [disabled]="isDateInPast(selectedSlot.date)"
                       [loading]="isCancellingBooking"
@@ -183,14 +184,13 @@
             pButton 
             type="button" 
             label="Cancel" 
-            class="p-button-secondary"
+            severity="secondary"
             (click)="onCloseModal()">
           </button>
           <button 
             pButton 
             type="button" 
             label="Book Run" 
-            class="p-button-success"
             (click)="onCreateBooking()"
             [loading]="isCreatingBooking">
           </button>

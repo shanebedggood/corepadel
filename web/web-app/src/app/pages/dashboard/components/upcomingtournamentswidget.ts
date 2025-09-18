@@ -12,6 +12,7 @@ import { Tournament, TournamentService } from '../../../services/tournament.serv
   standalone: true,
   imports: [CommonModule, ButtonModule, CardModule, TagModule, CarouselModule, RouterModule],
   templateUrl: './upcomingtournamentswidget.html',
+  styleUrls: ['../../../shared/styles/button.styles.scss'],
   styles: [`
     .card {
       background-color: var(--surface-card);

@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
-import { PageHeaderComponent } from '../../layout/component/page-header.component';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { UserProfile } from '../../services/firebase-auth.service';
 import { ImageUploadService } from '../../services/image-upload.service';
@@ -13,31 +12,29 @@ import { Observable, map, switchMap } from 'rxjs';
 @Component({
     selector: 'app-profile',
     standalone: true,
-    imports: [CommonModule, CardModule, ButtonModule, AvatarModule, PageHeaderComponent],
+    imports: [CommonModule, CardModule, ButtonModule, AvatarModule],
+    styleUrls: ['../../shared/styles/container.styles.scss', '../../shared/styles/button.styles.scss'],
     template: `
-        <div class="card">
-            <!-- Page Header -->
-            <app-page-header 
-                title="My Profile"
-                [breadcrumbs]="breadcrumbs">
-            </app-page-header>
-            
-            <!-- Page Content -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div class="container-base p-4">
+            <div class="card">
+                <div class="font-semibold text-xl mb-1">My Profile</div>
+                <p class="text-gray-600 mb-4">View and manage your profile information</p>
+                
                 @if (userProfile$ | async; as profile) {
                     <div class="profile-content">
-                        <div class="profile-info">
-                            <!-- Profile Photo -->
-                            <div class="profile-photo-section text-center mb-6">
-                                <p-avatar 
-                                    [image]="(cachedProfileImage$ | async) || undefined" 
-                                    [label]="!(cachedProfileImage$ | async) ? getUserInitials(profile) : undefined"
-                                    size="xlarge" 
-                                    shape="circle"
-                                    class="large-profile-avatar">
-                                </p-avatar>
-                            </div>
+                        <!-- Profile Photo -->
+                        <div class="profile-photo-section text-center mb-6">
+                            <p-avatar 
+                                [image]="(cachedProfileImage$ | async) || undefined" 
+                                [label]="!(cachedProfileImage$ | async) ? getUserInitials(profile) : undefined"
+                                size="xlarge" 
+                                shape="circle"
+                                class="large-profile-avatar">
+                            </p-avatar>
+                        </div>
 
+                        <!-- Profile Information Grid -->
+                        <div class="profile-info-grid">
                             <div class="info-row">
                                 <label>First Name:</label>
                                 <span>{{ getFirstName(profile) }}</span>
@@ -59,6 +56,10 @@ import { Observable, map, switchMap } from 'rxjs';
                                 <span>{{ profile.email_verified ? 'Yes' : 'No' }}</span>
                             </div>
                             <div class="info-row">
+                                <label>Playtomic Rating:</label>
+                                <span>{{ getPlaytomicRating(profile) }}</span>
+                            </div>
+                            <div class="info-row full-width">
                                 <label>Interests:</label>
                                 <div class="interests-list">
                                     @if (profile.interests && profile.interests.length > 0) {
@@ -70,7 +71,7 @@ import { Observable, map, switchMap } from 'rxjs';
                                     }
                                 </div>
                             </div>
-                            <div class="info-row">
+                            <div class="info-row full-width">
                                 <label>Roles:</label>
                                 <div class="roles-list">
                                     @for (role of profile.roles; track role) {
@@ -85,7 +86,6 @@ import { Observable, map, switchMap } from 'rxjs';
                                 pButton 
                                 label="Edit Profile" 
                                 icon="pi pi-pencil"
-                                class="p-button-primary"
                                 (click)="editProfile()">
                             </button>
                         </div>
@@ -96,35 +96,41 @@ import { Observable, map, switchMap } from 'rxjs';
     `,
     styles: [`
         .profile-content {
-            padding: 0;
-        }
-        
-        .profile-info {
             display: flex;
             flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .profile-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 1rem;
+            align-items: start;
         }
         
         .info-row {
             display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e5e7eb;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.75rem 0;
         }
         
-        .info-row:last-child {
-            border-bottom: none;
+        .info-row.full-width {
+            grid-column: 1 / -1;
         }
         
         .info-row label {
-            font-weight: bold;
-            min-width: 120px;
+            font-weight: 600;
             color: #374151;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
         .info-row span {
             color: #1f2937;
+            font-size: 1rem;
+            font-weight: 500;
         }
         
         .roles-list {
@@ -137,7 +143,8 @@ import { Observable, map, switchMap } from 'rxjs';
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 1rem;
-            font-size: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
         
         .role-badge-admin {
@@ -183,6 +190,7 @@ import { Observable, map, switchMap } from 'rxjs';
             border-radius: 1rem;
             font-size: 0.875rem;
             text-transform: capitalize;
+            font-weight: 500;
         }
         
         .large-profile-avatar {
@@ -203,17 +211,70 @@ import { Observable, map, switchMap } from 'rxjs';
             height: 8rem !important;
             object-fit: cover;
         }
+        
+        .profile-actions {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 1.5rem;
+        }
+        
+        // Responsive adjustments - work with shared container styles
+        @media (max-width: 768px) {
+            .card {
+                padding: 1rem;
+                margin-bottom: 0.5rem;
+                border-radius: 0.375rem;
+            }
+            
+            .profile-info-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .info-row {
+                padding: 0.5rem 0;
+            }
+            
+            .large-profile-avatar {
+                width: 6rem !important;
+                height: 6rem !important;
+                font-size: 1.5rem !important;
+            }
+            
+            .large-profile-avatar ::ng-deep .p-avatar {
+                width: 6rem !important;
+                height: 6rem !important;
+                font-size: 1.5rem !important;
+            }
+            
+            .large-profile-avatar ::ng-deep .p-avatar img {
+                width: 6rem !important;
+                height: 6rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .card {
+                padding: 0.75rem;
+                border-radius: 0.25rem;
+            }
+            
+            .profile-content {
+                gap: 1rem;
+            }
+            
+            .info-row label {
+                font-size: 0.75rem;
+            }
+            
+            .info-row span {
+                font-size: 0.875rem;
+            }
+        }
     `]
 })
 export class ProfileComponent implements OnInit {
     userProfile$: Observable<UserProfile | null>;
     cachedProfileImage$: Observable<string | null>;
-    
-    // Page header configuration
-    breadcrumbs = [
-        { label: 'Home', route: '/player', icon: 'pi pi-home' },
-        { label: 'My Profile' }
-    ];
 
     constructor(
         private authService: FirebaseAuthService,
@@ -255,6 +316,10 @@ export class ProfileComponent implements OnInit {
 
     getDisplayName(profile: any): string {
         return profile.display_name || 'Not provided';
+    }
+
+    getPlaytomicRating(profile: any): string {
+        return profile.playtomic_rating ? profile.playtomic_rating.toFixed(2) : 'Not set';
     }
 
     getUserInitials(profile: any): string {

@@ -32,7 +32,7 @@ import { take } from 'rxjs/operators';
         <div class="p-4 text-gray-600">No upcoming court bookings.</div>
       } @else {
         <div class="court-content">
-          <p-table [value]="bookings()" [paginator]="false" [rows]="10" styleClass="p-datatable-sm">
+          <p-table [value]="bookings()" [paginator]="false" [rows]="10" size="small">
             <ng-template pTemplate="header">
               <tr>
                 <th>Date & Time</th>
@@ -59,7 +59,7 @@ import { take } from 'rxjs/operators';
 
       <ng-template pTemplate="footer">
         <div class="court-footer">
-          <p-button label="Manage bookings" [routerLink]="['/player/court-booking']" styleClass="p-button-outlined" severity="secondary"></p-button>
+          <p-button label="Manage bookings" [routerLink]="['/player/court-booking']"></p-button>
         </div>
       </ng-template>
     </p-card>
@@ -70,7 +70,8 @@ import { take } from 'rxjs/operators';
     .court-title { display:flex; align-items:center; }
     .court-content { padding: 1.5rem; background: white; }
     .court-footer { padding: 1rem 1.5rem; background: white; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end; font-size: 1rem; }
-  `]
+  `],
+  styleUrls: ['../../../shared/styles/button.styles.scss']
 })
 export class CourtBookingsWidget {
   private courtService = inject(CourtScheduleService);

@@ -37,7 +37,7 @@ interface CalendarDay {
         ProgressSpinnerModule
     ],
     templateUrl: './run-booking.component.html',
-    styleUrls: ['./run-booking.component.scss', '../../shared/styles/container.styles.scss']
+    styleUrls: ['./run-booking.component.scss', '../../shared/styles/container.styles.scss', '../../shared/styles/button.styles.scss']
 })
 export class RunBookingComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();

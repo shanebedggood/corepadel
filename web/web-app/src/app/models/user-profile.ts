@@ -12,4 +12,5 @@ export interface UserProfile {
   profile_picture?: string;
   interests?: string[];
   profile_completed?: boolean;
+  playtomic_rating?: number;
 }

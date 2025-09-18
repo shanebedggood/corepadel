@@ -100,6 +100,7 @@ public class UserResource {
             if (profileData.emailVerified != null) user.emailVerified = profileData.emailVerified;
             if (profileData.interests != null) user.interests = profileData.interests;
             if (profileData.profileCompleted != null) user.profileCompleted = profileData.profileCompleted;
+            if (profileData.playtomicRating != null) user.playtomicRating = profileData.playtomicRating;
             
             User updatedUser = userService.updateUser(user);
             return Response.ok(updatedUser).build();

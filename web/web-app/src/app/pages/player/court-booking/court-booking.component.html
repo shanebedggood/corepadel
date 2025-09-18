@@ -148,8 +148,6 @@
                                         label="Book slot"
                                         icon="pi pi-plus"
                                         size="small"
-                                        severity="secondary"
-                                        [text]="true"
                                         [loading]="isTeamBeingBooked(slot, court.number, team.teamNumber)"
                                         [disabled]="isTeamBeingBooked(slot, court.number, team.teamNumber)"
                                         (onClick)="joinTeam(slot, court.number, team.teamNumber)">
@@ -215,7 +213,7 @@
                 <td>{{ booking.courtNumber || '-' }}</td>
                 <td></td>
                 <td>
-                  <p-badge class="booking-status-badge" [value]="getBookingStatusLabel(booking.status)" [severity]="getBookingStatusBadge(booking.status)"></p-badge>
+                  <p-badge class="booking-status-badge text-gray-700" [value]="getBookingStatusLabel(booking.status)" [severity]="getBookingStatusBadge(booking.status)"></p-badge>
                 </td>
                 <td class="text-right">
                   @if (canCancelBooking(booking)) {

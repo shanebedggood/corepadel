@@ -177,6 +177,7 @@ public class UserService {
         existingUser.emailVerified = user.emailVerified;
         if (user.interests != null) existingUser.interests = user.interests;
         if (user.profileCompleted != null) existingUser.profileCompleted = user.profileCompleted;
+        existingUser.playtomicRating = user.playtomicRating;
         
         return existingUser;
     }
